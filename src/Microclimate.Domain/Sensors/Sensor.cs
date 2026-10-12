@@ -1,16 +1,13 @@
 using Microclimate.Domain.Common;
-using Microclimate.Domain.Enums;
 
 namespace Microclimate.Domain.Sensors;
 
-/// <summary>Датчик мікроклімату, встановлений у кімнаті.</summary>
+/// <summary>Датчик мікроклімату, встановлений у кімнаті. Один датчик може надсилати будь-які метрики.</summary>
 public sealed class Sensor : Entity<Guid>
 {
     public const int SerialNumberMaxLength = 64;
     public const int ModelMaxLength = 100;
     public const int DeviceKeyHashMaxLength = 256;
-
-    private readonly List<SensorCapability> _capabilities = [];
 
     // Для EF Core
     private Sensor()
@@ -30,7 +27,6 @@ public sealed class Sensor : Entity<Guid>
         IsActive = true;
     }
 
-    /// <summary>Поточна кімната датчика.</summary>
     public Guid RoomId { get; private set; }
 
     public string SerialNumber { get; private set; }
@@ -47,26 +43,8 @@ public sealed class Sensor : Entity<Guid>
     /// <summary>Час останнього прийнятого виміру.</summary>
     public DateTimeOffset? LastSeenAt { get; private set; }
 
-    /// <summary>Метрики, які вимірює датчик.</summary>
-    public IReadOnlyCollection<MetricType> Capabilities => _capabilities.Select(c => c.Metric).ToArray();
-
-    public static Sensor Create(
-        Guid roomId,
-        string serialNumber,
-        string? model,
-        string deviceKeyHash,
-        IEnumerable<MetricType> capabilities,
-        DateTimeOffset now)
-    {
-        ArgumentNullException.ThrowIfNull(capabilities);
-
-        var metrics = capabilities.Select(m => Guard.Defined(m, "Метрика датчика")).Distinct().ToArray();
-        if (metrics.Length == 0)
-        {
-            throw new DomainException("Датчик має вимірювати хоча б одну метрику.");
-        }
-
-        var sensor = new Sensor(
+    public static Sensor Create(Guid roomId, string serialNumber, string? model, string deviceKeyHash, DateTimeOffset now) =>
+        new(
             Guid.CreateVersion7(now),
             Guard.NotEmpty(roomId, "Кімната"),
             Guard.RequiredText(serialNumber, "Серійний номер", SerialNumberMaxLength),
@@ -74,23 +52,12 @@ public sealed class Sensor : Entity<Guid>
             Guard.RequiredText(deviceKeyHash, "Хеш ключа датчика", DeviceKeyHashMaxLength),
             now.ToUniversalTime());
 
-        sensor._capabilities.AddRange(metrics.Select(m => new SensorCapability(sensor.Id, m)));
-        return sensor;
-    }
-
-    public bool Supports(MetricType metric) => _capabilities.Exists(c => c.Metric == metric);
-
-    /// <summary>Перевіряє, що датчик може надіслати вимір метрики.</summary>
-    public void EnsureCanReport(MetricType metric)
+    /// <summary>Перевіряє, що датчик може надсилати виміри.</summary>
+    public void EnsureActive()
     {
         if (!IsActive)
         {
             throw new DomainException($"Датчик {SerialNumber} деактивовано.");
-        }
-
-        if (!Supports(metric))
-        {
-            throw new DomainException($"Датчик {SerialNumber} не вимірює метрику {metric}.");
         }
     }
 
@@ -103,12 +70,6 @@ public sealed class Sensor : Entity<Guid>
             LastSeenAt = utc;
         }
     }
-
-    /// <summary>Переносить датчик в іншу кімнату. Попередні виміри залишаються прив'язаними до старої кімнати.</summary>
-    public void MoveTo(Guid roomId) => RoomId = Guard.NotEmpty(roomId, "Кімната");
-
-    public void RotateKey(string newDeviceKeyHash) =>
-        DeviceKeyHash = Guard.RequiredText(newDeviceKeyHash, "Хеш ключа датчика", DeviceKeyHashMaxLength);
 
     public void Deactivate() => IsActive = false;
 
