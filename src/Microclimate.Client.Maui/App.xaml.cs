@@ -1,16 +1,17 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Microclimate.Client.Maui;
 
 public partial class App : Application
 {
-	public App()
-	{
-		InitializeComponent();
-	}
+    private readonly IServiceProvider services;
 
-	protected override Window CreateWindow(IActivationState? activationState)
-	{
-		return new Window(new AppShell());
-	}
+    public App(IServiceProvider services)
+    {
+        InitializeComponent();
+        this.services = services;
+    }
+
+    protected override Window CreateWindow(IActivationState? activationState) =>
+        new(services.GetRequiredService<AppShell>());
 }
