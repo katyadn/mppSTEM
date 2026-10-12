@@ -97,11 +97,11 @@ dotnet build src/Microclimate.Client.Maui -t:Run -f net10.0-windows10.0.19041.0 
 
 ## MAUI: macOS / Android
 
-На Mac із сумісним Xcode:
+На Mac із Xcode 26.6 використовуйте `net10.0-maccatalyst`. Для встановленого Xcode 27 доступний SDK 27; команди нижче явно вибирають його:
 
 ```bash
-dotnet build src/Microclimate.Client.Maui -f net10.0-maccatalyst -p:MauiTargetFramework=net10.0-maccatalyst -p:RuntimeIdentifier=maccatalyst-arm64 -p:EnableCodeSigning=false
-dotnet build src/Microclimate.Client.Maui -t:Run -f net10.0-maccatalyst -p:MauiTargetFramework=net10.0-maccatalyst -p:RuntimeIdentifier=maccatalyst-arm64 -p:EnableCodeSigning=false
+dotnet build src/Microclimate.Client.Maui -f net10.0-maccatalyst27.0 -p:MauiTargetFramework=net10.0-maccatalyst27.0 -p:RuntimeIdentifier=maccatalyst-arm64 -p:EnableCodeSigning=false
+dotnet build src/Microclimate.Client.Maui -t:Run -f net10.0-maccatalyst27.0 -p:MauiTargetFramework=net10.0-maccatalyst27.0 -p:RuntimeIdentifier=maccatalyst-arm64 -p:EnableCodeSigning=false
 ```
 
 `EnableCodeSigning=false` використовується лише для локальної незапакованої Debug-перевірки, не для розповсюдження. На Intel Mac замініть runtime на `maccatalyst-x64`. Для Android після встановлення JDK та Android SDK:

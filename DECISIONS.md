@@ -92,3 +92,12 @@
 - Розглянуті варіанти: глобальний TargetFrameworks; окрема властивість тільки клієнта.
 - Рішення: MauiTargetFramework обмежує TargetFrameworks лише всередині MAUI csproj; CI і README використовують її. ProjectReference прибирає глобальні TargetFrameworks/RuntimeIdentifier під час build.
 - Наслідки: Contracts залишається net10.0; відновлення клієнта не вимагає workloads інших платформ.
+
+## D-3-011 — Локальний Xcode 27
+
+- Дата: 2026-10-12
+- Автор: Учасник 3
+- Проблема: стандартний MacCatalyst SDK 26.5 вимагає Xcode 26.6, а локально встановлено Xcode 27.
+- Розглянуті варіанти: заміна Xcode; явний вибір встановленого платформного SDK 27.
+- Рішення: README дає локальний target net10.0-maccatalyst27.0 через MauiTargetFramework. MacCatalyst minimum піднято до 17.0 відповідно до вимоги SDK; стандартний target зберігається для сумісних Mac.
+- Наслідки: .NET залишається 10; Windows/Android targets незмінні. Мінімальний MacCatalyst 17.0 відповідає macOS 14.
