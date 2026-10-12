@@ -1,0 +1,17 @@
+{
+  "solution": {
+    "path": "Microclimate.slnx",
+    "projects": [
+      "src/Microclimate.Api/Microclimate.Api.csproj",
+      "src/Microclimate.Application/Microclimate.Application.csproj",
+      "src/Microclimate.Contracts/Microclimate.Contracts.csproj",
+      "src/Microclimate.Domain/Microclimate.Domain.csproj",
+      "src/Microclimate.Infrastructure/Microclimate.Infrastructure.csproj",
+      "src/Microclimate.SensorSimulator/Microclimate.SensorSimulator.csproj",
+      "tests/Microclimate.Api.IntegrationTests/Microclimate.Api.IntegrationTests.csproj",
+      "tests/Microclimate.Application.Tests/Microclimate.Application.Tests.csproj",
+      "tests/Microclimate.Client.Tests/Microclimate.Client.Tests.csproj",
+      "tests/Microclimate.Domain.Tests/Microclimate.Domain.Tests.csproj"
+    ]
+  }
+}
