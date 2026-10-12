@@ -14,13 +14,14 @@
 - **Запит:** виконати Етап 0 за participant-3-stage-0.md, під’єднати katyadn/mppSTEM у Rider; встановити залежності та самостійно виконати технічну роботу.
 - **Шаблони dotnet new:** створили solution, бібліотеки, API, worker, MAUI і xUnit-проєкти; перевага — стандартна структура, обмеження — демонстраційний код і залежності треба перевіряти.
 - **ШІ:** створив каркас, конфігурацію та документацію; перевага — швидкість і узгодженість, обмеження — генерація не доводить коректність, потрібні збірка, тести та рев’ю.
-- **CommunityToolkit.Mvvm:** пакет додано для наступного каркасу MVVM; генератори властивостей і команд застосовуються у відповідному PR клієнта.
+- **CommunityToolkit.Mvvm 8.4.2:** `[ObservableProperty]` генерує властивості IsBusy/Title з повідомленнями змін; `[RelayCommand]` генерує ICommand з методів. Переваги — менше повторюваного коду і async commands; обмеження — потрібні partial-класи та перевірка згенерованих імен і binding на збірці.
 
 | Артефакти | Що згенеровано/змінено агентом | Що людина змінила вручну | Перевірка |
 |---|---|---|---|
 | .github/workflows/ci.yml | Linux build/test/coverage та Windows MAUI job; версії Actions перевірено через GitHub releases API | Не підтверджено | Фактичний статус GitHub Actions у підсумковому звіті |
 | .github/ISSUE_TEMPLATE/, .github/pull_request_template.md, CONTRIBUTING.md | Шаблони задач і PR, правила команди | Не підтверджено | YAML-структура та перегляд тексту |
 | README.md, docs/responsibility-zones.md, deploy/README.md | Опис системи, зон і запуску за ОС; Docker відкладено до Етапу 2 | Не підтверджено | Швидкий старт серверної частини на чистому клоні; результати в підсумковому звіті |
+| Client.Maui/ViewModels/, Services/, Views/, AppShell, App, MauiProgram | П’ять MVVM-екранів, source generators, compiled bindings, DI й маршрути | Не підтверджено | Платформний build, CI Windows і ручна навігація; фактичні результати в чеклісті |
 | global.json, .editorconfig, .gitignore | Шаблони та правила для SDK, стилю й артефактів | Не підтверджено | dotnet CLI, git diff |
 | src/, tests/, Microclimate.slnx | Порожні проєкти, стандартні API/worker/MAUI, залежності й чотири заглушки | Не підтверджено | Release build і dotnet test; результати в підсумковому звіті |
 | Directory.Build.props, Directory.Packages.props, Microclimate.Ci.slnf | Спільні параметри, CPM, виправлена OpenAPI-залежність і CI-фільтр | Не підтверджено | Restore, NuGet Audit і build |
