@@ -24,6 +24,7 @@
 | Client.Maui/ViewModels/, Services/, Views/, AppShell, App, MauiProgram | П’ять MVVM-екранів, source generators, compiled bindings, DI й маршрути | Не підтверджено | Платформний build, CI Windows і ручна навігація; фактичні результати в чеклісті |
 | docs/ui/wireframes.md, docs/ui/screenshots/stage-0/README.md | П’ять ASCII-макетів, ролі/дії/навігація та інструкція для реальних скриншотів | Погодження командою ще не підтверджено | Перегляд змісту; скриншоти працюючого UI перевіряти окремо |
 | docs/stage-0-checklist.md | Статуси issues/PR, фактичні перевірки, блокери й сім питань до захисту | Людське рев’ю ще не підтверджено | Зіставлено з результатами CLI та GitHub Actions |
+| GitHub issues #1–#7 та PR #8–#14 | Формулювання задач, критерії готовності, описи змін і перевірок | Людина надала завдання та дозвіл; командне рев’ю ще очікується | Посилання і статуси перевірено через GitHub API та gh |
 | global.json, .editorconfig, .gitignore | Шаблони та правила для SDK, стилю й артефактів | Не підтверджено | dotnet CLI, git diff |
 | src/, tests/, Microclimate.slnx | Порожні проєкти, стандартні API/worker/MAUI, залежності й чотири заглушки | Не підтверджено | Release build і dotnet test; результати в підсумковому звіті |
 | Directory.Build.props, Directory.Packages.props, Microclimate.Ci.slnf | Спільні параметри, CPM, виправлена OpenAPI-залежність і CI-фільтр | Не підтверджено | Restore, NuGet Audit і build |
@@ -46,3 +47,5 @@
 
 - Завершальна перевірка: чистий GitHub-клон commit bade40a пройшов restore, Release build із 0 warnings/0 errors і всі чотири тести. Фінальний код MAUI commit f6b68b7 має успішні Linux і Windows jobs у run 38288647440. Після цього оновлено Markdown-звіт та прибрано зайві пробіли стандартних шаблонів; реалізація не змінювалася.
 - Rider відкрив Microclimate.slnx і визначив /Users/dmytro/.dotnet/dotnet, SDK 10.0.300. Робочий клон: ~/RiderProjects/mppSTEM, feature/7-stage0-docs.
+
+- Додаткова перевірка README: локальний `dotnet run --project src/Microclimate.Api --launch-profile http` запустив стандартний API на localhost:5195; GET /WeatherForecast повернув HTTP 200 і п’ять шаблонних записів. Тестовий процес завершено. Команди чистого старту містять checkout повної feature-гілки до restore, доки main очікує merge.

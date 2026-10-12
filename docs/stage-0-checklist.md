@@ -23,6 +23,7 @@
 - [x] GitHub має права push; GitHub CLI 2.102.0 встановлено та авторизовано як dimatsenko. Перші repo/API-операції виконано через наявний збережений вхід. Після окремого явного дозволу людини та її авторизації у браузері завершено офіційний OAuth-вхід CLI; `gh auth status` підтверджує успіх.
 - [x] Docker Desktop 4.95.0 встановлено у `~/Applications/Docker.app`; підпис перевірено. Docker client/server 29.8.2, engine працює.
 - [x] `dotnet restore Microclimate.Ci.slnf` проходить.
+- [x] Команда API-запуску з README працює; шаблонний /WeatherForecast відповів HTTP 200 і п’ятьма демонстраційними записами. Після перевірки процес завершено.
 - [x] Release build серверного CI-фільтра: **0 warnings, 0 errors**.
 - [x] Чотири `Placeholder_ShouldPass` проходять; coverage/TRX генеруються. Це заглушки, а не тести предметної логіки.
 - [x] CI PR каркасу pipeline перевірив Linux і Windows успішно: [run 38286833251](https://github.com/katyadn/mppSTEM/actions/runs/38286833251).
