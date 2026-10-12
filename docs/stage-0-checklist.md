@@ -26,7 +26,7 @@
 - [x] Release build серверного CI-фільтра: **0 warnings, 0 errors**.
 - [x] Чотири `Placeholder_ShouldPass` проходять; coverage/TRX генеруються. Це заглушки, а не тести предметної логіки.
 - [x] CI PR каркасу pipeline перевірив Linux і Windows успішно: [run 38286833251](https://github.com/katyadn/mppSTEM/actions/runs/38286833251).
-- [x] Швидкий старт на свіжому GitHub-клоні feature/7-stage0-docs: restore, Release build (0 warnings/0 errors) і всі чотири тести проходять. Перевірений commit bade40a; подальше доповнення звіту змінює тільки Markdown.
+- [x] Швидкий старт на свіжому GitHub-клоні feature/7-stage0-docs: restore, Release build (0 warnings/0 errors) і всі чотири тести проходять. Перевірений commit bade40a; подальші правки документації та пробілів у шаблонах не змінюють реалізацію.
 - [x] Фінальний MAUI-каркас (commit f6b68b7) пройшов обидва CI jobs: [run 38288647440](https://github.com/katyadn/mppSTEM/actions/runs/38288647440). Наступні гілки містять той самий перевірений код і додають документацію; актуальний статус кожного PR видно у checks.
 - [ ] Ручний Windows-запуск, переходи та скриншоти.
 - [ ] Командне погодження вайрфреймів і контрактів.
