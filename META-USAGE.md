@@ -33,7 +33,53 @@
 
 ## Учасник 2
 
-Заповнює Учасник 2.
+- **Інструменти:** Gemini 3.8 Flash (Antigravity AI Assistant), Visual Studio Code / JetBrains Rider, .NET CLI 10.0.401, Git.
+- **Принципи та механізми (мета)програмування:**
+  1. *Декларативне та атрибутне програмування:* використання метаданих і C#-атрибутів (`[ApiController]`, `[ApiVersion("1.0")]`, `[Route("...")]`, `[ProducesResponseType<T>]`) для автоматичного формування маршрутизації, версіонування та фільтрації відповідей без імперативного коду.
+  2. *Compile-time кодогенерація OpenAPI:* генерація OpenAPI-документації v1 за допомогою source generators бібліотеки `Microsoft.AspNetCore.OpenApi` на основі статичних типів контролерів та DTO.
+  3. *Primary Constructors та Records для незмінних DTO:* `public sealed record` з позиційними параметрами забезпечують автоматичну генерацію методів еквівалентності (`Equals`, `GetHashCode`), форматування `ToString` та копіювання (`with`), зменшуючи обсяг бойлерплейт-коду.
+  4. *ШІ-асистент для проектування контрактів і тестів:* генерація специфікацій REST API (`docs/api.md`), моделі безпеки (`docs/security.md`), контрактів SignalR (`docs/realtime.md`), типізованих DTO в `Microclimate.Contracts` та інтеграційних тестів WebApplicationFactory.
+
+### Переваги та обмеження підходів
+
+| Підхід / Інструмент | Переваги | Обмеження |
+|---|---|---|
+| **Атрибутне програмування (`[ApiVersion]`, `[ProducesResponseType]`)** | Декларативність, читабельність, єдине джерело правди для Swagger та маршрутизації. | Помилки конфігурації виявляються під час запуску або аналізаторами; обмежена гнучкість для динамічних маршрутів. |
+| **C# Records (`record`) для DTO** | Лаконічність (1-2 рядки на DTO), вбудована незмінність (immutability), безпека при передачі в багатопотоковому середовищі. | Відсутність традиційного наслідування для складних ієрархій; потребує суворого узгодження імен полів при десеріалізації. |
+| **Генерація OpenAPI .NET 10** | Відсутність важкої рефлексії Swashbuckle у runtime, висока швидкість cold-start сервісу. | Потребує точного узгодження версій NuGet (`Microsoft.AspNetCore.OpenApi` та `Asp.Versioning.OpenApi`). |
+| **ШІ-асистент (Antigravity / Gemini)** | Швидке проектування специфікацій, таблиць ендпоінтів, покриття контрактів коментарями та розробка інтеграційних тестів. | Ризик генерації надлишкових допоміжних сутностей; згенерований код вимагає обов'язкової компіляції (`TreatWarningsAsErrors`), перевірки тестами та людського рев'ю. |
+
+### Ключові запити до ШІ-асистента
+- *«Сформувати специфікацію REST API v1, формат ProblemDetails (RFC 9457) та діаграми взаємодії у docs/api.md».*
+- *«Створити модель безпеки у docs/security.md: ролі, матриця прав, життєвий цикл JWT, ротація refresh-токенів, X-Device-Key».*
+- *«Спроєктувати події реального часу SignalR у docs/realtime.md та HubMethods».*
+- *«Реалізувати чистий набір DTO у Microclimate.Contracts згідно з розділом 4.1 методички без зайвих залежностей».*
+- *«Підняти хост Api з версіонуванням, Swagger UI, GlobalExceptionHandler та написати 5 інтеграційних тестів WebApplicationFactory».*
+
+### Згенеровані артефакти та верифікація
+
+| Файл / Артефакт | Що згенеровано агентом | Що змінено вручну / скориговано | Спосіб перевірки |
+|---|---|---|---|
+| `docs/api.md` | Таблиця ендпоінтів v1, одиниці вимірювань, ProblemDetails, дві Mermaid sequence-діаграми | Погоджено структуру з методичкою та вимогами команди | Перегляд Markdown, валідація Mermaid, рев'ю Учасниками 1 і 3 |
+| `docs/security.md` | Ролі, матриця доступу, політика ротації refresh-токенів, обґрунтування X-Device-Key та CORS | Узгоджено вимоги до сутності RefreshToken з Учасником 1 | Аналітичний перегляд моделі загроз, відповідність RFC 7519 |
+| `docs/realtime.md` | Специфікація SignalR: хаб `/hubs/alerts`, групи кімнат, події, схема автоматичного реконекту | Узгоджено формат payload із DTO клієнта | Звірка назв подій із `HubMethods`, валідація діаграми |
+| `src/Microclimate.Contracts/` (36 файлів) | Усі DTO та публічні переліки для Common, Auth, Users, Buildings, Rooms, Sensors, Measurements, Analytics, Thresholds, Alerts, Realtime, Service | Видалено зайві експериментальні типи (`RoomStatus`, `RoomType`), спрощено сигнатури | `dotnet build src/Microclimate.Contracts -c Release` (0 попереджень, 0 помилок) |
+| `src/Microclimate.Api/Program.cs` | Конфігурація хоста: версіонування URL-сегментом, SwaggerUI, HealthChecks, TimeProvider, GlobalExceptionHandler | Узгоджено налаштування OpenAPI з аналізатором `Asp.Versioning` | Збірка та інтеграційні тести |
+| `src/Microclimate.Api/Middleware/GlobalExceptionHandler.cs` | Реалізація `IExceptionHandler` з генерацією ProblemDetails та маскуванням detail у Production | Додано витягування Activity TraceId | Перевірка в інтеграційному тесті 404/500 |
+| `src/Microclimate.Api/Controllers/V1/PingController.cs` | Контролер діагностики з версіонуванням 1.0 та TimeProvider | Додано атрибути `[ApiVersion("1.0")]` та `[ProducesResponseType]` | Інтеграційний тест `Ping_V1_ReturnsOkWithVersion` |
+| `tests/Microclimate.Api.IntegrationTests/` | 5 інтеграційних тестів на базі `WebApplicationFactory<Program>` | Налаштовано локальний `.editorconfig` для CA1707 (рішення D-1-010) | `dotnet test tests/Microclimate.Api.IntegrationTests -c Release` (5/5 успішно) |
+| `Directory.Packages.props` | Додано версії `Swashbuckle.AspNetCore.SwaggerUI`, `Asp.Versioning.Mvc`, `Asp.Versioning.OpenApi`, `Microsoft.AspNetCore.Mvc.Testing` | Оновлено `Microsoft.AspNetCore.OpenApi` до 10.0.10 для усунення downgrade-попередження | `dotnet restore`, `dotnet test Microclimate.Ci.slnf` |
+| `DECISIONS.md` | Записи архітектурних рішень D-2-001 … D-2-008 | Сформульовано аргументацію та наслідки | Перегляд документації |
+
+### Що людина зробила сама:
+- Надала повний контекст завдань Етапу 0 та узгодила границі зон відповідальності з Учасником 1 та 3.
+- Створила задачі (issues #23, #24, #32, #35, #36, #37, #38, #39) на GitHub.
+- Прийняла рішення щодо спрощення структури (видалення надлишкових допоміжних класів і дотримання суворого мінімалізму).
+- Провела звірку форматів та одиниць вимірювань за фізичними стандартами (T, RH, CO₂, PM2.5, шум, освітленість).
+- Погодила сумісність портів і контрактів для переходу до Етапу 1.
+
+> **Примітка для захисту:** Учасник 2 повинен перед співбесідою уважно переглянути цей розділ і бути готовим пояснити кожне архітектурне рішення своїми словами.
+
 
 ## Учасник 3
 
