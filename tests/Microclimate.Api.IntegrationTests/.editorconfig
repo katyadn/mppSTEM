@@ -1,0 +1,3 @@
+[*.cs]
+# Назви тестів за схемою Method_Scenario_Expected містять підкреслення (див. DECISIONS.md D-1-010).
+dotnet_diagnostic.CA1707.severity = none
