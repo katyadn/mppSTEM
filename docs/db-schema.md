@@ -279,3 +279,37 @@ CHECK: для заданих (не NULL) значень `CriticalMin <= WarningM
 3. Ретенція сирих даних (наприклад, 90 днів), довше зберігаються лише агрегати.
 4. Для PostgreSQL — можливе секціонування `Measurements` за місяцями.
 
+## 7. Провайдери БД (SQLite ↔ PostgreSQL)
+
+| | SQLite | PostgreSQL |
+|---|---|---|
+| Для чого | Розробка, unit/integration-тести, швидкий запуск без Docker | Основна СУБД у Docker Compose, навантажувальні тести |
+| Пакет EF Core | `Microsoft.EntityFrameworkCore.Sqlite` | `Npgsql.EntityFrameworkCore.PostgreSQL` |
+
+Вибір провайдера — у конфігурації:
+
+```json
+{
+  "Database": {
+    "Provider": "Sqlite",
+    "ConnectionString": "Data Source=microclimate.db"
+  }
+}
+```
+
+У Docker — змінні середовища `Database__Provider=Postgres`, `Database__ConnectionString=Host=db;...`.
+
+**Окремі набори міграцій** для кожного провайдера (`Infrastructure/Persistence/Migrations/Sqlite`, `.../Postgres`, генеруються з параметром `--output-dir` і відповідним провайдером). Один набір не підходить: міграції містять провайдер-специфічні типи (`timestamptz` проти `TEXT`), анотації identity-колонок і DDL.
+
+Відомі відмінності та рішення:
+
+| Відмінність | Рішення |
+|---|---|
+| SQLite не має нативного типу для `DateTimeOffset` і не вміє коректно сортувати/порівнювати його в запитах | Для SQLite — `ValueConverter` `DateTimeOffset` → `long` (UTC ticks). Оскільки весь час в UTC, порядок зберігається |
+| `decimal` у SQLite зберігається як `TEXT`, агрегати по ньому обмежені | `decimal` лише для `AreaM2` (без агрегатів); значення вимірів — `double` |
+| Порівняння рядків без урахування регістру відрізняється | Email нормалізується до нижнього регістру в домені, тож порівняння завжди точне |
+| CHECK-обмеження | Підтримуються обома; задаються через `ToTable(t => t.HasCheckConstraint(...))` |
+| Часткові індекси | Підтримуються обома (`HasFilter`); текст фільтра може відрізнятися — задається умовно за провайдером |
+| Оптимістична конкурентність | PostgreSQL — системна колонка `xmin`; SQLite — власна колонка `Version` з ручним інкрементом |
+
+Перевірка: unit-тести репозиторіїв на SQLite (in-memory), інтеграційні — на PostgreSQL через Testcontainers (Етапи 1–2). Ті самі тести запускаються на обох провайдерах.
