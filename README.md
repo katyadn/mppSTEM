@@ -89,25 +89,25 @@ dotnet run --project src/Microclimate.Api --launch-profile http
 
 ```powershell
 dotnet workload install maui-windows
-dotnet build src/Microclimate.Client.Maui -c Release -f net10.0-windows10.0.19041.0 -p:TargetFrameworks=net10.0-windows10.0.19041.0
-dotnet build src/Microclimate.Client.Maui -t:Run -f net10.0-windows10.0.19041.0 -p:TargetFrameworks=net10.0-windows10.0.19041.0
+dotnet build src/Microclimate.Client.Maui -c Release -f net10.0-windows10.0.19041.0 -p:MauiTargetFramework=net10.0-windows10.0.19041.0
+dotnet build src/Microclimate.Client.Maui -t:Run -f net10.0-windows10.0.19041.0 -p:MauiTargetFramework=net10.0-windows10.0.19041.0
 ```
 
-Явне `TargetFrameworks` обмежує restore платформою Windows, тому команда не потребує Android SDK. Перевірте Login → Dashboard, деталі кімнати, вкладки Alerts/Settings і вихід; додайте реальні скриншоти у `docs/ui/screenshots/stage-0/`.
+Явне `MauiTargetFramework` обмежує restore платформою Windows, тому команда не потребує Android SDK. Перевірте Login → Dashboard, деталі кімнати, вкладки Alerts/Settings і вихід; додайте реальні скриншоти у `docs/ui/screenshots/stage-0/`.
 
 ## MAUI: macOS / Android
 
 На Mac із сумісним Xcode:
 
 ```bash
-dotnet build src/Microclimate.Client.Maui -f net10.0-maccatalyst -p:TargetFrameworks=net10.0-maccatalyst -p:RuntimeIdentifier=maccatalyst-arm64 -p:EnableCodeSigning=false
-dotnet build src/Microclimate.Client.Maui -t:Run -f net10.0-maccatalyst -p:TargetFrameworks=net10.0-maccatalyst -p:RuntimeIdentifier=maccatalyst-arm64 -p:EnableCodeSigning=false
+dotnet build src/Microclimate.Client.Maui -f net10.0-maccatalyst -p:MauiTargetFramework=net10.0-maccatalyst -p:RuntimeIdentifier=maccatalyst-arm64 -p:EnableCodeSigning=false
+dotnet build src/Microclimate.Client.Maui -t:Run -f net10.0-maccatalyst -p:MauiTargetFramework=net10.0-maccatalyst -p:RuntimeIdentifier=maccatalyst-arm64 -p:EnableCodeSigning=false
 ```
 
 `EnableCodeSigning=false` використовується лише для локальної незапакованої Debug-перевірки, не для розповсюдження. На Intel Mac замініть runtime на `maccatalyst-x64`. Для Android після встановлення JDK та Android SDK:
 
 ```bash
-dotnet build src/Microclimate.Client.Maui -f net10.0-android -p:TargetFrameworks=net10.0-android
+dotnet build src/Microclimate.Client.Maui -f net10.0-android -p:MauiTargetFramework=net10.0-android
 ```
 
 ## CI та межі Етапу 0
