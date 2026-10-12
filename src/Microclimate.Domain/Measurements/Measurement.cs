@@ -16,20 +16,15 @@ public sealed class Measurement : Entity<long>
     {
     }
 
-    private Measurement(Guid sensorId, Guid roomId, MetricType metric, double value, DateTimeOffset measuredAt, DateTimeOffset receivedAt)
+    private Measurement(Guid sensorId, MetricType metric, double value, DateTimeOffset measuredAt)
     {
         SensorId = sensorId;
-        RoomId = roomId;
         Metric = metric;
         Value = value;
         MeasuredAt = measuredAt;
-        ReceivedAt = receivedAt;
     }
 
     public Guid SensorId { get; private set; }
-
-    /// <summary>Кімната, де зроблено вимір (історичний факт, не змінюється при перенесенні датчика).</summary>
-    public Guid RoomId { get; private set; }
 
     public MetricType Metric { get; private set; }
 
@@ -39,14 +34,12 @@ public sealed class Measurement : Entity<long>
     /// <summary>Час виміру на датчику, UTC.</summary>
     public DateTimeOffset MeasuredAt { get; private set; }
 
-    /// <summary>Час прийому сервером, UTC.</summary>
-    public DateTimeOffset ReceivedAt { get; private set; }
-
-    public static Measurement Record(Sensor sensor, MetricType metric, double value, DateTimeOffset measuredAt, DateTimeOffset receivedAt)
+    /// <param name="now">Поточний час сервера; вимір не може бути пізнішим за нього більше ніж на <see cref="AllowedClockSkew"/>.</param>
+    public static Measurement Record(Sensor sensor, MetricType metric, double value, DateTimeOffset measuredAt, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(sensor);
+        sensor.EnsureActive();
         Guard.Defined(metric, "Метрика");
-        sensor.EnsureCanReport(metric);
         Guard.Finite(value, "Значення виміру");
 
         var limits = MetricLimits.For(metric);
@@ -57,12 +50,11 @@ public sealed class Measurement : Entity<long>
         }
 
         var measuredUtc = measuredAt.ToUniversalTime();
-        var receivedUtc = receivedAt.ToUniversalTime();
-        if (measuredUtc > receivedUtc + AllowedClockSkew)
+        if (measuredUtc > now.ToUniversalTime() + AllowedClockSkew)
         {
             throw new DomainException("Час виміру не може бути в майбутньому.");
         }
 
-        return new Measurement(sensor.Id, sensor.RoomId, metric, value, measuredUtc, receivedUtc);
+        return new Measurement(sensor.Id, metric, value, measuredUtc);
     }
 }

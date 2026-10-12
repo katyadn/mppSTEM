@@ -3,7 +3,7 @@ using Microclimate.Domain.Enums;
 
 namespace Microclimate.Domain.Rooms;
 
-/// <summary>Приміщення будівлі, в якому встановлено датчики.</summary>
+/// <summary>Приміщення, в якому встановлено датчики.</summary>
 public sealed class Room : Entity<Guid>
 {
     public const int NameMaxLength = 100;
@@ -16,16 +16,14 @@ public sealed class Room : Entity<Guid>
         Name = string.Empty;
     }
 
-    private Room(Guid id, Guid buildingId, DateTimeOffset createdAt)
+    private Room(Guid id, DateTimeOffset createdAt)
     {
         Id = id;
-        BuildingId = buildingId;
         CreatedAt = createdAt;
         Name = string.Empty;
     }
 
-    public Guid BuildingId { get; private set; }
-
+    /// <summary>Назва або номер кімнати, унікальні в системі.</summary>
     public string Name { get; private set; }
 
     public int Floor { get; private set; }
@@ -37,9 +35,9 @@ public sealed class Room : Entity<Guid>
 
     public DateTimeOffset CreatedAt { get; private set; }
 
-    public static Room Create(Guid buildingId, string name, int floor, decimal? areaM2, RoomType type, DateTimeOffset now)
+    public static Room Create(string name, int floor, decimal? areaM2, RoomType type, DateTimeOffset now)
     {
-        var room = new Room(Guid.CreateVersion7(now), Guard.NotEmpty(buildingId, "Будівля"), now.ToUniversalTime());
+        var room = new Room(Guid.CreateVersion7(now), now.ToUniversalTime());
         room.Update(name, floor, areaM2, type);
         return room;
     }
