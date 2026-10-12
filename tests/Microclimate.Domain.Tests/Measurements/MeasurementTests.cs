@@ -7,32 +7,18 @@ namespace Microclimate.Domain.Tests.Measurements;
 public class MeasurementTests
 {
     [Fact]
-    public void Record_ValidValue_TakesRoomFromSensorAndStoresUtc()
+    public void Record_ValidValue_StoresSensorAndUtcTime()
     {
-        // Arrange
-        var sensor = TestData.Sensor(MetricType.Temperature);
+        var sensor = TestData.Sensor();
         var measuredAt = TestData.Now.ToOffset(TimeSpan.FromHours(3));
 
-        // Act
         var measurement = Measurement.Record(sensor, MetricType.Temperature, 22.4, measuredAt, TestData.Now);
 
-        // Assert
         Assert.Equal(sensor.Id, measurement.SensorId);
-        Assert.Equal(sensor.RoomId, measurement.RoomId);
+        Assert.Equal(MetricType.Temperature, measurement.Metric);
         Assert.Equal(22.4, measurement.Value);
         Assert.Equal(TimeSpan.Zero, measurement.MeasuredAt.Offset);
         Assert.Equal(TestData.Now, measurement.MeasuredAt);
-    }
-
-    [Fact]
-    public void Record_SensorMovedLater_KeepsOriginalRoom()
-    {
-        var sensor = TestData.Sensor(MetricType.Temperature);
-        var measurement = Measurement.Record(sensor, MetricType.Temperature, 22, TestData.Now, TestData.Now);
-
-        sensor.MoveTo(Guid.NewGuid());
-
-        Assert.Equal(TestData.RoomId, measurement.RoomId);
     }
 
     [Theory]
@@ -42,9 +28,7 @@ public class MeasurementTests
     [InlineData(MetricType.Temperature, 85)]
     public void Record_ValueOnPhysicalBoundary_IsAllowed(MetricType metric, double value)
     {
-        var sensor = TestData.Sensor(metric);
-
-        var measurement = Measurement.Record(sensor, metric, value, TestData.Now, TestData.Now);
+        var measurement = Measurement.Record(TestData.Sensor(), metric, value, TestData.Now, TestData.Now);
 
         Assert.Equal(value, measurement.Value);
     }
@@ -58,17 +42,14 @@ public class MeasurementTests
     [InlineData(MetricType.Temperature, double.PositiveInfinity)]
     public void Record_InvalidValue_Throws(MetricType metric, double value)
     {
-        var sensor = TestData.Sensor(metric);
-
-        Assert.Throws<DomainException>(() => Measurement.Record(sensor, metric, value, TestData.Now, TestData.Now));
+        Assert.Throws<DomainException>(() => Measurement.Record(TestData.Sensor(), metric, value, TestData.Now, TestData.Now));
     }
 
     [Fact]
     public void Record_WithinClockSkew_IsAllowed()
     {
-        var sensor = TestData.Sensor(MetricType.Co2);
-
-        var measurement = Measurement.Record(sensor, MetricType.Co2, 600, TestData.Now + Measurement.AllowedClockSkew, TestData.Now);
+        var measurement = Measurement.Record(
+            TestData.Sensor(), MetricType.Co2, 600, TestData.Now + Measurement.AllowedClockSkew, TestData.Now);
 
         Assert.Equal(600, measurement.Value);
     }
@@ -76,16 +57,16 @@ public class MeasurementTests
     [Fact]
     public void Record_MeasuredInFutureBeyondSkew_Throws()
     {
-        var sensor = TestData.Sensor(MetricType.Co2);
         var measuredAt = TestData.Now + Measurement.AllowedClockSkew + TimeSpan.FromSeconds(1);
 
-        Assert.Throws<DomainException>(() => Measurement.Record(sensor, MetricType.Co2, 600, measuredAt, TestData.Now));
+        Assert.Throws<DomainException>(() => Measurement.Record(TestData.Sensor(), MetricType.Co2, 600, measuredAt, TestData.Now));
     }
 
     [Fact]
-    public void Record_UnsupportedMetric_Throws()
+    public void Record_DeactivatedSensor_Throws()
     {
-        var sensor = TestData.Sensor(MetricType.Temperature);
+        var sensor = TestData.Sensor();
+        sensor.Deactivate();
 
         Assert.Throws<DomainException>(() => Measurement.Record(sensor, MetricType.Co2, 600, TestData.Now, TestData.Now));
     }
@@ -93,9 +74,7 @@ public class MeasurementTests
     [Fact]
     public void Record_UndefinedMetric_Throws()
     {
-        var sensor = TestData.Sensor(MetricType.Temperature);
-
-        Assert.Throws<DomainException>(() => Measurement.Record(sensor, (MetricType)99, 1, TestData.Now, TestData.Now));
+        Assert.Throws<DomainException>(() => Measurement.Record(TestData.Sensor(), (MetricType)99, 1, TestData.Now, TestData.Now));
     }
 
     [Fact]

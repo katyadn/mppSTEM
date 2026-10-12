@@ -1,4 +1,3 @@
-using Microclimate.Domain.Enums;
 using Microclimate.Domain.Sensors;
 
 namespace Microclimate.Domain.Tests;
@@ -11,12 +10,5 @@ internal static class TestData
 
     public static readonly Guid UserId = Guid.Parse("0199a1b2-0000-7000-8000-000000000002");
 
-    public static Sensor Sensor(params MetricType[] metrics) =>
-        Domain.Sensors.Sensor.Create(
-            RoomId,
-            "SN-001",
-            "Model X",
-            "hash",
-            metrics.Length == 0 ? [MetricType.Temperature, MetricType.Humidity, MetricType.Co2] : metrics,
-            Now);
+    public static Sensor Sensor() => Domain.Sensors.Sensor.Create(RoomId, "SN-001", "Model X", "hash", Now);
 }
