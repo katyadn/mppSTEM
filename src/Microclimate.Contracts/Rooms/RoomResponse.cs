@@ -1,5 +1,3 @@
-using Microclimate.Contracts.Common;
-
 namespace Microclimate.Contracts.Rooms;
 
 /// <summary>
@@ -18,5 +16,5 @@ public sealed record RoomResponse(
     string Name,
     int Floor,
     double? AreaSqM,
-    RoomType Type,
+    string? Type,
     DateTimeOffset CreatedAt);

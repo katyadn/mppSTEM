@@ -1,5 +1,3 @@
-using Microclimate.Contracts.Common;
-
 namespace Microclimate.Contracts.Rooms;
 
 /// <summary>
@@ -13,4 +11,4 @@ public sealed record UpdateRoomRequest(
     string Name,
     int Floor,
     double? AreaSqM = null,
-    RoomType Type = RoomType.Office);
+    string? Type = null);
