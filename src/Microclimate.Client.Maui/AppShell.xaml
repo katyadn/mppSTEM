@@ -1,14 +1,23 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<Shell
-    x:Class="Microclimate.Client.Maui.AppShell"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:Microclimate.Client.Maui"
-    Title="Microclimate.Client.Maui">
-
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
-
+<?xml version="1.0" encoding="utf-8" ?>
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       x:Class="Microclimate.Client.Maui.AppShell"
+       Title="Мікроклімат"
+       FlyoutBehavior="Disabled">
+    <TabBar Route="auth">
+        <Tab Route="sign-in" Title="Вхід">
+            <ShellContent x:Name="LoginContent" Route="login" Title="Вхід" />
+        </Tab>
+    </TabBar>
+    <TabBar Route="main">
+        <Tab Route="dashboard" Title="Огляд">
+            <ShellContent x:Name="DashboardContent" Route="dashboard-page" Title="Огляд" />
+        </Tab>
+        <Tab Route="alerts" Title="Сповіщення">
+            <ShellContent x:Name="AlertsContent" Route="alerts-page" Title="Сповіщення" />
+        </Tab>
+        <Tab Route="settings" Title="Налаштування">
+            <ShellContent x:Name="SettingsContent" Route="settings-page" Title="Налаштування" />
+        </Tab>
+    </TabBar>
 </Shell>
