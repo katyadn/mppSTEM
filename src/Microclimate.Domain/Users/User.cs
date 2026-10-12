@@ -1,0 +1,80 @@
+using System.Net.Mail;
+
+using Microclimate.Domain.Common;
+using Microclimate.Domain.Enums;
+
+namespace Microclimate.Domain.Users;
+
+/// <summary>Користувач системи.</summary>
+public sealed class User : Entity<Guid>
+{
+    public const int EmailMaxLength = 256;
+    public const int DisplayNameMaxLength = 100;
+    public const int PasswordHashMaxLength = 256;
+
+    // Для EF Core
+    private User()
+    {
+        Email = string.Empty;
+        DisplayName = string.Empty;
+        PasswordHash = string.Empty;
+    }
+
+    private User(Guid id, string email, string displayName, string passwordHash, UserRole role, DateTimeOffset createdAt)
+    {
+        Id = id;
+        Email = email;
+        DisplayName = displayName;
+        PasswordHash = passwordHash;
+        Role = role;
+        CreatedAt = createdAt;
+        IsActive = true;
+    }
+
+    /// <summary>Email у нижньому регістрі.</summary>
+    public string Email { get; private set; }
+
+    public string DisplayName { get; private set; }
+
+    /// <summary>Хеш пароля (обчислює шар Api); сам пароль не зберігається.</summary>
+    public string PasswordHash { get; private set; }
+
+    public UserRole Role { get; private set; }
+
+    public bool IsActive { get; private set; }
+
+    public DateTimeOffset CreatedAt { get; private set; }
+
+    public static User Create(string email, string displayName, string passwordHash, UserRole role, DateTimeOffset now) =>
+        new(
+            Guid.CreateVersion7(now),
+            NormalizeEmail(email),
+            Guard.RequiredText(displayName, "Ім'я", DisplayNameMaxLength),
+            Guard.RequiredText(passwordHash, "Хеш пароля", PasswordHashMaxLength),
+            Guard.Defined(role, "Роль"),
+            now.ToUniversalTime());
+
+    /// <summary>Нормалізує email (обрізає пробіли, нижній регістр) і перевіряє формат.</summary>
+    public static string NormalizeEmail(string email)
+    {
+        var normalized = Guard.RequiredText(email, "Email", EmailMaxLength).ToLowerInvariant();
+        if (!MailAddress.TryCreate(normalized, out var address) || address.Address != normalized)
+        {
+            throw new DomainException($"Email '{normalized}' має некоректний формат.");
+        }
+
+        return normalized;
+    }
+
+    public void ChangeRole(UserRole role) => Role = Guard.Defined(role, "Роль");
+
+    public void ChangePasswordHash(string passwordHash) =>
+        PasswordHash = Guard.RequiredText(passwordHash, "Хеш пароля", PasswordHashMaxLength);
+
+    public void Rename(string displayName) =>
+        DisplayName = Guard.RequiredText(displayName, "Ім'я", DisplayNameMaxLength);
+
+    public void Deactivate() => IsActive = false;
+
+    public void Activate() => IsActive = true;
+}
