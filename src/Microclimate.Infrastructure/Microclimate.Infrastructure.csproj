@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../Microclimate.Application/Microclimate.Application.csproj" />
+    <ProjectReference Include="../Microclimate.Domain/Microclimate.Domain.csproj" />
+  </ItemGroup>
+</Project>
