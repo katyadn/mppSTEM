@@ -12,21 +12,22 @@
 | D: README draft | [#4](https://github.com/katyadn/mppSTEM/issues/4) | [#11](https://github.com/katyadn/mppSTEM/pull/11) | Очікує людського рев’ю та merge |
 | E: MAUI client skeleton and navigation | [#5](https://github.com/katyadn/mppSTEM/issues/5) | [#12](https://github.com/katyadn/mppSTEM/pull/12) | Очікує людського рев’ю та merge |
 | F: UI wireframes | [#6](https://github.com/katyadn/mppSTEM/issues/6) | [#13](https://github.com/katyadn/mppSTEM/pull/13) | Очікує людського рев’ю та merge |
-| G: Stage 0 docs: decisions and META-USAGE | [#7](https://github.com/katyadn/mppSTEM/issues/7) | [PR цього кроку](https://github.com/katyadn/mppSTEM/pulls?q=is%3Apr+head%3Afeature%2F7-stage0-docs) | Очікує людського рев’ю та merge |
+| G: Stage 0 docs: decisions and META-USAGE | [#7](https://github.com/katyadn/mppSTEM/issues/7) | [#14](https://github.com/katyadn/mppSTEM/pull/14) | Очікує людського рев’ю та merge |
 
 Зливати PR послідовно A→B→C→D→E→F→G через **Create a merge commit**. Це збереже спільну історію і скоротить diff наступних залежних PR. Issues закриються через `Closes #...` після відповідних merge; зараз їх не позначено закритими.
 
 ## Фактично перевірено
 
 - [x] .NET SDK 10.0.300 встановлено; MAUI workload 10.0.20 встановлено.
+- [x] Microclimate.slnx відкрито в Rider; Rider визначив активний SDK 10.0.300 та конфігурації API http/https і SensorSimulator. Клон Rider відстежує origin/feature/7-stage0-docs.
 - [x] GitHub має права push; GitHub CLI 2.102.0 встановлено. Існуючий GitHub токен працює для репозиторію; `gh auth login --with-token` відхиляє його через відсутній read:org. Repo/API-операції виконано через той самий збережений вхід, без нових дозволів.
 - [x] Docker Desktop 4.95.0 встановлено у `~/Applications/Docker.app`; підпис перевірено. Docker client/server 29.8.2, engine працює.
 - [x] `dotnet restore Microclimate.Ci.slnf` проходить.
 - [x] Release build серверного CI-фільтра: **0 warnings, 0 errors**.
 - [x] Чотири `Placeholder_ShouldPass` проходять; coverage/TRX генеруються. Це заглушки, а не тести предметної логіки.
 - [x] CI PR каркасу pipeline перевірив Linux і Windows успішно: [run 38286833251](https://github.com/katyadn/mppSTEM/actions/runs/38286833251).
-- [ ] Швидкий старт на свіжому GitHub-клоні повної гілки — результат буде додано після перевірки.
-- [ ] Остаточні Windows CI для MAUI/документації — статус дивитися на відповідних PR.
+- [x] Швидкий старт на свіжому GitHub-клоні feature/7-stage0-docs: restore, Release build (0 warnings/0 errors) і всі чотири тести проходять. Перевірений commit bade40a; подальше доповнення звіту змінює тільки Markdown.
+- [x] Фінальний MAUI-каркас (commit f6b68b7) пройшов обидва CI jobs: [run 38288647440](https://github.com/katyadn/mppSTEM/actions/runs/38288647440). Наступні гілки містять той самий перевірений код і додають документацію; актуальний статус кожного PR видно у checks.
 - [ ] Ручний Windows-запуск, переходи та скриншоти.
 - [ ] Командне погодження вайрфреймів і контрактів.
 - [ ] Перегляд META-USAGE.md своїми словами Учасником 3.

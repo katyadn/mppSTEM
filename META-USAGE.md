@@ -43,3 +43,6 @@
 - Платформне налаштування MauiTargetFramework виправлено після виявлення поширення глобального TargetFrameworks на Contracts; тепер Contracts залишається net10.0.
 - Windows CI pipeline успішний; статус фінального MAUI-каркасу дивитися у PR. macOS C#/XAML скомпілювалися з preview SDK, але повний build/run завершився помилкою native linker через Xcode/SDK; Windows UI-виконання не перевірено.
 - Швидкий старт на чистому клоні, фінальні CI statuses та ручні перевірки фіксуються в docs/stage-0-checklist.md. До людського перегляду всі ручні правки й погодження позначаються як непідтверджені.
+
+- Завершальна перевірка: чистий GitHub-клон commit bade40a пройшов restore, Release build із 0 warnings/0 errors і всі чотири тести. Фінальний код MAUI commit f6b68b7 має успішні Linux і Windows jobs у run 38288647440. Після цього оновлено лише Markdown-звіт.
+- Rider відкрив Microclimate.slnx і визначив /Users/dmytro/.dotnet/dotnet, SDK 10.0.300. Робочий клон: ~/RiderProjects/mppSTEM, feature/7-stage0-docs.
