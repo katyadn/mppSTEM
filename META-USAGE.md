@@ -20,6 +20,7 @@
 |---|---|---|---|
 | .github/workflows/ci.yml | Linux build/test/coverage та Windows MAUI job; версії Actions перевірено через GitHub releases API | Не підтверджено | Фактичний статус GitHub Actions у підсумковому звіті |
 | .github/ISSUE_TEMPLATE/, .github/pull_request_template.md, CONTRIBUTING.md | Шаблони задач і PR, правила команди | Не підтверджено | YAML-структура та перегляд тексту |
+| README.md, docs/responsibility-zones.md, deploy/README.md | Опис системи, зон і запуску за ОС; Docker відкладено до Етапу 2 | Не підтверджено | Швидкий старт серверної частини на чистому клоні; результати в підсумковому звіті |
 | global.json, .editorconfig, .gitignore | Шаблони та правила для SDK, стилю й артефактів | Не підтверджено | dotnet CLI, git diff |
 | src/, tests/, Microclimate.slnx | Порожні проєкти, стандартні API/worker/MAUI, залежності й чотири заглушки | Не підтверджено | Release build і dotnet test; результати в підсумковому звіті |
 | Directory.Build.props, Directory.Packages.props, Microclimate.Ci.slnf | Спільні параметри, CPM, виправлена OpenAPI-залежність і CI-фільтр | Не підтверджено | Restore, NuGet Audit і build |
