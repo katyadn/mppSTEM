@@ -66,12 +66,13 @@ Domain і Contracts не посилаються на інші проєкти. Vi
 ```bash
 git clone https://github.com/katyadn/mppSTEM.git
 cd mppSTEM
+git switch feature/7-stage0-docs
 dotnet restore Microclimate.Ci.slnf
 dotnet build Microclimate.Ci.slnf -c Release --no-restore
 dotnet test Microclimate.Ci.slnf -c Release --no-build
 ```
 
-Поки PR Етапу 0 не злиті, після clone виконайте `git switch feature/7-stage0-docs`, щоб отримати повний каркас. Після merge цей крок більше не потрібний.
+Рядок `git switch feature/7-stage0-docs` потрібний, поки PR Етапу 0 не злиті, щоб отримати повний каркас. Після merge усіх PR у main цей рядок пропустіть.
 
 У Rider відкрийте `Microclimate.slnx`. Для перевірки серверної частини з термінала використовуйте `Microclimate.Ci.slnf`; відкриття повного solution може вимагати локальних платформних SDK MAUI.
 
