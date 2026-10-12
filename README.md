@@ -97,12 +97,14 @@ dotnet build src/Microclimate.Client.Maui -t:Run -f net10.0-windows10.0.19041.0 
 
 ## MAUI: macOS / Android
 
-На Mac із Xcode 26.6 використовуйте `net10.0-maccatalyst`. Для встановленого Xcode 27 доступний preview SDK 27; явний прапорець EnableXcode27Preview підтверджує використання experimental API лише для локальної перевірки; команди нижче явно вибирають його:
+На Mac із **Xcode 26.6**, сумісним зі встановленим стабільним MacCatalyst SDK 26.5:
 
 ```bash
-dotnet build src/Microclimate.Client.Maui -f net10.0-maccatalyst27.0 -p:MauiTargetFramework=net10.0-maccatalyst27.0 -p:RuntimeIdentifier=maccatalyst-arm64 -p:EnableCodeSigning=false -p:EnableXcode27Preview=true
-dotnet build src/Microclimate.Client.Maui -t:Run -f net10.0-maccatalyst27.0 -p:MauiTargetFramework=net10.0-maccatalyst27.0 -p:RuntimeIdentifier=maccatalyst-arm64 -p:EnableCodeSigning=false -p:EnableXcode27Preview=true
+dotnet build src/Microclimate.Client.Maui -f net10.0-maccatalyst -p:MauiTargetFramework=net10.0-maccatalyst -p:RuntimeIdentifier=maccatalyst-arm64 -p:EnableCodeSigning=false
+dotnet build src/Microclimate.Client.Maui -t:Run -f net10.0-maccatalyst -p:MauiTargetFramework=net10.0-maccatalyst -p:RuntimeIdentifier=maccatalyst-arm64 -p:EnableCodeSigning=false
 ```
+
+Локально Xcode 27 наразі несумісний: стабільний SDK вимагає 26.6, а preview SDK завершився помилкою native linker `EnhancedLinkSecurity`. Повний Mac-запуск не підтверджено; Xcode для інших проєктів не змінювався.
 
 `EnableCodeSigning=false` використовується лише для локальної незапакованої Debug-перевірки, не для розповсюдження. На Intel Mac замініть runtime на `maccatalyst-x64`. Для Android після встановлення JDK та Android SDK:
 

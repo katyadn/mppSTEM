@@ -93,13 +93,11 @@
 - Рішення: MauiTargetFramework обмежує TargetFrameworks лише всередині MAUI csproj; CI і README використовують її. ProjectReference прибирає глобальні TargetFrameworks/RuntimeIdentifier під час build.
 - Наслідки: Contracts залишається net10.0; відновлення клієнта не вимагає workloads інших платформ.
 
-## D-3-011 — Локальний Xcode 27
+## D-3-011 — Стабільний Apple SDK і межі локальної перевірки
 
 - Дата: 2026-10-12
 - Автор: Учасник 3
-- Проблема: стандартний MacCatalyst SDK 26.5 вимагає Xcode 26.6, а локально встановлено Xcode 27.
-- Розглянуті варіанти: заміна Xcode; явний вибір встановленого платформного SDK 27.
-- Рішення: README дає локальний target net10.0-maccatalyst27.0 через MauiTargetFramework. MacCatalyst minimum піднято до 17.0 відповідно до вимоги SDK; стандартний target зберігається для сумісних Mac.
-- Наслідки: .NET залишається 10; Windows/Android targets незмінні. Мінімальний MacCatalyst 17.0 відповідає macOS 14.
-
-- Доповнення D-3-011: SDK 27 позначає Apple API діагностикою XCODE_27_0_PREVIEW. Офіційний спосіб явного opt-in описаний у https://github.com/dotnet/macios/blob/main/docs/preview-apis.md. Тільки EnableXcode27Preview=true додає цей конкретний diagnostic до NoWarn для локальної preview-перевірки; CI Windows і стандартні targets не мають такого opt-in. Це не змінює аналізатори коду, аудит NuGet або виконання тестів.
+- Проблема: встановлено Xcode 27.0 (27A266a), а стабільний MacCatalyst SDK 26.5.10315 вимагає Xcode 26.6. Preview SDK 27 компілює C#/XAML, але native linker не знаходить EnhancedLinkSecurity.
+- Розглянуті варіанти: заміна глобального Xcode; preview SDK; залишити стабільні targets і задекларувати блокер.
+- Рішення: не змінювати Xcode, який потрібний іншим проєктам; залишити шаблонні Apple targets і мінімальну версію 15.0, не додавати preview opt-in до фінального проєкту. README дає Mac-команди для сумісного Xcode 26.6.
+- Наслідки: локальний запуск Mac не підтверджено. Windows-збірку перевіряє CI; ручний Windows-запуск залишається командною перевіркою.
