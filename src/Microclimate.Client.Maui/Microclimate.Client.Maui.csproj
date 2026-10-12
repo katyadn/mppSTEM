@@ -40,6 +40,6 @@
     <PackageReference Include="CommunityToolkit.Mvvm" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../Microclimate.Contracts/Microclimate.Contracts.csproj" />
+    <ProjectReference Include="../Microclimate.Contracts/Microclimate.Contracts.csproj" GlobalPropertiesToRemove="TargetFrameworks;RuntimeIdentifier" />
   </ItemGroup>
 </Project>
