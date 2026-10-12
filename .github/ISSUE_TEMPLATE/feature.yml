@@ -1,0 +1,42 @@
+name: Нова задача
+description: Потреба, критерії готовності та зона відповідальності
+title: "[Feature] "
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Опис
+      description: Яка проблема і який результат потрібен?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Критерії готовності
+      value: "- [ ] Результат реалізовано\n- [ ] Перевірки виконано\n- [ ] Документацію оновлено"
+    validations:
+      required: true
+  - type: dropdown
+    id: zone
+    attributes:
+      label: Зона відповідальності
+      options: [Учасник 1, Учасник 2, Учасник 3]
+    validations:
+      required: true
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Етап
+      options: ["0", "1", "2", "3"]
+    validations:
+      required: true
+  - type: input
+    id: estimate
+    attributes:
+      label: Оцінка (story points)
+      placeholder: "1, 2, 3, 5 або 8"
+  - type: input
+    id: deadline
+    attributes:
+      label: Дедлайн
+      placeholder: YYYY-MM-DD

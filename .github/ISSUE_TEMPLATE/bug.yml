@@ -1,0 +1,36 @@
+name: Помилка
+description: Кроки відтворення та фактична поведінка
+title: "[Bug] "
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: Кроки відтворення
+      value: "1. \n2. \n3. "
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Очікуваний результат
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Фактичний результат
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Середовище
+      description: ОС, версія SDK, версія застосунку
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Логи
+      description: Не додавайте токени, паролі та персональні дані.
+      render: text
