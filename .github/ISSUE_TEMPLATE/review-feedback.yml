@@ -1,0 +1,30 @@
+name: Зауваження викладача
+description: Виправлення після чекпоінту
+title: "[Review] "
+body:
+  - type: input
+    id: source
+    attributes:
+      label: Джерело (чекпоінт №)
+    validations:
+      required: true
+  - type: textarea
+    id: feedback
+    attributes:
+      label: Зауваження
+    validations:
+      required: true
+  - type: textarea
+    id: plan
+    attributes:
+      label: План виправлення
+      value: "- [ ] Виправити причину\n- [ ] Перевірити результат"
+    validations:
+      required: true
+  - type: input
+    id: deadline
+    attributes:
+      label: Дедлайн до наступного чекпоінту
+      placeholder: YYYY-MM-DD
+    validations:
+      required: true
