@@ -20,7 +20,7 @@
 
 - [x] .NET SDK 10.0.300 встановлено; MAUI workload 10.0.20 встановлено.
 - [x] Microclimate.slnx відкрито в Rider; Rider визначив активний SDK 10.0.300 та конфігурації API http/https і SensorSimulator. Клон Rider відстежує origin/feature/7-stage0-docs.
-- [x] GitHub має права push; GitHub CLI 2.102.0 встановлено. Існуючий GitHub токен працює для репозиторію; `gh auth login --with-token` відхиляє його через відсутній read:org. Repo/API-операції виконано через той самий збережений вхід, без нових дозволів.
+- [x] GitHub має права push; GitHub CLI 2.102.0 встановлено та авторизовано як dimatsenko. Перші repo/API-операції виконано через наявний збережений вхід. Після окремого явного дозволу людини та її авторизації у браузері завершено офіційний OAuth-вхід CLI; `gh auth status` підтверджує успіх.
 - [x] Docker Desktop 4.95.0 встановлено у `~/Applications/Docker.app`; підпис перевірено. Docker client/server 29.8.2, engine працює.
 - [x] `dotnet restore Microclimate.Ci.slnf` проходить.
 - [x] Release build серверного CI-фільтра: **0 warnings, 0 errors**.
