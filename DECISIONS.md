@@ -101,3 +101,5 @@
 - Розглянуті варіанти: заміна Xcode; явний вибір встановленого платформного SDK 27.
 - Рішення: README дає локальний target net10.0-maccatalyst27.0 через MauiTargetFramework. MacCatalyst minimum піднято до 17.0 відповідно до вимоги SDK; стандартний target зберігається для сумісних Mac.
 - Наслідки: .NET залишається 10; Windows/Android targets незмінні. Мінімальний MacCatalyst 17.0 відповідає macOS 14.
+
+- Доповнення D-3-011: SDK 27 позначає Apple API діагностикою XCODE_27_0_PREVIEW. Офіційний спосіб явного opt-in описаний у https://github.com/dotnet/macios/blob/main/docs/preview-apis.md. Тільки EnableXcode27Preview=true додає цей конкретний diagnostic до NoWarn для локальної preview-перевірки; CI Windows і стандартні targets не мають такого opt-in. Це не змінює аналізатори коду, аудит NuGet або виконання тестів.
