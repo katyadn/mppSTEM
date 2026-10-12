@@ -12,8 +12,8 @@ public interface IAlertRepository
 {
     Task<Alert?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
-    /// <summary>Незакриті (Open або Acknowledged) сповіщення метрики кімнати — для захисту від спаму й гістерезису.</summary>
-    Task<IReadOnlyList<Alert>> GetUnresolvedAsync(Guid roomId, MetricType metric, CancellationToken cancellationToken);
+    /// <summary>Незакрите (Open або Acknowledged) сповіщення метрики кімнати, якщо є.</summary>
+    Task<Alert?> GetUnresolvedAsync(Guid roomId, MetricType metric, CancellationToken cancellationToken);
 
     /// <summary>Стрічка сповіщень, новіші спочатку.</summary>
     Task<PagedResult<Alert>> ListAsync(AlertFilter filter, PageRequest page, CancellationToken cancellationToken);

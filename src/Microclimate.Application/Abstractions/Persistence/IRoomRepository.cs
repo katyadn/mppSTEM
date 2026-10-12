@@ -8,14 +8,13 @@ public interface IRoomRepository
 {
     Task<Room?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
-    /// <summary>Кімнати (усі або однієї будівлі), впорядковані за будівлею й назвою.</summary>
-    Task<PagedResult<Room>> ListAsync(Guid? buildingId, PageRequest page, CancellationToken cancellationToken);
+    /// <summary>Кімнати, впорядковані за поверхом і назвою.</summary>
+    Task<PagedResult<Room>> ListAsync(PageRequest page, CancellationToken cancellationToken);
 
-    /// <summary>Чи є в будівлі кімната з такою назвою (унікальність у межах будівлі).</summary>
-    Task<bool> ExistsByNameAsync(Guid buildingId, string name, CancellationToken cancellationToken);
+    Task<bool> ExistsByNameAsync(string name, CancellationToken cancellationToken);
 
-    /// <summary>Чи має кімната датчики або виміри (видалення заборонено).</summary>
-    Task<bool> HasHistoryAsync(Guid roomId, CancellationToken cancellationToken);
+    /// <summary>Чи є в кімнаті датчики (тоді видалення заборонено).</summary>
+    Task<bool> HasSensorsAsync(Guid roomId, CancellationToken cancellationToken);
 
     void Add(Room room);
 

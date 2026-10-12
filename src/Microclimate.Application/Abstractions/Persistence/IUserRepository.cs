@@ -2,7 +2,7 @@ using Microclimate.Domain.Users;
 
 namespace Microclimate.Application.Abstractions.Persistence;
 
-/// <summary>Доступ до користувачів і refresh-токенів (сценарії автентифікації — Учасник 2).</summary>
+/// <summary>Доступ до користувачів (сценарії автентифікації — Учасник 2).</summary>
 public interface IUserRepository
 {
     Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
@@ -15,15 +15,4 @@ public interface IUserRepository
     void Add(User user);
 
     void Remove(User user);
-}
-
-/// <summary>Доступ до refresh-токенів.</summary>
-public interface IRefreshTokenRepository
-{
-    Task<RefreshToken?> GetByHashAsync(string tokenHash, CancellationToken cancellationToken);
-
-    /// <summary>Невідкликані токени користувача — для відкликання всього ланцюжка при повторному використанні.</summary>
-    Task<IReadOnlyList<RefreshToken>> ListUnrevokedByUserAsync(Guid userId, CancellationToken cancellationToken);
-
-    void Add(RefreshToken token);
 }
