@@ -30,7 +30,6 @@ public sealed class Threshold : Entity<Guid>
 
     public double? CriticalMax { get; private set; }
 
-    /// <summary>Поточні межі як value object.</summary>
     public ThresholdLimits Limits => new(CriticalMin, WarningMin, WarningMax, CriticalMax);
 
     public static Threshold Create(Guid roomId, MetricType metric, ThresholdLimits limits, DateTimeOffset now)
@@ -49,6 +48,5 @@ public sealed class Threshold : Entity<Guid>
         CriticalMax = limits.CriticalMax;
     }
 
-    /// <summary>Оцінює значення: <c>null</c> — норма, інакше рівень сповіщення.</summary>
     public AlertLevel? Evaluate(double value) => Limits.Evaluate(value);
 }

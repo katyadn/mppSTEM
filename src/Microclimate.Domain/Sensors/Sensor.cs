@@ -40,7 +40,6 @@ public sealed class Sensor : Entity<Guid>
 
     public DateTimeOffset InstalledAt { get; private set; }
 
-    /// <summary>Час останнього прийнятого виміру.</summary>
     public DateTimeOffset? LastSeenAt { get; private set; }
 
     public static Sensor Create(Guid roomId, string serialNumber, string? model, string deviceKeyHash, DateTimeOffset now) =>
@@ -52,7 +51,6 @@ public sealed class Sensor : Entity<Guid>
             Guard.RequiredText(deviceKeyHash, "Хеш ключа датчика", DeviceKeyHashMaxLength),
             now.ToUniversalTime());
 
-    /// <summary>Перевіряє, що датчик може надсилати виміри.</summary>
     public void EnsureActive()
     {
         if (!IsActive)
@@ -72,6 +70,4 @@ public sealed class Sensor : Entity<Guid>
     }
 
     public void Deactivate() => IsActive = false;
-
-    public void Activate() => IsActive = true;
 }

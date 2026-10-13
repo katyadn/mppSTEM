@@ -38,7 +38,6 @@ public sealed class Alert : Entity<Guid>
 
     public AlertStatus Status { get; private set; }
 
-    /// <summary>Значення, що перевищило поріг.</summary>
     public double Value { get; private set; }
 
     /// <summary>Межа, яку перевищено (знімок на момент події).</summary>
@@ -94,7 +93,6 @@ public sealed class Alert : Entity<Guid>
         Status = AlertStatus.Acknowledged;
     }
 
-    /// <summary>Закриває сповіщення, коли значення повернулося в норму.</summary>
     public void Resolve(DateTimeOffset now)
     {
         if (Status == AlertStatus.Resolved)

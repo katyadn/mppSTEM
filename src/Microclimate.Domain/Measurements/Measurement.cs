@@ -28,13 +28,10 @@ public sealed class Measurement : Entity<long>
 
     public MetricType Metric { get; private set; }
 
-    /// <summary>Значення в одиницях метрики (див. <see cref="MetricLimits.Unit"/>).</summary>
     public double Value { get; private set; }
 
-    /// <summary>Час виміру на датчику, UTC.</summary>
     public DateTimeOffset MeasuredAt { get; private set; }
 
-    /// <param name="now">Поточний час сервера; вимір не може бути пізнішим за нього більше ніж на <see cref="AllowedClockSkew"/>.</param>
     public static Measurement Record(Sensor sensor, MetricType metric, double value, DateTimeOffset measuredAt, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(sensor);

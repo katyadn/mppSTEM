@@ -12,10 +12,8 @@ public interface IAlertRepository
 {
     Task<Alert?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
-    /// <summary>Незакрите (Open або Acknowledged) сповіщення метрики кімнати, якщо є.</summary>
     Task<Alert?> GetUnresolvedAsync(Guid roomId, MetricType metric, CancellationToken cancellationToken);
 
-    /// <summary>Стрічка сповіщень, новіші спочатку.</summary>
     Task<PagedResult<Alert>> ListAsync(AlertFilter filter, PageRequest page, CancellationToken cancellationToken);
 
     void Add(Alert alert);

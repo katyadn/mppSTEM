@@ -54,7 +54,7 @@ public sealed class User : Entity<Guid>
             Guard.Defined(role, "Роль"),
             now.ToUniversalTime());
 
-    /// <summary>Нормалізує email (обрізає пробіли, нижній регістр) і перевіряє формат.</summary>
+    /// <summary>Обрізає пробіли, переводить у нижній регістр і перевіряє формат.</summary>
     public static string NormalizeEmail(string email)
     {
         var normalized = Guard.RequiredText(email, "Email", EmailMaxLength).ToLowerInvariant();
@@ -68,13 +68,5 @@ public sealed class User : Entity<Guid>
 
     public void ChangeRole(UserRole role) => Role = Guard.Defined(role, "Роль");
 
-    public void ChangePasswordHash(string passwordHash) =>
-        PasswordHash = Guard.RequiredText(passwordHash, "Хеш пароля", PasswordHashMaxLength);
-
-    public void Rename(string displayName) =>
-        DisplayName = Guard.RequiredText(displayName, "Ім'я", DisplayNameMaxLength);
-
     public void Deactivate() => IsActive = false;
-
-    public void Activate() => IsActive = true;
 }

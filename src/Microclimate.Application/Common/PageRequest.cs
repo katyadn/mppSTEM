@@ -26,6 +26,5 @@ public sealed record PageRequest
 
     public int PageSize { get; }
 
-    /// <summary>Кількість елементів, які треба пропустити.</summary>
     public int Skip => (Page - 1) * PageSize;
 }
