@@ -2,7 +2,7 @@
 
 ![CI](https://github.com/katyadn/mppSTEM/actions/workflows/ci.yml/badge.svg)
 
-Кросплатформна .NET-система для моніторингу температури, вологості, CO₂, PM2.5, шуму й освітленості. Плануються історія вимірювань, аналітика комфорту, налаштування порогів та сповіщення. Етап 0 містить каркас проєктів і клієнта; реальних вимірювань та автентифікації ще немає.
+Кросплатформна .NET-система для моніторингу температури, вологості, CO₂, PM2.5, шуму й освітленості. Плануються історія вимірювань, аналітика комфорту, налаштування порогів та сповіщення. Domain уже містить кімнати, датчики, виміри, пороги, сповіщення й користувачів; будівлі до моделі не входять. Клієнт має навігацію та логіку відображення контрактів, але отримання серверних вимірів і автентифікацію ще не підключено.
 
 ## Команда
 
@@ -10,7 +10,7 @@
 |---|---|
 | 1 | Domain, Application, Infrastructure, SensorSimulator: дані, EF Core, аналітика |
 | 2 | Api, Contracts: REST API, JWT, SignalR, OpenTelemetry |
-| 3 | Client.Maui, deploy/, .github/, solution, CI, README |
+| 3 | Client.Maui, Client.Core, deploy/, .github/, solution, CI, README |
 
 Деталі: [зони відповідальності](docs/responsibility-zones.md). Імена учасників додає команда.
 
@@ -18,18 +18,19 @@
 
 ```text
 src/
-  Microclimate.Domain/            Предметна модель; порожня бібліотека
-  Microclimate.Contracts/         Спільні контракти; порожня бібліотека
-  Microclimate.Application/       Прикладні сценарії; порожня бібліотека
+  Microclimate.Domain/            Кімнати, датчики, виміри, пороги, сповіщення, користувачі
+  Microclimate.Contracts/         Спільні DTO; частина старих контрактів ще потребує узгодження
+  Microclimate.Application/       Порти сховища, прийому вимірів та аналітики
   Microclimate.Infrastructure/    Реалізації доступу до даних; порожня бібліотека
-  Microclimate.Api/               Стандартний Web API шаблон з WeatherForecast
+  Microclimate.Api/               Службові endpoints /health і /api/v1/ping
   Microclimate.SensorSimulator/   Стандартний Worker шаблон, без симуляції датчиків
-  Microclimate.Client.Maui/       Кросплатформний UI, каркас MVVM і навігації
+  Microclimate.Client.Core/       Проєкції Contracts і відображення аналітики без MAUI
+  Microclimate.Client.Maui/       Кросплатформний UI, MVVM, навігація та графік із прогалинами
 tests/
-  Microclimate.Domain.Tests/          Заглушка майбутніх предметних тестів
-  Microclimate.Application.Tests/     Заглушка майбутніх прикладних тестів
-  Microclimate.Api.IntegrationTests/  Заглушка майбутніх інтеграційних тестів
-  Microclimate.Client.Tests/          Заглушка без залежності від MAUI
+  Microclimate.Domain.Tests/          Тести предметної моделі
+  Microclimate.Application.Tests/     Тести прикладних типів
+  Microclimate.Api.IntegrationTests/  Тести службових API endpoints
+  Microclimate.Client.Tests/          Вісім тестів клієнтських проєкцій та станів даних
 ```
 
 Стрілки позначають **посилання на проєкти**, а не мережеві виклики:
@@ -45,12 +46,15 @@ graph LR
   Api --> Contracts
   SensorSimulator --> Contracts
   ClientMaui[Client.Maui] --> Contracts
+  ClientMaui --> ClientCore[Client.Core]
+  ClientCore --> Contracts
+  ClientTests[Client.Tests] --> ClientCore
   DomainTests[Domain.Tests] --> Domain
   ApplicationTests[Application.Tests] --> Application
   ApiTests[Api.IntegrationTests] --> Api
 ```
 
-Domain і Contracts не посилаються на інші проєкти. ViewModels надалі буде винесено в окрему бібліотеку для тестування на Linux.
+Domain і Contracts не посилаються на інші проєкти. Client.Core із логікою відображення тестується на Linux; ViewModels і нативне малювання залишаються в MAUI.
 
 ## Вимоги
 
@@ -58,7 +62,7 @@ Domain і Contracts не посилаються на інші проєкти. Vi
 - Для сервера й тестів MAUI workload не потрібний.
 - Для MAUI: `dotnet workload install maui` та SDK потрібної платформи. Android потребує JDK та Android SDK; MacCatalyst/iOS — сумісного Xcode; Windows — Windows SDK.
 - JetBrains Rider з підтримкою .NET 10, Visual Studio 2026 або VS Code + C# Dev Kit; для MAUI у VS Code також .NET MAUI extension.
-- Docker Desktop знадобиться на Етапі 2. На Етапі 0 контейнери не запускаються.
+- Docker Desktop потрібний для локального PostgreSQL і контейнерного запуску; див. deploy/README.md.
 - Git; GitHub CLI для issues, PR та перевірки CI.
 
 ## Швидкий старт: сервер і тести (будь-яка ОС)
@@ -73,13 +77,13 @@ dotnet test Microclimate.Ci.slnf -c Release --no-build
 
 У Rider відкрийте `Microclimate.slnx`. Для перевірки серверної частини з термінала використовуйте `Microclimate.Ci.slnf`; відкриття повного solution може вимагати локальних платформних SDK MAUI.
 
-API на Етапі 0 запускається як демонстраційний шаблон:
+Локальний API:
 
 ```bash
 dotnet run --project src/Microclimate.Api --launch-profile http
 ```
 
-Порт задається в `src/Microclimate.Api/Properties/launchSettings.json`; `/WeatherForecast` є шаблонним endpoint і не є API системи мікроклімату.
+Порт задається в `src/Microclimate.Api/Properties/launchSettings.json`; Службові endpoints: `/health` і `/api/v1/ping`; WeatherForecast видалено Учасником 2.
 
 ## MAUI: Windows
 
@@ -114,13 +118,13 @@ dotnet build src/Microclimate.Client.Maui -f net10.0-android -p:MauiTargetFramew
 
 ## CI та межі Етапу 0
 
-CI має два jobs: Linux `build-test` (restore, строгий Release build, чотири заглушки, coverage artifact/summary) і Windows `maui-build`. Заглушки перевіряють запуск xUnit, а не предметну логіку; нульове покриття бізнес-коду на цьому етапі очікуване.
+CI має два jobs: Linux `build-test` (restore, строгий Release build, тести, coverage artifact/summary) і Windows `maui-build`. Перевіряються Domain, Application, API та Client.Core. Клієнтські тести покривають NoData, справжній нуль, категорію сервера та розриви часового ряду; Windows job перевіряє нативну збірку.
 
-Кнопка входу — навігаційна заглушка; ролі, пароль, HTTP, DTO, історія, графіки та реальні сповіщення реалізуються на наступних етапах. [Вайрфрейми](docs/ui/wireframes.md) — чернетка для погодження командою.
+Кнопка входу — навігаційна заглушка. Dashboard працює з кімнатами без будівлі; RoomDetails показує NoData окремо і розриває графік на порожніх інтервалах. ApplyRooms/ApplyAnalytics приймають готові Contracts; HTTP, автентифікація та отримання даних залишаються наступним кроком. [Вайрфрейми](docs/ui/wireframes.md) — чернетка для погодження командою.
 
 ## Запуск через Docker
 
-З’явиться на **Етапі 2**. У `deploy/` зараз тільки пояснення меж етапу, Dockerfile та compose ще не створено.
+[Інструкція Docker Compose](deploy/README.md): PostgreSQL запускається окремо; профіль app збирає API й simulator та передає конфігурацію Database. Сховище EF Core й реальна симуляція ще не реалізовані.
 
 ## Документація
 

@@ -143,3 +143,12 @@
 Агент оновив локальний main із GitHub, встановив .NET SDK 10.0.401 та workload maui-maccatalyst 10.0.401.1. Виправив MacCatalyst minimum 17.0, додав SceneDelegate і scene manifest; для локальної Debug-збірки застосував ad-hoc підпис. Попередній блокер Xcode 27 усунуто. Зміни підготовано у fix/43-maccatalyst-launch, issue #43.
 
 Перебудова Mac-клієнта пройшла: 0 errors, 2 CA1711 warnings для платформних AppDelegate/SceneDelegate. Агент через UI перевірив екран входу, перехід до огляду, деталі й повернення, вкладки сповіщень/налаштувань та вихід. Клієнт залишено запущеним на огляді. Це перевірка каркасу на Mac; ручний запуск Windows і серверна інтеграція клієнта не підтверджені.
+
+
+### Оновлення 2026-10-13: адаптація до Domain (issue #34)
+
+За запитом користувача агент створив Client.Core, клієнтські проєкції кімнат і аналітики, GraphicsView для окремих сегментів графіка, методи ApplyRooms/ApplyAnalytics та передачу RoomId під час навігації. Агент написав вісім клієнтських тестів замість заглушки, додав Core у solution/CI filter, прибрав будівлі з wireframes, узгодив стани сповіщень і права редагування порогів.
+
+Агент додав Dockerfile для API/simulator та Compose із PostgreSQL, профілем app, Database__Provider/ConnectionString, .env.example і правилами виключення локальних credentials. Domain, Application, API та Contracts не змінював. Наявні Contracts ще містять legacy BuildingId/BuildingName та інші розбіжності; їх адаптація належить Учаснику 2. Серверний HTTP, EF Core, міграції й реальні дані клієнта цими змінами не реалізовані. Підтверджений внесок людини — постановка запиту; реалізацію й перевірки виконав агент.
+
+Перевірки цієї адаптації виконав агент: Release build без warnings/errors, 56 тестів; Mac build і UI-порожні стани; ізольована UI-копія з тестовою кімнатою перевірила навігацію й візуальний розрив графіка. Два CA1711 warnings платформних AppDelegate/SceneDelegate збережено як відомі. Тестові дані не включені до робочого коду. Docker config і обидва Dockerfile перевірено CLI та build/run: PostgreSQL healthy/SELECT 1, службові API endpoints HTTP 200, обидва процеси отримали Database config. Тестові контейнери зупинено; це не перевірка EF Core або реальних вимірів.
