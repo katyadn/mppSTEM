@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: microclimate
+      POSTGRES_USER: microclimate
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in deploy/.env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U microclimate -d microclimate"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    profiles: [app]
+    build:
+      context: ..
+      dockerfile: deploy/api.Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      Database__Provider: Postgres
+      Database__ConnectionString: "Host=db;Database=microclimate;Username=microclimate;Password=${POSTGRES_PASSWORD}"
+    ports:
+      - "127.0.0.1:${API_PORT:-5195}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  simulator:
+    profiles: [app]
+    build:
+      context: ..
+      dockerfile: deploy/simulator.Dockerfile
+    environment:
+      Database__Provider: Postgres
+      Database__ConnectionString: "Host=db;Database=microclimate;Username=microclimate;Password=${POSTGRES_PASSWORD}"
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
+
+volumes:
+  postgres-data:

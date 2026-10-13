@@ -4,6 +4,7 @@
     "projects": [
       "src/Microclimate.Api/Microclimate.Api.csproj",
       "src/Microclimate.Application/Microclimate.Application.csproj",
+      "src/Microclimate.Client.Core/Microclimate.Client.Core.csproj",
       "src/Microclimate.Contracts/Microclimate.Contracts.csproj",
       "src/Microclimate.Domain/Microclimate.Domain.csproj",
       "src/Microclimate.Infrastructure/Microclimate.Infrastructure.csproj",

@@ -4,6 +4,6 @@ public interface INavigationService
 {
     Task GoToDashboardAsync();
     Task GoToLoginAsync();
-    Task GoToRoomDetailsAsync();
+    Task GoToRoomDetailsAsync(Guid? roomId = null, string? roomName = null);
     Task GoBackAsync();
 }

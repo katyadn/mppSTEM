@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/Microclimate.Api/Microclimate.Api.csproj" />
     <Project Path="src/Microclimate.Application/Microclimate.Application.csproj" />
+    <Project Path="src/Microclimate.Client.Core/Microclimate.Client.Core.csproj" />
     <Project Path="src/Microclimate.Client.Maui/Microclimate.Client.Maui.csproj" />
     <Project Path="src/Microclimate.Contracts/Microclimate.Contracts.csproj" />
     <Project Path="src/Microclimate.Domain/Microclimate.Domain.csproj" />
