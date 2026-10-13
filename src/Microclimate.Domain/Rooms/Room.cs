@@ -23,12 +23,10 @@ public sealed class Room : Entity<Guid>
         Name = string.Empty;
     }
 
-    /// <summary>Назва або номер кімнати, унікальні в системі.</summary>
     public string Name { get; private set; }
 
     public int Floor { get; private set; }
 
-    /// <summary>Площа, м²; <c>null</c>, якщо невідома.</summary>
     public decimal? AreaM2 { get; private set; }
 
     public RoomType Type { get; private set; }
