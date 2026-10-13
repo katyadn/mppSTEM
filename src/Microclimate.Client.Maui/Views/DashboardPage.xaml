@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:cards="clr-namespace:Microclimate.Client.Core.Presentation;assembly=Microclimate.Client.Core"
              xmlns:vm="clr-namespace:Microclimate.Client.Maui.ViewModels"
+             x:Name="Dashboard"
              x:Class="Microclimate.Client.Maui.Views.DashboardPage"
              x:DataType="vm:DashboardViewModel"
              Title="{Binding Title}">
@@ -9,9 +11,28 @@
         <VerticalStackLayout Padding="24" Spacing="16">
             <Label Text="{Binding Title}" FontSize="28" FontAttributes="Bold"
                    SemanticProperties.HeadingLevel="Level1" />
-            <Label Text="Екран у розробці (Етап 1)" />
+            <Label Text="Дані з сервера ще не підключено." />
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Rooms}" Spacing="12">
+                <BindableLayout.EmptyView>
+                    <Label Text="Немає кімнат для відображення" />
+                </BindableLayout.EmptyView>
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="cards:RoomCard">
+                        <Border Padding="16">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="{Binding Name}" FontSize="20" FontAttributes="Bold" />
+                                <Label Text="{Binding StatusText}" />
+                                <Label Text="{Binding MetricsText}" />
+                                <Button Text="Деталі кімнати"
+                                        Command="{Binding Source={x:Reference Dashboard}, Path=BindingContext.OpenSelectedRoomCommand, x:DataType=ContentPage}"
+                                        CommandParameter="{Binding .}" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
             <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-            <Button Text="Відкрити деталі кімнати" Command="{Binding OpenRoomCommand}" />
+            <Button Text="Переглянути каркас аналітики" Command="{Binding OpenRoomCommand}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Microclimate.Client.Maui.Controls"
              xmlns:vm="clr-namespace:Microclimate.Client.Maui.ViewModels"
              x:Class="Microclimate.Client.Maui.Views.RoomDetailsPage"
              x:DataType="vm:RoomDetailsViewModel"
@@ -9,7 +10,13 @@
         <VerticalStackLayout Padding="24" Spacing="16">
             <Label Text="{Binding Title}" FontSize="28" FontAttributes="Bold"
                    SemanticProperties.HeadingLevel="Level1" />
-            <Label Text="Екран у розробці (Етап 1)" />
+            <Label Text="Показники кімнати" FontSize="18" />
+            <Label Text="Дані з сервера ще не підключено." />
+            <Label Text="Комфорт" FontAttributes="Bold" />
+            <Label Text="{Binding ComfortText}" />
+            <Label Text="Історія вимірювань" FontAttributes="Bold" />
+            <Label Text="Немає вимірювань за обраний період" IsVisible="{Binding HasNoSeries}" />
+            <controls:TimeSeriesChart Segments="{Binding Series}" HeightRequest="180" IsVisible="{Binding HasSeries}" />
             <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
             <Button Text="Назад" Command="{Binding GoBackCommand}" />
         </VerticalStackLayout>
