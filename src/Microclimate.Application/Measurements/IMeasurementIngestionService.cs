@@ -14,7 +14,6 @@ public sealed record IngestionResult(int Accepted, int AlertsRaised, int AlertsR
 /// <summary>Прийом вимірів: перевірка, збереження, створення й закриття сповіщень (docs/analytics.md, розділ 4).</summary>
 public interface IMeasurementIngestionService
 {
-    /// <summary>Максимальна кількість вимірів у пакеті.</summary>
     const int MaxBatchSize = 500;
 
     /// <summary>

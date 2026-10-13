@@ -3,7 +3,6 @@ namespace Microclimate.Application.Abstractions.Persistence;
 /// <summary>Фіксація змін і транзакції (реалізація — DbContext в Infrastructure).</summary>
 public interface IUnitOfWork
 {
-    /// <summary>Зберігає зміни, накопичені репозиторіями. Повертає кількість змінених рядків.</summary>
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 
     /// <summary>

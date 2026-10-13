@@ -17,9 +17,7 @@ public interface IAnalyticsService
 {
     Task<IReadOnlyList<MetricSummary>> GetSummaryAsync(Guid roomId, MetricType? metric, DateRange range, CancellationToken cancellationToken);
 
-    /// <summary>Часовий ряд з порожніми кошиками для інтервалів без даних.</summary>
     Task<IReadOnlyList<SeriesPoint>> GetSeriesAsync(Guid roomId, MetricType metric, DateRange range, AggregationInterval interval, CancellationToken cancellationToken);
 
-    /// <summary>Поточний індекс комфорту кімнати (за останні <see cref="ComfortIndexSettings.Window"/>).</summary>
     Task<ComfortIndexResult> GetComfortIndexAsync(Guid roomId, CancellationToken cancellationToken);
 }
