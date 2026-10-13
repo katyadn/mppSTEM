@@ -1,22 +1,22 @@
 # Підсумок Етапу 0 — Учасник 3
 
-Дата: 2026-10-12. Повний каркас знаходиться у `feature/7-stage0-docs`; main змінюється лише після людського рев’ю та merge PR.
+Дата початкового звіту: 2026-10-12. PR #8–#14 злиті у main за явним дорученням користувача, issues #1–#7 закриті. Командне рев’ю окремо не підтверджене. Оновлення запуску Mac: 2026-10-13.
 
 ## Issues та PR
 
 | Крок | Issue | PR | Статус |
 |---|---|---|---|
-| A: Solution skeleton and build configuration | [#1](https://github.com/katyadn/mppSTEM/issues/1) | [#8](https://github.com/katyadn/mppSTEM/pull/8) | Очікує людського рев’ю та merge |
-| B: CI pipeline: build and test | [#2](https://github.com/katyadn/mppSTEM/issues/2) | [#9](https://github.com/katyadn/mppSTEM/pull/9) | Очікує людського рев’ю та merge |
-| C: Repository templates and contribution rules | [#3](https://github.com/katyadn/mppSTEM/issues/3) | [#10](https://github.com/katyadn/mppSTEM/pull/10) | Очікує людського рев’ю та merge |
-| D: README draft | [#4](https://github.com/katyadn/mppSTEM/issues/4) | [#11](https://github.com/katyadn/mppSTEM/pull/11) | Очікує людського рев’ю та merge |
-| E: MAUI client skeleton and navigation | [#5](https://github.com/katyadn/mppSTEM/issues/5) | [#12](https://github.com/katyadn/mppSTEM/pull/12) | Очікує людського рев’ю та merge |
-| F: UI wireframes | [#6](https://github.com/katyadn/mppSTEM/issues/6) | [#13](https://github.com/katyadn/mppSTEM/pull/13) | Очікує людського рев’ю та merge |
-| G: Stage 0 docs: decisions and META-USAGE | [#7](https://github.com/katyadn/mppSTEM/issues/7) | [#14](https://github.com/katyadn/mppSTEM/pull/14) | Очікує людського рев’ю та merge |
+| A: Solution skeleton and build configuration | [#1](https://github.com/katyadn/mppSTEM/issues/1) | [#8](https://github.com/katyadn/mppSTEM/pull/8) | PR злитий; issue закритий |
+| B: CI pipeline: build and test | [#2](https://github.com/katyadn/mppSTEM/issues/2) | [#9](https://github.com/katyadn/mppSTEM/pull/9) | PR злитий; issue закритий |
+| C: Repository templates and contribution rules | [#3](https://github.com/katyadn/mppSTEM/issues/3) | [#10](https://github.com/katyadn/mppSTEM/pull/10) | PR злитий; issue закритий |
+| D: README draft | [#4](https://github.com/katyadn/mppSTEM/issues/4) | [#11](https://github.com/katyadn/mppSTEM/pull/11) | PR злитий; issue закритий |
+| E: MAUI client skeleton and navigation | [#5](https://github.com/katyadn/mppSTEM/issues/5) | [#12](https://github.com/katyadn/mppSTEM/pull/12) | PR злитий; issue закритий |
+| F: UI wireframes | [#6](https://github.com/katyadn/mppSTEM/issues/6) | [#13](https://github.com/katyadn/mppSTEM/pull/13) | PR злитий; issue закритий |
+| G: Stage 0 docs: decisions and META-USAGE | [#7](https://github.com/katyadn/mppSTEM/issues/7) | [#14](https://github.com/katyadn/mppSTEM/pull/14) | PR злитий; issue закритий |
 
-Зливати PR послідовно A→B→C→D→E→F→G через **Create a merge commit**. Це збереже спільну історію і скоротить diff наступних залежних PR. Issues закриються через `Closes #...` після відповідних merge; зараз їх не позначено закритими.
+PR злиті послідовно A→B→C→D→E→F→G через merge commits. Команди merge виконав агент за вказівкою користувача.
 
-## Фактично перевірено
+## Перевірки початкового Етапу 0 (2026-10-12)
 
 - [x] .NET SDK 10.0.300 встановлено; MAUI workload 10.0.20 встановлено.
 - [x] Microclimate.slnx відкрито в Rider; Rider визначив активний SDK 10.0.300 та конфігурації API http/https і SensorSimulator. Клон Rider відстежує origin/feature/7-stage0-docs.
@@ -33,14 +33,14 @@
 - [ ] Командне погодження вайрфреймів і контрактів.
 - [ ] Перегляд META-USAGE.md своїми словами Учасником 3.
 - [ ] Налаштування захисту main адміністратором (≥1 review, required build-test).
-- [ ] Фінальна перевірка main після людського merge всіх PR.
+- [x] Після merge початкових PR виконано Release build і чотири тодішні тести; подальші перевірки наведено нижче.
 
 ## Межі та відкриті блокери
 
 - У зонах Учасників 1 і 2 лише стандартні проєкти; WeatherForecast і Worker є шаблонними прикладами. Єдина правка Worker — `{Time}` для CA1727.
 - MVVM-клієнт не робить HTTP і не має DTO/справжньої автентифікації. Їх додають на Етапі 1 після погодження API.
 - Dockerfile/compose належать Етапу 2; Docker engine встановлено, але контейнерний запуск не вигадано.
-- macOS: Xcode 27.0 (27A266a) несумісний зі стабільним MacCatalyst SDK 26.5.10315 (потрібен Xcode 26.6). Preview SDK27 скомпілював C#/XAML, але native linker не знайшов EnhancedLinkSecurity. Повний Mac build/run не пройшов; preview opt-in не залишено в конфігурації.
+- macOS: 2026-10-13 блокер усунуто з .NET SDK 10.0.401, workload set 10.0.401.1 та scene lifecycle. Mac build і переходи каркасу перевірено агентом; інструкція в README. Windows UI-запуск залишається неперевіреним.
 - Android SDK/JDK окремо не встановлено, Android runtime build не підтверджено; Android target присутній. Обов’язковий Windows build перевіряється на Windows runner.
 - Запуск на Windows та screenshots потребують комп’ютера з Windows; зелений build не є доказом роботи UI.
 
@@ -57,3 +57,10 @@
 ## Після merge
 
 На свіжому main виконати restore/build/test CI-фільтра та Windows MAUI build за README, перевірити обидва CI jobs і закриття issues. `git clean -xdf --dry-run` тільки показує можливе очищення; видалення не виконувати без окремого дозволу.
+
+
+## Актуалізація 2026-10-13
+
+Локальний main оновлено до ba1de73 з роботою Учасників 1 і 2. Виправлення Mac-запуску підготовлено від цього стану в fix/43-maccatalyst-launch, issue #43. Release build CI-фільтра: 0 warnings, 0 errors; пройшли 49 тестів (Domain 40, Application 3, API 5, Client 1). Client test залишається заглушкою.
+
+Mac Debug rebuild: 0 errors, 2 CA1711 warnings щодо AppDelegate/SceneDelegate. Агент виконав UI-перевірку: вхід → огляд → деталі → назад; сповіщення; налаштування → вихід → повторний вхід. Застосунок залишено відкритим. Перевірка Mac не замінює Windows-запуск і командне рев’ю.

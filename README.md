@@ -66,13 +66,10 @@ Domain і Contracts не посилаються на інші проєкти. Vi
 ```bash
 git clone https://github.com/katyadn/mppSTEM.git
 cd mppSTEM
-git switch feature/7-stage0-docs
 dotnet restore Microclimate.Ci.slnf
 dotnet build Microclimate.Ci.slnf -c Release --no-restore
 dotnet test Microclimate.Ci.slnf -c Release --no-build
 ```
-
-Рядок `git switch feature/7-stage0-docs` потрібний, поки PR Етапу 0 не злиті, щоб отримати повний каркас. Після merge усіх PR у main цей рядок пропустіть.
 
 У Rider відкрийте `Microclimate.slnx`. Для перевірки серверної частини з термінала використовуйте `Microclimate.Ci.slnf`; відкриття повного solution може вимагати локальних платформних SDK MAUI.
 
@@ -98,16 +95,18 @@ dotnet build src/Microclimate.Client.Maui -t:Run -f net10.0-windows10.0.19041.0 
 
 ## MAUI: macOS / Android
 
-На Mac із **Xcode 26.6**, сумісним зі встановленим стабільним MacCatalyst SDK 26.5:
+На Mac із **Xcode 27.0** використовуйте .NET SDK **10.0.401** і workload set **10.0.401.1** ([офіційний реліз](https://github.com/dotnet/macios/releases/tag/dotnet-10.0.1xx-xcode27.0-10722)). Мінімальна версія MacCatalyst — 17.0; scene lifecycle налаштований у `Platforms/MacCatalyst/`.
 
 ```bash
-dotnet build src/Microclimate.Client.Maui -f net10.0-maccatalyst -p:MauiTargetFramework=net10.0-maccatalyst -p:RuntimeIdentifier=maccatalyst-arm64 -p:EnableCodeSigning=false
-dotnet build src/Microclimate.Client.Maui -t:Run -f net10.0-maccatalyst -p:MauiTargetFramework=net10.0-maccatalyst -p:RuntimeIdentifier=maccatalyst-arm64 -p:EnableCodeSigning=false
+export PATH="$HOME/.dotnet:$PATH"
+dotnet workload install maui-maccatalyst --version 10.0.401.1
+dotnet build src/Microclimate.Client.Maui -t:Rebuild -f net10.0-maccatalyst -p:MauiTargetFramework=net10.0-maccatalyst -p:RuntimeIdentifier=maccatalyst-arm64 -p:EnableCodeSigning=true -p:CodesignKey=-
+open src/Microclimate.Client.Maui/bin/Debug/net10.0-maccatalyst/maccatalyst-arm64/Мікроклімат.app
 ```
 
-Локально Xcode 27 наразі несумісний: стабільний SDK вимагає 26.6, а preview SDK завершився помилкою native linker `EnhancedLinkSecurity`. Повний Mac-запуск не підтверджено; Xcode для інших проєктів не змінювався.
+`CodesignKey=-` створює локальний ad-hoc підпис для Debug-запуску. Для розповсюдження потрібний підпис розробника. Перебудова оновлює manifest після зміни SDK та конфігурації вікна. 2026-10-13 на macOS 27 перевірено вхід → огляд → деталі → назад, вкладки сповіщень/налаштувань і вихід. Екрани залишаються каркасом без серверної інтеграції.
 
-`EnableCodeSigning=false` використовується лише для локальної незапакованої Debug-перевірки, не для розповсюдження. На Intel Mac замініть runtime на `maccatalyst-x64`. Для Android після встановлення JDK та Android SDK:
+На Intel Mac замініть runtime на `maccatalyst-x64`. Для Android після встановлення JDK та Android SDK:
 
 ```bash
 dotnet build src/Microclimate.Client.Maui -f net10.0-android -p:MauiTargetFramework=net10.0-android
