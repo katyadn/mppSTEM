@@ -2,7 +2,7 @@
 
 ![CI](https://github.com/katyadn/mppSTEM/actions/workflows/ci.yml/badge.svg)
 
-Кросплатформна .NET-система для моніторингу температури, вологості, CO₂, PM2.5, шуму й освітленості. Плануються історія вимірювань, аналітика комфорту, налаштування порогів та сповіщення. Domain уже містить кімнати, датчики, виміри, пороги, сповіщення й користувачів; будівлі до моделі не входять. Клієнт має навігацію та логіку відображення контрактів, але отримання серверних вимірів і автентифікацію ще не підключено.
+Кросплатформна .NET-система для моніторингу температури, вологості, CO₂, PM2.5, шуму й освітленості. Плануються історія вимірювань, аналітика комфорту, налаштування порогів та сповіщення. Domain уже містить кімнати, датчики, виміри, пороги, сповіщення й користувачів; будівлі до моделі не входять. Клієнт має HTTP-сценарії входу, кімнат, аналітики й сповіщень за Contracts. Реальні предметні endpoints backend ще не реалізовані; статус клієнта й перевірок — у docs/client-progress.md.
 
 ## Команда
 
@@ -24,13 +24,13 @@ src/
   Microclimate.Infrastructure/    Реалізації доступу до даних; порожня бібліотека
   Microclimate.Api/               Службові endpoints /health і /api/v1/ping
   Microclimate.SensorSimulator/   Стандартний Worker шаблон, без симуляції датчиків
-  Microclimate.Client.Core/       Проєкції Contracts і відображення аналітики без MAUI
+  Microclimate.Client.Core/       ViewModels, HTTP, сесія та проєкції без MAUI
   Microclimate.Client.Maui/       Кросплатформний UI, MVVM, навігація та графік із прогалинами
 tests/
   Microclimate.Domain.Tests/          Тести предметної моделі
   Microclimate.Application.Tests/     Тести прикладних типів
   Microclimate.Api.IntegrationTests/  Тести службових API endpoints
-  Microclimate.Client.Tests/          Вісім тестів клієнтських проєкцій та станів даних
+  Microclimate.Client.Tests/          Тести HTTP, сесій, ViewModels та проєкцій
 ```
 
 Стрілки позначають **посилання на проєкти**, а не мережеві виклики:
@@ -54,7 +54,7 @@ graph LR
   ApiTests[Api.IntegrationTests] --> Api
 ```
 
-Domain і Contracts не посилаються на інші проєкти. Client.Core із логікою відображення тестується на Linux; ViewModels і нативне малювання залишаються в MAUI.
+Domain і Contracts не посилаються на інші проєкти. Client.Core містить ViewModels, HTTP, сесію та логіку відображення і тестується на Linux; нативні екрани, сховище та малювання — у MAUI.
 
 ## Вимоги
 
@@ -97,6 +97,8 @@ dotnet build src/Microclimate.Client.Maui -t:Run -f net10.0-windows10.0.19041.0 
 
 Явне `MauiTargetFramework` обмежує restore платформою Windows, тому команда не потребує Android SDK. Перевірте Login → Dashboard, деталі кімнати, вкладки Alerts/Settings і вихід; додайте реальні скриншоти у `docs/ui/screenshots/stage-0/`.
 
+Поточна локальна перешкода (2026-10-18): після оновлення Xcode до 27.1 повний Mac build з workload 27.0.10722 зупиняється на перевірці сумісності; наведені нижче команди потребують саме сумісного Xcode 27.0. Новий UI-run наразі не підтверджений.
+
 ## MAUI: macOS / Android
 
 На Mac із **Xcode 27.0** використовуйте .NET SDK **10.0.401** і workload set **10.0.401.1** ([офіційний реліз](https://github.com/dotnet/macios/releases/tag/dotnet-10.0.1xx-xcode27.0-10722)). Мінімальна версія MacCatalyst — 17.0; scene lifecycle налаштований у `Platforms/MacCatalyst/`.
@@ -118,9 +120,9 @@ dotnet build src/Microclimate.Client.Maui -f net10.0-android -p:MauiTargetFramew
 
 ## CI та межі Етапу 0
 
-CI має два jobs: Linux `build-test` (restore, строгий Release build, тести, coverage artifact/summary) і Windows `maui-build`. Перевіряються Domain, Application, API та Client.Core. Клієнтські тести покривають NoData, справжній нуль, категорію сервера та розриви часового ряду; Windows job перевіряє нативну збірку.
+CI має два jobs: Linux `build-test` (restore, строгий Release build, тести, coverage artifact/summary) і Windows `maui-build`. Перевіряються Domain, Application, API та Client.Core. Клієнтські тести покривають HTTP, сесію, ViewModels, NoData та розриви часового ряду; Windows job перевіряє нативну збірку.
 
-Кнопка входу — навігаційна заглушка. Dashboard працює з кімнатами без будівлі; RoomDetails показує NoData окремо і розриває графік на порожніх інтервалах. ApplyRooms/ApplyAnalytics приймають готові Contracts; HTTP, автентифікація та отримання даних залишаються наступним кроком. [Вайрфрейми](docs/ui/wireframes.md) — чернетка для погодження командою.
+Клієнтський вхід тепер викликає API та зберігає access-сесію в системному захищеному сховищі (або лише в пам’яті, якщо сховище недоступне). Кімнати, деталі та сповіщення завантажуються HTTP-запитами; є пагінація, фільтри й повідомлення про помилки. Повний потік поки перевірено на тестовому HTTP-сервері: предметний backend очікує реалізації Учасниками 1 і 2. [Статус клієнта — орієнтир 50%](docs/client-progress.md).
 
 ## Запуск через Docker
 

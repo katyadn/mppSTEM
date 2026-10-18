@@ -300,3 +300,19 @@
 - Варіанти: запуск лише БД; завжди піднімати ще не реалізовані серверні сценарії.
 - Рішення: default compose запускає PostgreSQL 17-alpine; профіль app додає API й simulator, обидва отримують налаштування Database. Пароль читається з локального .env, порти прив’язані до localhost, дані зберігає volume.
 - Наслідки: контейнерні процеси можна перевірити окремо від EF Core й міграцій; готовність health/ping не доводить прийом вимірів. Джерела: [PostgreSQL image](https://hub.docker.com/_/postgres), [контейнери .NET](https://learn.microsoft.com/en-us/dotnet/core/docker/build-container).
+
+
+## D-3-015 — Основні клієнтські сценарії у Client.Core
+
+- Дата: 2026-10-18; Автор: Учасник 3.
+- Проблема: каркас переходив без входу й не завантажував даних; ViewModels у MAUI не перевірялися Linux-тестами.
+- Рішення: ViewModels/INavigationService перенесено до Client.Core; додано IClientApi/ClientApi, ClientSession та абстракції налаштувань/сховища. MAUI підключає Preferences, SecureStorage, navigation і HttpClient зі стандартним TLS та вимкненими redirect. JSON — source-generated metadata.
+- Сесія: лише access token, expiry, адреса сервера й профіль. Пароль/refresh не зберігаються; 401/expiry/server change очищають сесію, 403 залишає її. Refresh endpoint не використовується відповідно до D-1-001. Якщо захищене сховище недоступне, тільки пам’ять без plaintext fallback.
+- Наслідки: основні сценарії тестуються через handler і справжній localhost HTTP fixture без змін Domain/Api/Contracts. Ці тести не доводять реалізацію реального backend або роботу нативного системного сховища. Ролі остаточно перевіряє сервер.
+
+## D-3-016 — Межі перевірки після оновлення Xcode
+
+- Дата: 2026-10-18; Автор: Учасник 3.
+- Проблема: Xcode 27.1 несумісний зі встановленим MacCatalyst workload 27.0.10722, що вимагає 27.0.
+- Рішення: Xcode для інших проєктів не змінювати; перевірку сумісності не вимикати. Окрема Compile перевіряє C#/XAML; Windows CI перевіряє native build. Новий Mac UI-run не заявляти.
+- Наслідки: повний Mac-запуск і перевірка SecureStorage потребують сумісного SDK/Xcode; остання історична UI-перевірка від 2026-10-13 не переноситься автоматично на цю версію.

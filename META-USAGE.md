@@ -152,3 +152,14 @@
 Агент додав Dockerfile для API/simulator та Compose із PostgreSQL, профілем app, Database__Provider/ConnectionString, .env.example і правилами виключення локальних credentials. Domain, Application, API та Contracts не змінював. Наявні Contracts ще містять legacy BuildingId/BuildingName та інші розбіжності; їх адаптація належить Учаснику 2. Серверний HTTP, EF Core, міграції й реальні дані клієнта цими змінами не реалізовані. Підтверджений внесок людини — постановка запиту; реалізацію й перевірки виконав агент.
 
 Перевірки цієї адаптації виконав агент: Release build без warnings/errors, 56 тестів; Mac build і UI-порожні стани; ізольована UI-копія з тестовою кімнатою перевірила навігацію й візуальний розрив графіка. Два CA1711 warnings платформних AppDelegate/SceneDelegate збережено як відомі. Тестові дані не включені до робочого коду. Docker config і обидва Dockerfile перевірено CLI та build/run: PostgreSQL healthy/SELECT 1, службові API endpoints HTTP 200, обидва процеси отримали Database config. Тестові контейнери зупинено; це не перевірка EF Core або реальних вимірів.
+
+
+### Оновлення 2026-10-18: основні клієнтські сценарії (#46)
+
+Користувач доручив довести його клієнтську частину приблизно до 50%; уточнено, що Client.Maui/Client.Core — зона Учасника 3, Api/Contracts — Учасника 2. Агент переніс ViewModels й інтерфейс навігації до Core, реалізував HTTP-клієнт, access-сесію без refresh, форми входу, кімнати/пагінацію, аналітику з метриками/періодами, фільтри й підтвердження сповіщень, налаштування адреси API та logout. Платформний код підключає Preferences/SecureStorage; пароль і токен у звичайні файли не записуються.
+
+Агент написав тести HTTP/станів/ролей/скасування, справжній локальний HttpListener fixture та перевірку відсутності HTTP redirect для пароля. Живий backend не підмінено fixture у робочому застосунку: fixture існує лише в тестовому проєкті. Domain/Api/Contracts не змінювалися. Тексти, код, тести й виправлення згенеровані агентом; ручне авторство людини не заявляється.
+
+Поточний Xcode 27.1 заблокував native Mac build. Керований C#/XAML Compile перевіряється окремо; це не UI-run і не перевірка платформного SecureStorage. Відсутність справжніх предметних endpoints backend явно зазначена у docs/client-progress.md; результати локальних тестів і CI фіксуються окремо.
+
+Локальний результат для #46: Release build 0 warnings/errors, усі 89 тестів пройшли (Client 41, Domain 40, Application 3, API 5). Два тести використовують справжній localhost HTTP, решта — контрольований transport/стани. C#/XAML Compile пройшов із двома відомими CA1711; native Mac build зупинився через Xcode 27.1. GitHub CI перевіряється окремо.
