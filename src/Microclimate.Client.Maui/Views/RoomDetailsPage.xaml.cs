@@ -1,4 +1,4 @@
-using Microclimate.Client.Maui.ViewModels;
+using Microclimate.Client.Core.ViewModels;
 
 namespace Microclimate.Client.Maui.Views;
 
@@ -19,5 +19,16 @@ public partial class RoomDetailsPage : ContentPage, IQueryAttributable
             ? value : (Guid?)null;
         var name = query.TryGetValue("RoomName", out var title) ? title as string : null;
         viewModel.SelectRoom(roomId, name);
+    }
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        await viewModel.InitializeAsync();
+    }
+
+    protected override void OnDisappearing()
+    {
+        viewModel.CancelPending();
+        base.OnDisappearing();
     }
 }
