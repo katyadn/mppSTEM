@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
     <ProjectReference Include="../Microclimate.Contracts/Microclimate.Contracts.csproj" />
   </ItemGroup>
 </Project>

@@ -19,28 +19,7 @@ public sealed record RoomCard(Guid Id, string Name, int Floor, string? Type, str
         };
         return new(room.Id, room.Name, room.Floor, room.Type, status,
             string.Join(" · ", room.LatestMetrics.Select(metric =>
-                $"{MetricName(metric.Metric)}: {metric.Value.ToString("0.#", CultureInfo.InvariantCulture)} {MetricUnit(metric.Metric)}")));
+                $"{MetricPresentation.MetricName(metric.Metric)}: {metric.Value.ToString("0.#", CultureInfo.InvariantCulture)} {MetricPresentation.MetricUnit(metric.Metric)}")));
     }
 
-    private static string MetricName(MetricType metric) => metric switch
-    {
-        MetricType.Temperature => "Температура",
-        MetricType.Humidity => "Вологість",
-        MetricType.Co2 => "CO₂",
-        MetricType.Pm25 => "PM2.5",
-        MetricType.Noise => "Шум",
-        MetricType.Light => "Освітленість",
-        _ => "Невідома метрика",
-    };
-
-    private static string MetricUnit(MetricType metric) => metric switch
-    {
-        MetricType.Temperature => "°C",
-        MetricType.Humidity => "%",
-        MetricType.Co2 => "ppm",
-        MetricType.Pm25 => "µg/m³",
-        MetricType.Noise => "dB(A)",
-        MetricType.Light => "lux",
-        _ => string.Empty,
-    };
 }
