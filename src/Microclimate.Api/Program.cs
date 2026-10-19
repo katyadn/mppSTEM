@@ -68,6 +68,8 @@ builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<Microclimate.Application.Abstractions.Notifications.IAlertNotifier, Microclimate.Api.Services.SignalRAlertNotifier>();
 builder.Services.AddScoped<Microclimate.Application.Measurements.IMeasurementIngestionService, Microclimate.Api.Services.MeasurementIngestionService>();
+builder.Services.AddSingleton<Microclimate.Application.Analytics.IComfortIndexCalculator, Microclimate.Api.Services.ComfortIndexCalculator>();
+builder.Services.AddScoped<Microclimate.Application.Analytics.IAnalyticsService, Microclimate.Api.Services.AnalyticsService>();
 
 // ── Persistence & Repositories (Fallback In-Memory) ───────────────────────────
 builder.Services.AddSingleton<Microclimate.Api.Storage.InMemoryDataStore>();
