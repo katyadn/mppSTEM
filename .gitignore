@@ -487,3 +487,6 @@ $RECYCLE.BIN/
 TestResults/
 coveragereport/
 .DS_Store
+
+# Локальна БД SQLite
+microclimate.db*
