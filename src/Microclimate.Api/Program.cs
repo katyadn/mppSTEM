@@ -65,6 +65,9 @@ builder.Services.AddAuthorization();
 // ── Application Services ──────────────────────────────────────────────────────
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddSignalR();
+builder.Services.AddScoped<Microclimate.Application.Abstractions.Notifications.IAlertNotifier, Microclimate.Api.Services.SignalRAlertNotifier>();
+builder.Services.AddScoped<Microclimate.Application.Measurements.IMeasurementIngestionService, Microclimate.Api.Services.MeasurementIngestionService>();
 
 // ── Persistence & Repositories (Fallback In-Memory) ───────────────────────────
 builder.Services.AddSingleton<Microclimate.Api.Storage.InMemoryDataStore>();
@@ -104,6 +107,7 @@ app.UseAuthorization();
 
 app.MapHealthChecks("/health");
 app.MapControllers();
+app.MapHub<Microclimate.Api.Hubs.AlertsHub>("/hubs/alerts");
 
 app.Run();
 
