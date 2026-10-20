@@ -35,6 +35,34 @@ builder.Services
     })
     .AddOpenApi();
 
+builder.Services.ConfigureAll<Microsoft.AspNetCore.OpenApi.OpenApiOptions>(options =>
+{
+    options.AddDocumentTransformer((doc, _, _) =>
+    {
+        doc.Components ??= new();
+        var scheme = new Microsoft.OpenApi.OpenApiSecurityScheme
+        {
+            Type = Microsoft.OpenApi.SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            Description = "Enter your JWT token (without 'Bearer ' prefix)",
+        };
+
+        doc.Components.SecuritySchemes ??= new Dictionary<string, Microsoft.OpenApi.IOpenApiSecurityScheme>();
+        doc.Components.SecuritySchemes["Bearer"] = scheme;
+
+        var req = new Microsoft.OpenApi.OpenApiSecurityRequirement
+        {
+            [new Microsoft.OpenApi.OpenApiSecuritySchemeReference("Bearer")] = [],
+        };
+
+        doc.Security ??= [];
+        doc.Security.Add(req);
+
+        return Task.CompletedTask;
+    });
+});
+
 // ── JWT Authentication ────────────────────────────────────────────────────────
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var secretKey = jwtSection["SecretKey"]

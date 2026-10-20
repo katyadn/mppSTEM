@@ -72,14 +72,18 @@
 | `Directory.Packages.props` | Додано версії `Swashbuckle.AspNetCore.SwaggerUI`, `Asp.Versioning.Mvc`, `Asp.Versioning.OpenApi`, `Microsoft.AspNetCore.Mvc.Testing` | Оновлено `Microsoft.AspNetCore.OpenApi` до 10.0.10 для усунення downgrade-попередження | `dotnet restore`, `dotnet test Microclimate.Ci.slnf` |
 | `DECISIONS.md` | Записи архітектурних рішень D-2-001 … D-2-008 | Сформульовано аргументацію та наслідки | Перегляд документації |
 
-### Що людина зробила сама:
-- Надала повний контекст завдань Етапу 0 та узгодила границі зон відповідальності з Учасником 1 та 3.
-- Створила задачі (issues #23, #24, #32, #35, #36, #37, #38, #39) на GitHub.
-- Прийняла рішення щодо спрощення структури (видалення надлишкових допоміжних класів і дотримання суворого мінімалізму).
-- Провела звірку форматів та одиниць вимірювань за фізичними стандартами (T, RH, CO₂, PM2.5, шум, освітленість).
-- Погодила сумісність портів і контрактів для переходу до Етапу 1.
+### Етап 1 (Реалізація API, Безпеки, Подій та Аналітики)
 
-> **Примітка для захисту:** Учасник 2 повинен перед співбесідою уважно переглянути цей розділ і бути готовим пояснити кожне архітектурне рішення своїми словами.
+- **Ключові задачі Етапу 1:**
+  1. *Блок 1 (Auth & Error Handling):* Реалізація `JwtTokenService` (HMAC-SHA256, 15m access token, 7d refresh token), обробника заголовка `X-Device-Key` (`DeviceKeyAuthHandler`) із SHA-256 хешуванням, `AuthController` та глобальної обробки винятків (`GlobalExceptionHandler`) за RFC 9457 ProblemDetails. Автономний `InMemoryStorage` для незалежного запуску та тестування до готовності EF Core від Учасника 1.
+  2. *Блок 2 (Rooms & Sensors):* Контролери `RoomsController` та `SensorsController` з одноразовою видачею `DeviceKey`, ротацією ключів `RotateDeviceKey` та валідацією залежностей (заборона видалення кімнати з прив'язаними сенсорами).
+  3. *Блок 3 (Measurements, Thresholds, Alerts & Realtime):* Пакетна реєстрація показників датчиків (до 500 штук за виклик) із перевіркою фізичних меж і часового зсуву (clock skew ±5 хв/7 днів) у `MeasurementIngestionService`. Реалізація `AlertsHub` на базі SignalR (кімнатні підписки `room-{id}` та `all-alerts`), `ThresholdsController`, `AlertsController` з можливістю підтвердження тривог (`AcknowledgeAlert`) та потоковий експорт у CSV.
+  4. *Блок 4 (Users & Analytics):* Адміністративний `UsersController` з керуванням ролями, математичний калькулятор індексу комфорту `ComfortIndexCalculator` (відповідно до формули розділу 3 `docs/analytics.md` з ваговими коефіцієнтами T:0.3, CO₂:0.3, RH:0.2, PM2.5:0.2 та критичним обнуленням) та аналітичні сервіси `AnalyticsController` (summary, series, comfort).
+- **Верифікація:**
+  - 42 інтеграційні тести WebApplicationFactory у `tests/Microclimate.Api.IntegrationTests` (загалом 86 тестів у солюшені, 100% успішні).
+  - Компіляція Release 0 Warning(s), 0 Error(s) із увімкненим `TreatWarningsAsErrors`.
+
+> **Примітка для захисту:** Учасник 2 володіє структурою коду, алгоритмом обчислення комфорту, життєвим циклом JWT/DeviceKey та ланцюжком обробки помилок через ProblemDetails.
 
 
 ## Учасник 3
