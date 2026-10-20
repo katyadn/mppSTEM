@@ -110,7 +110,7 @@ erDiagram
 | `RoomId` | uuid | ні | FK → `Rooms.Id`, `RESTRICT`; індекс `IX_Sensors_RoomId` |
 | `SerialNumber` | varchar(64) | ні | UNIQUE |
 | `Model` | varchar(100) | так | |
-| `DeviceKeyHash` | varchar(256) | ні | Хеш ключа `X-Device-Key`, сам ключ не зберігається |
+| `DeviceKeyHash` | varchar(256) | ні | Хеш ключа `X-Device-Key`, сам ключ не зберігається; індекс `IX_Sensors_DeviceKeyHash` для пошуку датчика при кожному запиті з вимірами |
 | `IsActive` | bool | ні | Неактивний датчик не приймає виміри |
 | `InstalledAt` | timestamptz | ні | |
 | `LastSeenAt` | timestamptz | так | Час останнього прийнятого виміру |
@@ -222,7 +222,20 @@ WHERE s.RoomId = @roomId AND m.MetricType = @metric AND m.MeasuredAt >= @from AN
 
 У Docker використовуються змінні середовища `Database__Provider=Postgres` і `Database__ConnectionString=Host=db;...`.
 
-Міграції генеруються окремо для кожного провайдера (`Migrations/Sqlite` і `Migrations/Postgres`), бо в них різні типи колонок і DDL.
+Міграції генеруються окремо для кожного провайдера, бо в них різні типи колонок і DDL. Для цього є два контексти-нащадки спільного `AppDbContext`: `SqliteAppDbContext` і `PostgresAppDbContext` (`src/Microclimate.Infrastructure/Persistence`). Міграції лежать у `Persistence/Migrations/Sqlite` і `Persistence/Migrations/Postgres`.
+
+Команди (інструмент `dotnet-ef` встановлюється локально командою `dotnet tool restore`):
+
+```bash
+# нова міграція для обох провайдерів
+dotnet ef migrations add <Назва> --project src/Microclimate.Infrastructure --startup-project src/Microclimate.Infrastructure --context SqliteAppDbContext --output-dir Persistence/Migrations/Sqlite
+dotnet ef migrations add <Назва> --project src/Microclimate.Infrastructure --startup-project src/Microclimate.Infrastructure --context PostgresAppDbContext --output-dir Persistence/Migrations/Postgres
+
+# створити або оновити локальну БД SQLite (файл microclimate.db)
+dotnet ef database update --project src/Microclimate.Infrastructure --startup-project src/Microclimate.Infrastructure --context SqliteAppDbContext
+```
+
+Реєстрація в DI: `services.AddInfrastructure(configuration)` читає `Database:Provider` і `Database:ConnectionString`.
 
 Відмінності провайдерів, які треба врахувати:
 
