@@ -54,10 +54,17 @@ public sealed class User : Entity<Guid>
             Guard.Defined(role, "Роль"),
             now.ToUniversalTime());
 
-    /// <summary>Обрізає пробіли, переводить у нижній регістр і перевіряє формат.</summary>
+    /// <summary>Канонічний вигляд email без перевірки формату: без пробілів по краях, у нижньому регістрі.</summary>
+    public static string CanonicalEmail(string email)
+    {
+        ArgumentNullException.ThrowIfNull(email);
+        return email.Trim().ToLowerInvariant();
+    }
+
+    /// <summary>Канонічний вигляд email з перевіркою, що він заданий, не задовгий і має правильний формат.</summary>
     public static string NormalizeEmail(string email)
     {
-        var normalized = Guard.RequiredText(email, "Email", EmailMaxLength).ToLowerInvariant();
+        var normalized = CanonicalEmail(Guard.RequiredText(email, "Email", EmailMaxLength));
         if (!MailAddress.TryCreate(normalized, out var address) || address.Address != normalized)
         {
             throw new DomainException($"Email '{normalized}' має некоректний формат.");
