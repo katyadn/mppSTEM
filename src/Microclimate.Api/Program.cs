@@ -53,7 +53,7 @@ builder.Services.ConfigureAll<Microsoft.AspNetCore.OpenApi.OpenApiOptions>(optio
 
         var req = new Microsoft.OpenApi.OpenApiSecurityRequirement
         {
-            [new Microsoft.OpenApi.OpenApiSecuritySchemeReference("Bearer")] = [],
+            [new Microsoft.OpenApi.OpenApiSecuritySchemeReference("Bearer", doc)] = [],
         };
 
         doc.Security ??= [];
