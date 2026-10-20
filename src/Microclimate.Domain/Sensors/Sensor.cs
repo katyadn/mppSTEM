@@ -70,4 +70,11 @@ public sealed class Sensor : Entity<Guid>
     }
 
     public void Deactivate() => IsActive = false;
+
+    /// <summary>Ротація секретного ключа датчика.</summary>
+    public void RotateDeviceKey(string newDeviceKeyHash)
+    {
+        EnsureActive();
+        DeviceKeyHash = Guard.RequiredText(newDeviceKeyHash, "Хеш ключа датчика", DeviceKeyHashMaxLength);
+    }
 }
