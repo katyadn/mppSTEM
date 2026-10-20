@@ -235,7 +235,7 @@ dotnet ef migrations add <Назва> --project src/Microclimate.Infrastructure 
 dotnet ef database update --project src/Microclimate.Infrastructure --startup-project src/Microclimate.Infrastructure --context SqliteAppDbContext
 ```
 
-Реєстрація в DI: `services.AddInfrastructure(configuration)` читає `Database:Provider` і `Database:ConnectionString`. Api використовує БД, якщо `Database:Provider` задано (профілі запуску задають SQLite, файл `src/Microclimate.Api/microclimate.db`); під час старту застосовуються міграції, а в порожню БД додаються демо-дані. Без цього параметра Api працює зі сховищем у пам'яті (так запускаються інтеграційні тести).
+Реєстрація в DI: `services.AddInfrastructure(configuration)` читає `Database:Provider` і `Database:ConnectionString`. Api використовує БД, якщо `Database:Provider` задано (профілі запуску задають SQLite, файл `src/Microclimate.Api/microclimate.db`); під час старту застосовуються міграції, а в порожню БД у середовищі Development додаються демо-дані (в інших середовищах — ні, бо паролі демо-користувачів відомі). Без цього параметра Api працює зі сховищем у пам'яті (так запускаються інтеграційні тести).
 
 Відмінності провайдерів, які треба врахувати:
 

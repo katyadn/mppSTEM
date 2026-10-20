@@ -77,7 +77,7 @@ builder.Services.AddApplication();
 // ── Persistence ───────────────────────────────────────────────────────────────
 // Якщо задано Database:Provider (профілі запуску, Docker), дані зберігаються в БД через Infrastructure.
 // Без нього (інтеграційні тести) лишається сховище в пам'яті.
-var useDatabase = !string.IsNullOrWhiteSpace(builder.Configuration["Database:Provider"]);
+var useDatabase = !string.IsNullOrWhiteSpace(builder.Configuration[DatabaseSettings.ProviderKey]);
 if (useDatabase)
 {
     builder.Services.AddInfrastructure(builder.Configuration);
@@ -126,7 +126,7 @@ app.MapHub<Microclimate.Api.Hubs.AlertsHub>("/hubs/alerts");
 
 if (useDatabase)
 {
-    await Microclimate.Api.Storage.DatabaseSeeder.InitializeAsync(app.Services);
+    await Microclimate.Api.Storage.DatabaseSeeder.InitializeAsync(app.Services, seedDemoData: app.Environment.IsDevelopment());
 }
 
 await app.RunAsync();

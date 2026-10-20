@@ -5,19 +5,20 @@ using Microsoft.EntityFrameworkCore;
 namespace Microclimate.Api.Storage;
 
 /// <summary>
-/// Підготовка БД під час старту: застосовує міграції, а в порожню БД додає ті самі демо-дані,
-/// що й сховище в пам'яті (адміністратор, оператор, кімната, датчик).
+/// Підготовка БД під час старту: завжди застосовує міграції. Демо-дані сховища в пам'яті
+/// (адміністратор, оператор, кімната, датчик) додаються лише в порожню БД і лише в середовищі
+/// розробки, бо паролі демо-користувачів відомі.
 /// </summary>
 public static class DatabaseSeeder
 {
-    public static async Task InitializeAsync(IServiceProvider services, CancellationToken cancellationToken = default)
+    public static async Task InitializeAsync(IServiceProvider services, bool seedDemoData, CancellationToken cancellationToken = default)
     {
         await using var scope = services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         await db.Database.MigrateAsync(cancellationToken);
 
-        if (await db.Users.AnyAsync(cancellationToken))
+        if (!seedDemoData || await db.Users.AnyAsync(cancellationToken))
         {
             return;
         }

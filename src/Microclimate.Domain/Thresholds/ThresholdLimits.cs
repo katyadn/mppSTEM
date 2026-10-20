@@ -59,40 +59,35 @@ public sealed record ThresholdLimits
     public double? CriticalMax { get; }
 
     /// <summary>Оцінює значення: <c>null</c> — норма, інакше рівень сповіщення.</summary>
-    public AlertLevel? Evaluate(double value)
-    {
-        if (value < CriticalMin || value > CriticalMax)
-        {
-            return AlertLevel.Critical;
-        }
-
-        if (value < WarningMin || value > WarningMax)
-        {
-            return AlertLevel.Warning;
-        }
-
-        return null;
-    }
+    public AlertLevel? Evaluate(double value) => Check(value).Level;
 
     /// <summary>Межа, яку перевищено значенням (знімок для сповіщення), або <c>null</c>, якщо значення в нормі.</summary>
-    public double? ExceededBound(double value)
+    public double? ExceededBound(double value) => Check(value).Bound;
+
+    // Межі перевіряються від суворіших до м'якших; відсутня межа (null) не спрацьовує.
+    private (AlertLevel? Level, double? Bound) Check(double value)
     {
         if (value < CriticalMin)
         {
-            return CriticalMin;
+            return (AlertLevel.Critical, CriticalMin);
         }
 
         if (value > CriticalMax)
         {
-            return CriticalMax;
+            return (AlertLevel.Critical, CriticalMax);
         }
 
         if (value < WarningMin)
         {
-            return WarningMin;
+            return (AlertLevel.Warning, WarningMin);
         }
 
-        return value > WarningMax ? WarningMax : null;
+        if (value > WarningMax)
+        {
+            return (AlertLevel.Warning, WarningMax);
+        }
+
+        return (null, null);
     }
 
     private static void CheckFinite(double? value, string field)

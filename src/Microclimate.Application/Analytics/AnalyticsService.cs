@@ -52,7 +52,7 @@ public sealed class AnalyticsService(
     {
         var room = await GetRoomAsync(roomId, cancellationToken);
         var now = time.GetUtcNow();
-        var window = DateRange.Create(now - ComfortIndexSettings.Window, now.AddTicks(1));
+        var window = DateRange.Create(now - ComfortIndexSettings.Window, now);
 
         var averages = await measurements.GetSummaryAsync(roomId, null, window, cancellationToken);
         var custom = (await thresholds.ListByRoomAsync(roomId, cancellationToken)).ToDictionary(t => t.Metric);

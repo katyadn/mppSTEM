@@ -46,6 +46,8 @@ public abstract class AppDbContext(DbContextOptions options) : DbContext(options
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
+        // Таблиці описано в Configurations/* за docs/db-schema.md, розділ 3.
+        // Id сутностей створює домен (Guid v7), тому в конфігураціях стоїть ValueGeneratedNever.
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 

@@ -8,30 +8,29 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Microclimate.Infrastructure;
 
-/// <summary>Реєстрація БД і репозиторіїв. Провайдер задається в конфігурації Database:Provider.</summary>
+/// <summary>Реєстрація БД і репозиторіїв. Провайдер і рядок підключення обов'язково задаються в конфігурації.</summary>
 public static class DependencyInjection
 {
-    public const string DefaultConnectionString = "Data Source=microclimate.db";
-
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
 
-        var provider = configuration["Database:Provider"] ?? "Sqlite";
-        var connectionString = configuration["Database:ConnectionString"] ?? DefaultConnectionString;
+        var provider = Required(configuration, DatabaseSettings.ProviderKey);
+        var connectionString = Required(configuration, DatabaseSettings.ConnectionStringKey);
 
-        if (string.Equals(provider, "Sqlite", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(provider, DatabaseSettings.Sqlite, StringComparison.OrdinalIgnoreCase))
         {
             services.AddDbContext<AppDbContext, SqliteAppDbContext>(o => o.UseSqlite(connectionString));
         }
-        else if (string.Equals(provider, "Postgres", StringComparison.OrdinalIgnoreCase))
+        else if (string.Equals(provider, DatabaseSettings.Postgres, StringComparison.OrdinalIgnoreCase))
         {
             services.AddDbContext<AppDbContext, PostgresAppDbContext>(o => o.UseNpgsql(connectionString));
         }
         else
         {
-            throw new InvalidOperationException($"Невідомий провайдер БД '{provider}'. Допустимі значення: Sqlite, Postgres.");
+            throw new InvalidOperationException(
+                $"Невідомий провайдер БД '{provider}'. Допустимі значення: {DatabaseSettings.Sqlite}, {DatabaseSettings.Postgres}.");
         }
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
@@ -43,5 +42,14 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
 
         return services;
+    }
+
+    // Без тихих значень за замовчуванням: помилка конфігурації видна одразу під час старту.
+    private static string Required(IConfiguration configuration, string key)
+    {
+        var value = configuration[key];
+        return string.IsNullOrWhiteSpace(value)
+            ? throw new InvalidOperationException($"Не задано налаштування '{key}'.")
+            : value;
     }
 }
