@@ -11,7 +11,8 @@
       "tests/Microclimate.Api.IntegrationTests/Microclimate.Api.IntegrationTests.csproj",
       "tests/Microclimate.Application.Tests/Microclimate.Application.Tests.csproj",
       "tests/Microclimate.Client.Tests/Microclimate.Client.Tests.csproj",
-      "tests/Microclimate.Domain.Tests/Microclimate.Domain.Tests.csproj"
+      "tests/Microclimate.Domain.Tests/Microclimate.Domain.Tests.csproj",
+      "tests/Microclimate.Infrastructure.Tests/Microclimate.Infrastructure.Tests.csproj"
     ]
   }
 }

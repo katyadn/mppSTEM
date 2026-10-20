@@ -19,6 +19,9 @@ public static class ComfortIndexSettings
 
     public const double AcceptableFrom = 60;
 
+    /// <summary>Якщо критичної межі немає, відстань до неї — 20 % від межі Warning.</summary>
+    public const double MissingCriticalSpanRatio = 0.2;
+
     public static double Weight(MetricType metric) => metric switch
     {
         MetricType.Temperature => 0.30,
