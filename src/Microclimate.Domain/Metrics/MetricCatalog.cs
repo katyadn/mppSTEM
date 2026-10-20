@@ -3,7 +3,7 @@ using Microclimate.Domain.Enums;
 namespace Microclimate.Domain.Metrics;
 
 /// <summary>
-/// Довідник метрик. Нова метрика додається одним рядком тут (і значенням у MetricType).
+/// Довідник метрик. Нова метрика додається одним рядком тут ї.
 /// Джерела порогів — docs/analytics.md, розділ 1.
 /// </summary>
 public static class MetricCatalog
