@@ -36,6 +36,10 @@ public sealed class SensorRepository(AppDbContext db) : ISensorRepository
     public Task<Sensor?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
         db.Sensors.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
 
+    /// <summary>Пошук датчика за хешем ключа X-Device-Key (автентифікація датчиків в Api).</summary>
+    public Task<Sensor?> GetByDeviceKeyHashAsync(string deviceKeyHash, CancellationToken cancellationToken) =>
+        db.Sensors.FirstOrDefaultAsync(s => s.DeviceKeyHash == deviceKeyHash, cancellationToken);
+
     public Task<bool> ExistsBySerialNumberAsync(string serialNumber, CancellationToken cancellationToken) =>
         db.Sensors.AnyAsync(s => s.SerialNumber == serialNumber.Trim(), cancellationToken);
 

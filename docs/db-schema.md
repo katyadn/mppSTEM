@@ -110,7 +110,7 @@ erDiagram
 | `RoomId` | uuid | ні | FK → `Rooms.Id`, `RESTRICT`; індекс `IX_Sensors_RoomId` |
 | `SerialNumber` | varchar(64) | ні | UNIQUE |
 | `Model` | varchar(100) | так | |
-| `DeviceKeyHash` | varchar(256) | ні | Хеш ключа `X-Device-Key`, сам ключ не зберігається |
+| `DeviceKeyHash` | varchar(256) | ні | Хеш ключа `X-Device-Key`, сам ключ не зберігається; індекс `IX_Sensors_DeviceKeyHash` для пошуку датчика при кожному запиті з вимірами |
 | `IsActive` | bool | ні | Неактивний датчик не приймає виміри |
 | `InstalledAt` | timestamptz | ні | |
 | `LastSeenAt` | timestamptz | так | Час останнього прийнятого виміру |

@@ -182,6 +182,8 @@ namespace Microclimate.Infrastructure.Persistence.Migrations.Sqlite
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DeviceKeyHash");
+
                     b.HasIndex("RoomId");
 
                     b.HasIndex("SerialNumber")

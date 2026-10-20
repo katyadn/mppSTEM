@@ -189,6 +189,8 @@ namespace Microclimate.Infrastructure.Persistence.Migrations.Postgres
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DeviceKeyHash");
+
                     b.HasIndex("RoomId");
 
                     b.HasIndex("SerialNumber")

@@ -41,6 +41,7 @@ internal sealed class SensorConfiguration : IEntityTypeConfiguration<Sensor>
         builder.Property(s => s.Model).HasMaxLength(Sensor.ModelMaxLength);
         builder.Property(s => s.DeviceKeyHash).HasMaxLength(Sensor.DeviceKeyHashMaxLength).IsRequired();
         builder.HasIndex(s => s.SerialNumber).IsUnique();
+        builder.HasIndex(s => s.DeviceKeyHash);
         builder.HasOne<Room>().WithMany().HasForeignKey(s => s.RoomId).OnDelete(DeleteBehavior.Restrict);
     }
 }
