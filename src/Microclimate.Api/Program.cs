@@ -7,7 +7,9 @@ using FluentValidation;
 using Microclimate.Api.Authentication;
 using Microclimate.Api.Middleware;
 using Microclimate.Api.Services;
+using Microclimate.Application;
 using Microclimate.Contracts.Auth;
+using Microclimate.Infrastructure;
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -68,18 +70,29 @@ builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<Microclimate.Application.Abstractions.Notifications.IAlertNotifier, Microclimate.Api.Services.SignalRAlertNotifier>();
 builder.Services.AddScoped<Microclimate.Application.Measurements.IMeasurementIngestionService, Microclimate.Api.Services.MeasurementIngestionService>();
-builder.Services.AddSingleton<Microclimate.Application.Analytics.IComfortIndexCalculator, Microclimate.Api.Services.ComfortIndexCalculator>();
-builder.Services.AddScoped<Microclimate.Application.Analytics.IAnalyticsService, Microclimate.Api.Services.AnalyticsService>();
 
-// ── Persistence & Repositories (Fallback In-Memory) ───────────────────────────
-builder.Services.AddSingleton<Microclimate.Api.Storage.InMemoryDataStore>();
-builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IUserRepository, Microclimate.Api.Storage.InMemoryUserRepository>();
-builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.ISensorRepository, Microclimate.Api.Storage.InMemorySensorRepository>();
-builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IRoomRepository, Microclimate.Api.Storage.InMemoryRoomRepository>();
-builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IThresholdRepository, Microclimate.Api.Storage.InMemoryThresholdRepository>();
-builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IAlertRepository, Microclimate.Api.Storage.InMemoryAlertRepository>();
-builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IMeasurementRepository, Microclimate.Api.Storage.InMemoryMeasurementRepository>();
-builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IUnitOfWork, Microclimate.Api.Storage.InMemoryUnitOfWork>();
+// Аналітика й індекс комфорту — шар Application.
+builder.Services.AddApplication();
+
+// ── Persistence ───────────────────────────────────────────────────────────────
+// Якщо задано Database:Provider (профілі запуску, Docker), дані зберігаються в БД через Infrastructure.
+// Без нього (інтеграційні тести) лишається сховище в пам'яті.
+var useDatabase = !string.IsNullOrWhiteSpace(builder.Configuration["Database:Provider"]);
+if (useDatabase)
+{
+    builder.Services.AddInfrastructure(builder.Configuration);
+}
+else
+{
+    builder.Services.AddSingleton<Microclimate.Api.Storage.InMemoryDataStore>();
+    builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IUserRepository, Microclimate.Api.Storage.InMemoryUserRepository>();
+    builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.ISensorRepository, Microclimate.Api.Storage.InMemorySensorRepository>();
+    builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IRoomRepository, Microclimate.Api.Storage.InMemoryRoomRepository>();
+    builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IThresholdRepository, Microclimate.Api.Storage.InMemoryThresholdRepository>();
+    builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IAlertRepository, Microclimate.Api.Storage.InMemoryAlertRepository>();
+    builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IMeasurementRepository, Microclimate.Api.Storage.InMemoryMeasurementRepository>();
+    builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IUnitOfWork, Microclimate.Api.Storage.InMemoryUnitOfWork>();
+}
 
 // ── FluentValidation ──────────────────────────────────────────────────────────
 builder.Services.AddValidatorsFromAssemblyContaining<Program>(includeInternalTypes: true);
@@ -111,6 +124,11 @@ app.MapHealthChecks("/health");
 app.MapControllers();
 app.MapHub<Microclimate.Api.Hubs.AlertsHub>("/hubs/alerts");
 
-app.Run();
+if (useDatabase)
+{
+    await Microclimate.Api.Storage.DatabaseSeeder.InitializeAsync(app.Services);
+}
+
+await app.RunAsync();
 
 public partial class Program;
