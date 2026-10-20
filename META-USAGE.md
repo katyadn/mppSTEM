@@ -25,8 +25,9 @@
 | tests/Microclimate.Domain.Tests/** | Тести перевірок і межових значень | Оновлено під змінену модель | Усі тести проходять локально; CI — у PR |
 | src/Microclimate.Application/** | Інтерфейси репозиторіїв, UoW, аналітики, прийому вимірів, експорту, IAlertNotifier | Склад інтерфейсів змінено за рішенням команди | Release build 0 warnings; 3 тести |
 | src/Microclimate.Infrastructure/** (крім міграцій) | AppDbContext, контексти SQLite і PostgreSQL, конфігурації таблиць, репозиторії, AddInfrastructure | Не підтверджено | Release build 0 warnings; 4 тести на SQLite в пам'яті з застосуванням міграцій |
+| src/Microclimate.Api/Program.cs (блок Persistence), Storage/DatabaseSeeder.cs, tests/.../DatabaseFlowTests.cs | Перемикання Api між БД і сховищем у пам'яті, міграції й демо-дані під час старту, тест ланцюга з БД | Не підтверджено | Усі тести Api проходять у режимі пам'яті; DatabaseFlowTests проходить на SQLite |
 | src/Microclimate.Application/Analytics/** (реалізації) | ComfortIndexCalculator, AnalyticsService, AggregationBuckets | Не підтверджено | 3 тести, зокрема приклад 3.4 з docs/analytics.md (CI = 84.55) |
-| DECISIONS.md (D-1-001…D-1-014), цей розділ | Формулювання рішень і декларація | Потребує перегляду Учасником 1 | Зіставлено з фактичними змінами в PR |
+| DECISIONS.md (D-1-001…D-1-015), цей розділ | Формулювання рішень і декларація | Потребує перегляду Учасником 1 | Зіставлено з фактичними змінами в PR |
 
 **Що ще не реалізовано:** прийом вимірів (MeasurementIngestionService), експорт CSV/JSON, симулятор — Етап 2. Норми мікроклімату з позначкою «[перевірити]» ще не звірені з першоджерелами.
 
