@@ -104,9 +104,8 @@ public sealed class UserRepository(AppDbContext db) : IUserRepository
 
     public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(email);
-        var normalized = email.Trim().ToLowerInvariant();
-        return db.Users.FirstOrDefaultAsync(u => u.Email == normalized, cancellationToken);
+        var canonical = User.CanonicalEmail(email);
+        return db.Users.FirstOrDefaultAsync(u => u.Email == canonical, cancellationToken);
     }
 
     public async Task<IReadOnlyList<User>> ListAsync(CancellationToken cancellationToken) =>

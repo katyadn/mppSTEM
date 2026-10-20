@@ -73,6 +73,10 @@ public sealed class RepositoryTests : IDisposable
         Assert.Equal(23, temperature.Avg);
         Assert.Equal([2, 1], series.Select(p => p.Count));
         Assert.Equal(22, series[0].Avg);
+
+        var latest = await repository.GetLatestByRoomAsync(sensor.RoomId, CancellationToken.None);
+        Assert.Equal(25, latest.Single(m => m.Metric == MetricType.Temperature).Value);
+        Assert.Equal(800, latest.Single(m => m.Metric == MetricType.Co2).Value);
     }
 
     [Fact]

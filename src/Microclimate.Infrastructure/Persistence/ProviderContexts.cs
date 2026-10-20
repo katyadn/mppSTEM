@@ -23,7 +23,7 @@ public sealed class PostgresAppDbContext(DbContextOptions<PostgresAppDbContext> 
 public sealed class SqliteDesignTimeFactory : IDesignTimeDbContextFactory<SqliteAppDbContext>
 {
     public SqliteAppDbContext CreateDbContext(string[] args) =>
-        new(new DbContextOptionsBuilder<SqliteAppDbContext>().UseSqlite("Data Source=microclimate.db").Options);
+        new(new DbContextOptionsBuilder<SqliteAppDbContext>().UseSqlite(DatabaseSettings.DesignTimeSqliteConnection).Options);
 }
 
 /// <summary>
@@ -33,5 +33,5 @@ public sealed class SqliteDesignTimeFactory : IDesignTimeDbContextFactory<Sqlite
 public sealed class PostgresDesignTimeFactory : IDesignTimeDbContextFactory<PostgresAppDbContext>
 {
     public PostgresAppDbContext CreateDbContext(string[] args) =>
-        new(new DbContextOptionsBuilder<PostgresAppDbContext>().UseNpgsql("Host=localhost;Database=microclimate").Options);
+        new(new DbContextOptionsBuilder<PostgresAppDbContext>().UseNpgsql(DatabaseSettings.DesignTimePostgresConnection).Options);
 }
