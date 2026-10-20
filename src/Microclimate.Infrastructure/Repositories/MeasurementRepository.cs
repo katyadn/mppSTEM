@@ -68,21 +68,16 @@ public sealed class MeasurementRepository(AppDbContext db) : IMeasurementReposit
 
     public async Task<IReadOnlyList<Measurement>> GetLatestByRoomAsync(Guid roomId, CancellationToken cancellationToken)
     {
-        var latest = new List<Measurement>();
-        foreach (var metric in Enum.GetValues<MetricType>())
-        {
-            var measurement = await RoomMeasurements(roomId)
-                .Where(m => m.Metric == metric)
-                .OrderByDescending(m => m.MeasuredAt)
-                .FirstOrDefaultAsync(cancellationToken);
+        // Один запит: для кожної метрики — вимір з найпізнішим часом.
+        var measurements = RoomMeasurements(roomId);
+        var latestTimes = measurements.GroupBy(m => m.Metric).Select(g => new { Metric = g.Key, MeasuredAt = g.Max(m => m.MeasuredAt) });
 
-            if (measurement is not null)
-            {
-                latest.Add(measurement);
-            }
-        }
+        var rows = await measurements
+            .Where(m => latestTimes.Any(l => l.Metric == m.Metric && l.MeasuredAt == m.MeasuredAt))
+            .ToListAsync(cancellationToken);
 
-        return latest;
+        // Якщо два датчики кімнати надіслали вимір в одну мить, береться один.
+        return rows.GroupBy(m => m.Metric).Select(g => g.MaxBy(m => m.Id)!).ToList();
     }
 
     // Виміри кімнати — це виміри її датчиків.

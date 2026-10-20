@@ -16,7 +16,7 @@
 | поза межами Warning, але в межах Critical | `Warning` |
 | `v < CriticalMin` або `v > CriticalMax` | `Critical` |
 
-Якщо Admin або Operator задали пороги кімнати (таблиця `Thresholds`), діють вони. Інакше діють значення за замовчуванням нижче (`Domain/Metrics/DefaultThresholds`).
+Якщо Admin або Operator задали пороги кімнати (таблиця `Thresholds`), діють вони. Інакше діють значення за замовчуванням нижче (`Domain/Metrics/MetricCatalog`, окремі значення для типу кімнати — `Domain/Metrics/DefaultThresholds`).
 
 ### 1.2. Значення за замовчуванням: офіс, аудиторія, лабораторія, житлове приміщення
 
