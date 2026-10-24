@@ -4,8 +4,10 @@ using Microclimate.Contracts.Rooms;
 
 namespace Microclimate.Client.Tests;
 
+// Перевірки картки кімнати без legacy-полів будівлі та вигаданого нормального стану.
 public sealed class RoomCardTests
 {
+    // Перевіряє: картка кімнати не відображає застарілі поля будівлі.
     [Fact]
     public void RoomCardIgnoresLegacyBuildingFields()
     {
@@ -19,6 +21,7 @@ public sealed class RoomCardTests
         Assert.Equal("CO₂: 1300 ppm · Шум: 55 dB(A)", card.MetricsText);
     }
 
+    // Перевіряє: відсутні виміри не позначаються як нормальні умови.
     [Fact]
     public void MissingMeasurementsDoNotClaimNormalConditions()
     {

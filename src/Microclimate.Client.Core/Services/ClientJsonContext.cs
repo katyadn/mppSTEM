@@ -7,8 +7,10 @@ using Microclimate.Contracts.Rooms;
 
 namespace Microclimate.Client.Core.Services;
 
+// Поля помилок валідації з серверного ProblemDetails.
 public sealed record ClientProblem(Dictionary<string, string[]>? Errors);
 
+// Метадані JSON, згенеровані під час компіляції для клієнтських DTO, із camelCase та рядковими enum.
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true, UseStringEnumConverter = true)]
 [JsonSerializable(typeof(LoginRequest))]
 [JsonSerializable(typeof(TokenResponse))]

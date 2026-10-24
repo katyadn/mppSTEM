@@ -1,4 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <!-- Тести клієнтських сценаріїв, локального HTTP й інтеграції з API; MAUI UI тут не запускається. -->
   <PropertyGroup>
     <IsPackable>false</IsPackable>
   </PropertyGroup>

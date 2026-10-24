@@ -3,11 +3,14 @@ using Microclimate.Contracts.Analytics;
 
 namespace Microclimate.Client.Core.Presentation;
 
+// Виміряна точка графіка; відсутні виміри не підміняються нулем.
 public sealed record ChartPoint(DateTimeOffset Time, double Value);
 
+// Перетворює серверну аналітику на тексти й неперервні сегменти графіка.
 public static class AnalyticsPresentation
 {
     // Порожні кошики зберігають розрив, навіть якщо сервер помилково надіслав Avg.
+    // Сортує точки за часом; порожній інтервал або некоректне середнє розриває лінію, виміряний нуль зберігається.
     public static IReadOnlyList<IReadOnlyList<ChartPoint>> SplitSeries(IEnumerable<SeriesPointResponse> points)
     {
         ArgumentNullException.ThrowIfNull(points);
@@ -33,6 +36,7 @@ public static class AnalyticsPresentation
         return segments;
     }
 
+    // Форматує індекс і серверну категорію; NoData або некоректний індекс не перетворює на нуль.
     public static string ComfortText(ComfortIndexResponse? comfort)
     {
         if (comfort is null || comfort.Category == ComfortCategory.NoData ||

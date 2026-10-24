@@ -5,9 +5,12 @@ using Microclimate.Contracts.Analytics;
 
 namespace Microclimate.Client.Tests;
 
+// Перевірки HTTP-контрактів, безпеки сесії, адрес API й обробки помилок.
 public sealed class ClientApiTests
 {
+    // Надає JSON ProblemDetails із помилкою періоду для тестування читабельних повідомлень.
     private static readonly string[] PeriodErrors = ["Період завеликий"];
+    // Перевіряє: вхід є анонімним, профіль запитується з Bearer, а сховище містить лише access-сесію.
     [Fact]
     public async Task LoginUsesAnonymousRequestThenAuthenticatedProfileAndStoresOnlyAccessSession()
     {
@@ -20,6 +23,7 @@ public sealed class ClientApiTests
         Assert.DoesNotContain("fixture-password", f.Store.Value!, StringComparison.Ordinal);
         Assert.DoesNotContain("refreshToken", f.Store.Value!, StringComparison.Ordinal);
     }
+    // Перевіряє: неправильні облікові дані не створюють сесію.
     [Fact]
     public async Task WrongCredentialsDoNotCreateSession()
     {
@@ -28,6 +32,7 @@ public sealed class ClientApiTests
         Assert.Contains("пароль", failure.Message, StringComparison.Ordinal);
         Assert.Null(f.Session.Current); Assert.Null(f.Store.Value);
     }
+    // Перевіряє: hTTP 401 очищає збережену сесію.
     [Fact]
     public async Task UnauthorizedResponseClearsStoredSession()
     {
@@ -36,6 +41,7 @@ public sealed class ClientApiTests
         await Assert.ThrowsAsync<ClientApiException>(() => f.Api.GetRoomsAsync(1, CancellationToken.None));
         Assert.Null(f.Session.Current); Assert.Null(f.Store.Value);
     }
+    // Перевіряє: hTTP 403 зберігає чинну сесію.
     [Fact]
     public async Task ForbiddenResponseKeepsSession()
     {
@@ -44,6 +50,7 @@ public sealed class ClientApiTests
         var failure = await Assert.ThrowsAsync<ClientApiException>(() => f.Api.GetRoomsAsync(1, CancellationToken.None));
         Assert.Equal(HttpStatusCode.Forbidden, failure.StatusCode); Assert.NotNull(f.Session.Current);
     }
+    // Перевіряє: прострочений токен очищається без надсилання серверу.
     [Fact]
     public async Task ExpiredSessionIsClearedWithoutSendingItsToken()
     {
@@ -51,6 +58,7 @@ public sealed class ClientApiTests
         await Assert.ThrowsAsync<ClientApiException>(() => f.Api.GetRoomsAsync(1, CancellationToken.None));
         Assert.Empty(f.Requests); Assert.Null(f.Store.Value);
     }
+    // Перевіряє: зміна сервера не передає йому токен попереднього сервера.
     [Fact]
     public async Task ChangingServerNeverSendsTokenToNewServer()
     {
@@ -58,6 +66,7 @@ public sealed class ClientApiTests
         await Assert.ThrowsAsync<ClientApiException>(() => f.Api.GetRoomsAsync(1, CancellationToken.None));
         Assert.Empty(f.Requests); Assert.Null(f.Session.Current);
     }
+    // Перевіряє: запит ряду містить UTC-межі, метрику й денні інтервали для довгого періоду.
     [Fact]
     public async Task SeriesUsesUtcAndMetricAndDayBucketsForLongerPeriods()
     {
@@ -70,6 +79,7 @@ public sealed class ClientApiTests
         Assert.Contains("to=", request.Uri.Query, StringComparison.Ordinal);
         Assert.DoesNotContain("building", request.Uri.Query, StringComparison.Ordinal);
     }
+    // Перевіряє: порожня статистика зберігає Count = 0 і відсутні значення.
     [Fact]
     public async Task EmptySummaryArrayPreservesMissingMeasurements()
     {
@@ -80,6 +90,7 @@ public sealed class ClientApiTests
         Assert.Equal(0, summary.Count);
         Assert.Null(summary.Avg);
     }
+    // Перевіряє: із серверного масиву статистики вибирається запитана метрика.
     [Fact]
     public async Task SummarySelectsRequestedMetricFromBackendArray()
     {
@@ -89,6 +100,7 @@ public sealed class ClientApiTests
         Assert.Equal(MetricType.Co2, summary.Metric);
         Assert.Equal(900, summary.Avg);
     }
+    // Перевіряє: серверні помилки валідації перетворюються на читабельне повідомлення.
     [Fact]
     public async Task ValidationProblemIsReadable()
     {
@@ -97,6 +109,7 @@ public sealed class ClientApiTests
         var error = await Assert.ThrowsAsync<ClientApiException>(() => f.Api.GetRoomsAsync(1, CancellationToken.None));
         Assert.Equal("Період завеликий", error.Message);
     }
+    // Перевіряє: некоректний JSON і мережевий збій стають клієнтськими помилками.
     [Fact]
     public async Task InvalidJsonAndNetworkErrorsBecomeClientErrors()
     {
@@ -107,6 +120,7 @@ public sealed class ClientApiTests
         var failure = await Assert.ThrowsAsync<ClientApiException>(() => f.Api.GetRoomsAsync(1, CancellationToken.None));
         Assert.DoesNotContain("internal-transport-detail", failure.Message, StringComparison.Ordinal);
     }
+    // Перевіряє: сесія відновлюється, а відмова сховища залишає нову сесію лише в пам’яті.
     [Fact]
     public async Task SessionCanBeRestoredAndUnavailableSecureStorageUsesMemoryOnly()
     {
@@ -116,12 +130,14 @@ public sealed class ClientApiTests
         await f.Session.ClearAsync(); f.Store.Persist = false; await f.SignInAsync();
         Assert.NotNull(f.Session.Current); Assert.False(f.Session.IsPersistent); Assert.Null(f.Store.Value);
     }
+    // Перевіряє: небезпечна або некоректна адреса API відхиляється.
     [Theory]
     [InlineData("http://remote.example.com/")]
     [InlineData("https://name:password@example.com/")]
     [InlineData("https://example.com/?token=secret")]
     [InlineData("file:///tmp/api")]
     public void UnsafeApiAddressesAreRejected(string address) => Assert.Throws<ArgumentException>(() => ApiAddress.Normalize(address));
+    // Перевіряє: припустима адреса API приводиться до очікуваного кореневого формату.
     [Theory]
     [InlineData("https://api.example.com", "https://api.example.com/")]
     [InlineData("http://localhost:5195", "http://localhost:5195/")]

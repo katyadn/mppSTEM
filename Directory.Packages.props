@@ -1,4 +1,5 @@
 <Project>
+  <!-- Єдині версії NuGet для всіх проєктів; PackageReference не дублюють номери версій. -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>

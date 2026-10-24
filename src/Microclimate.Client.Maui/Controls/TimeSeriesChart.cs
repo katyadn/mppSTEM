@@ -3,28 +3,35 @@ using Microclimate.Client.Core.Presentation;
 
 namespace Microclimate.Client.Maui.Controls;
 
+// Малює окремі сегменти часового ряду зі шкалою, одиницями та місцевими датами й часом.
 public sealed class TimeSeriesChart : GraphicsView, IDrawable
 {
+    // BindableProperty сегментів; зміна даних спричиняє перемальовування.
     public static readonly BindableProperty SegmentsProperty = BindableProperty.Create(
         nameof(Segments), typeof(IReadOnlyList<IReadOnlyList<ChartPoint>>), typeof(TimeSeriesChart),
         propertyChanged: (view, _, _) => ((TimeSeriesChart)view).Invalidate());
+    // BindableProperty одиниці осі значень; зміна підпису спричиняє перемальовування.
     public static readonly BindableProperty UnitProperty = BindableProperty.Create(
         nameof(Unit), typeof(string), typeof(TimeSeriesChart), string.Empty,
         propertyChanged: (view, _, _) => ((TimeSeriesChart)view).Invalidate());
 
+    // Призначає сам контроль об’єктом малювання GraphicsView.
     public TimeSeriesChart() => Drawable = this;
 
+    // Сегменти точок, які малюються окремо без з’єднання через прогалини.
     public IReadOnlyList<IReadOnlyList<ChartPoint>>? Segments
     {
         get => (IReadOnlyList<IReadOnlyList<ChartPoint>>?)GetValue(SegmentsProperty);
         set => SetValue(SegmentsProperty, value);
     }
+    // Одиниця вимірювання завантаженого часового ряду.
     public string Unit
     {
         get => (string)GetValue(UnitProperty);
         set => SetValue(UnitProperty, value);
     }
 
+    // Малює сітку, округлену шкалу, місцевий час і окремі сегменти; пропускає порожню або замалу область.
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
         var segments = Segments;
@@ -105,6 +112,7 @@ public sealed class TimeSeriesChart : GraphicsView, IDrawable
         canvas.RestoreState();
     }
 
+    // Округлює бажаний крок шкали до 1, 2, 2.5, 5 або 10 з відповідним десятковим порядком.
     private static double TickStep(double desired)
     {
         var magnitude = Math.Pow(10, Math.Floor(Math.Log10(desired)));

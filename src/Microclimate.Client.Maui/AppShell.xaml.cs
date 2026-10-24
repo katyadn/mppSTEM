@@ -3,8 +3,10 @@ using Microclimate.Client.Maui.Views;
 
 namespace Microclimate.Client.Maui;
 
+// Оголошує маршрути й створює сторінки вкладок через DI-контейнер.
 public partial class AppShell : Shell
 {
+    // Налаштовує фабрики сторінок вкладок і реєструє маршрути деталей та налаштувань.
     public AppShell(IServiceProvider services)
     {
         InitializeComponent();

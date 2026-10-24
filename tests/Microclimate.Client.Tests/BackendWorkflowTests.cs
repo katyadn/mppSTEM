@@ -11,8 +11,10 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Microclimate.Client.Tests;
 
+// Інтеграційна перевірка клієнта проти чинного API та ізольованої SQLite-бази.
 public sealed class BackendWorkflowTests
 {
+    // Перевіряє: вхід, кімнати, аналітика й підтвердження працюють через чинний API з тимчасовою SQLite-базою.
     [Fact]
     public async Task ClientUsesCurrentBackendWithSqliteForLoginRoomsAnalyticsAndAcknowledgement()
     {
@@ -87,15 +89,19 @@ public sealed class BackendWorkflowTests
         Assert.Equal("login", navigation.Destination);
     }
 
+    // Запускає чинний API в Development з окремою тимчасовою SQLite-базою для інтеграційного тесту.
     private sealed class SqliteBackendFactory : WebApplicationFactory<Program>
     {
+        // Шлях до окремої тимчасової SQLite-бази цього запуску.
         private readonly string databasePath = Path.Combine(Path.GetTempPath(), $"microclimate-client-{Guid.NewGuid():N}.db");
+        // Задає Development і SQLite для чинного API в ізольованому інтеграційному тесті.
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Development");
             builder.UseSetting("Database:Provider", "Sqlite");
             builder.UseSetting("Database:ConnectionString", $"Data Source={databasePath};Pooling=False");
         }
+        // Зупиняє тестовий API та прибирає файли тимчасової SQLite-бази.
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);

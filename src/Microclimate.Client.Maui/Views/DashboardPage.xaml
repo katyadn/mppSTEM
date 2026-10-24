@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!-- Огляд кімнат із пагінацією; команди елементів звертаються до типізованої ViewModel сторінки. -->
+
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
  xmlns:vm="clr-namespace:Microclimate.Client.Core.ViewModels;assembly=Microclimate.Client.Core" xmlns:cards="clr-namespace:Microclimate.Client.Core.Presentation;assembly=Microclimate.Client.Core" xmlns:views="clr-namespace:Microclimate.Client.Maui.Views" x:Name="PageRoot" x:Class="Microclimate.Client.Maui.Views.DashboardPage"
  x:DataType="vm:DashboardViewModel" Title="{Binding Title}">

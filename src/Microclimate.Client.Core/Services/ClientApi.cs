@@ -10,26 +10,40 @@ using Microclimate.Contracts.Rooms;
 
 namespace Microclimate.Client.Core.Services;
 
+// Помилка клієнтського запиту з повідомленням для користувача та необов’язковим HTTP-статусом.
 public sealed class ClientApiException(string message, HttpStatusCode? statusCode = null) : Exception(message)
 {
+    // HTTP-статус відповіді; null для локальної помилки або недоступності мережі.
     public HttpStatusCode? StatusCode { get; } = statusCode;
 }
 
+// Контракт клієнтських HTTP-сценаріїв: вхід, кімнати, аналітика та сповіщення.
 public interface IClientApi
 {
+    // Виконує вхід і завантажує профіль; у сесії зберігається лише access-токен із терміном дії.
     Task LoginAsync(string email, string password, CancellationToken cancellationToken);
+    // Перевіряє придатність збереженої сесії та оновлює профіль через auth/me.
     Task<bool> RestoreSessionAsync(CancellationToken cancellationToken);
+    // Отримує сторінку кімнат; відсутні в серверній відповіді виміри позначає як NoData.
     Task<PagedResponse<RoomSummaryResponse>> GetRoomsAsync(int page, CancellationToken cancellationToken);
+    // Отримує поточні дані кімнати за ідентифікатором.
     Task<RoomResponse> GetRoomAsync(Guid roomId, CancellationToken cancellationToken);
+    // Обирає статистику запитаної метрики з серверного масиву; за її відсутності повертає Count = 0 і null-значення.
     Task<MetricSummaryResponse> GetSummaryAsync(Guid roomId, MetricType metric, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken);
+    // Отримує часовий ряд із погодинними інтервалами до однієї доби включно та денними для довших періодів.
     Task<IReadOnlyList<SeriesPointResponse>> GetSeriesAsync(Guid roomId, MetricType metric, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken);
+    // Отримує поточний індекс і категорію комфорту, обчислені сервером.
     Task<ComfortIndexResponse> GetComfortAsync(Guid roomId, CancellationToken cancellationToken);
+    // Отримує сторінку сповіщень із необов’язковими фільтрами рівня та стану.
     Task<PagedResponse<AlertResponse>> GetAlertsAsync(int page, AlertLevel? level, AlertStatus? status, CancellationToken cancellationToken);
+    // Надсилає підтвердження сповіщення; остаточну перевірку прав виконує сервер.
     Task AcknowledgeAsync(Guid alertId, CancellationToken cancellationToken);
 }
 
+// Виконує запити до api/v1, прив’язує access-сесію до сервера та перетворює помилки HTTP на зрозумілі повідомлення.
 public sealed class ClientApi(HttpClient http, IClientSettings settings, ClientSession session, TimeProvider clock) : IClientApi
 {
+    // Виконує вхід і завантажує профіль; у сесії зберігається лише access-токен із терміном дії.
     public async Task LoginAsync(string email, string password, CancellationToken cancellationToken)
     {
         var server = ApiAddress.Normalize(settings.ApiAddress);
@@ -47,6 +61,7 @@ public sealed class ClientApi(HttpClient http, IClientSettings settings, ClientS
         await session.SaveAsync(new StoredSession(server, tokens.AccessToken, clock.GetUtcNow().AddSeconds(tokens.ExpiresIn), user)).ConfigureAwait(false);
     }
 
+    // Перевіряє придатність збереженої сесії та оновлює профіль через auth/me.
     public async Task<bool> RestoreSessionAsync(CancellationToken cancellationToken)
     {
         var server = ApiAddress.Normalize(settings.ApiAddress);
@@ -57,6 +72,7 @@ public sealed class ClientApi(HttpClient http, IClientSettings settings, ClientS
         return true;
     }
 
+    // Отримує сторінку кімнат; відсутні в серверній відповіді виміри позначає як NoData.
     public async Task<PagedResponse<RoomSummaryResponse>> GetRoomsAsync(int page, CancellationToken cancellationToken)
     {
         // Чинний API повертає RoomResponse без останніх вимірів і статусу.
@@ -65,34 +81,43 @@ public sealed class ClientApi(HttpClient http, IClientSettings settings, ClientS
             room.Id, Guid.Empty, "", room.Name, room.Floor, room.Type, "NoData", [])).ToList();
         return new(items, rooms.Page, rooms.PageSize, rooms.TotalCount);
     }
+    // Отримує поточні дані кімнати за ідентифікатором.
     public Task<RoomResponse> GetRoomAsync(Guid roomId, CancellationToken cancellationToken) => GetAsync<RoomResponse>($"rooms/{roomId:D}", cancellationToken);
+    // Обирає статистику запитаної метрики з серверного масиву; за її відсутності повертає Count = 0 і null-значення.
     public async Task<MetricSummaryResponse> GetSummaryAsync(Guid roomId, MetricType metric, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
     {
         var summaries = await GetAsync<List<MetricSummaryResponse>>($"rooms/{roomId:D}/analytics/summary?{PeriodQuery(metric, from, until)}", cancellationToken).ConfigureAwait(false);
         return summaries.FirstOrDefault(summary => summary.Metric == metric)
             ?? new MetricSummaryResponse(metric, 0, null, null, null, null);
     }
+    // Отримує часовий ряд із погодинними інтервалами до однієї доби включно та денними для довших періодів.
     public async Task<IReadOnlyList<SeriesPointResponse>> GetSeriesAsync(Guid roomId, MetricType metric, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken) =>
         await GetAsync<List<SeriesPointResponse>>($"rooms/{roomId:D}/analytics/series?{PeriodQuery(metric, from, until)}&interval={((until - from).TotalDays <= 1 ? "hour" : "day")}", cancellationToken).ConfigureAwait(false);
+    // Отримує поточний індекс і категорію комфорту, обчислені сервером.
     public Task<ComfortIndexResponse> GetComfortAsync(Guid roomId, CancellationToken cancellationToken) => GetAsync<ComfortIndexResponse>($"rooms/{roomId:D}/analytics/comfort", cancellationToken);
+    // Отримує сторінку сповіщень із необов’язковими фільтрами рівня та стану.
     public Task<PagedResponse<AlertResponse>> GetAlertsAsync(int page, AlertLevel? level, AlertStatus? status, CancellationToken cancellationToken) =>
         GetAsync<PagedResponse<AlertResponse>>($"alerts?page={page}&pageSize=20" +
             (level is null ? "" : $"&level={level.ToString()!.ToLowerInvariant()}") +
             (status is null ? "" : $"&status={status.ToString()!.ToLowerInvariant()}"), cancellationToken);
+    // Надсилає підтвердження сповіщення; остаточну перевірку прав виконує сервер.
     public async Task AcknowledgeAsync(Guid alertId, CancellationToken cancellationToken)
     {
         using var response = await SendAsync(HttpMethod.Post, $"alerts/{alertId:D}/acknowledge", cancellationToken).ConfigureAwait(false);
     }
 
+    // Формує query-параметри метрики та меж періоду в UTC ISO 8601 з URI-кодуванням.
     private static string PeriodQuery(MetricType metric, DateTimeOffset from, DateTimeOffset until) =>
         $"metric={metric.ToString().ToLowerInvariant()}&from={Uri.EscapeDataString(from.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture))}&to={Uri.EscapeDataString(until.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture))}";
 
+    // Виконує авторизований GET і десеріалізує тіло, звільняючи HTTP-відповідь.
     private async Task<T> GetAsync<T>(string path, CancellationToken cancellationToken) where T : class
     {
         using var response = await SendAsync(HttpMethod.Get, path, cancellationToken).ConfigureAwait(false);
         return await ReadAsync<T>(response, cancellationToken).ConfigureAwait(false);
     }
 
+    // Читає JSON через згенеровані метадані; порожнє або некоректне тіло перетворює на ClientApiException.
     private static async Task<T> ReadAsync<T>(HttpResponseMessage response, CancellationToken cancellationToken) where T : class
     {
         try
@@ -104,6 +129,7 @@ public sealed class ClientApi(HttpClient http, IClientSettings settings, ClientS
         catch (JsonException) { throw new ClientApiException("Формат відповіді сервера не відповідає контракту."); }
     }
 
+    // Додає Bearer-токен для потрібного сервера; HTTP 401 очищає сесію, 403 зберігає її, помилки мережі та валідації локалізуються.
     private async Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, CancellationToken cancellationToken,
         LoginRequest? body = null, string? server = null, bool anonymous = false, string? explicitToken = null)
     {

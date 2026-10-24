@@ -1,12 +1,16 @@
 namespace Microclimate.Client.Core.Services;
 
+// Налаштування кореневої адреси API, незалежні від платформного сховища.
 public interface IClientSettings
 {
+    // Коренева адреса сервера; ClientApi додає до неї api/v1/.
     string ApiAddress { get; set; }
 }
 
+// Перевіряє адресу сервера: HTTPS для віддалених вузлів, HTTP лише для локальної розробки.
 public static class ApiAddress
 {
+    // Перевіряє абсолютну адресу без credentials, query та fragment; додає завершальний слеш.
     public static string Normalize(string address)
     {
         if (!Uri.TryCreate(address?.Trim(), UriKind.Absolute, out var uri) ||
