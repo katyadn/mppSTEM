@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
- xmlns:vm="clr-namespace:Microclimate.Client.Core.ViewModels;assembly=Microclimate.Client.Core" xmlns:items="clr-namespace:Microclimate.Client.Core.Presentation;assembly=Microclimate.Client.Core" x:Name="PageRoot" x:Class="Microclimate.Client.Maui.Views.AlertsPage"
+ xmlns:vm="clr-namespace:Microclimate.Client.Core.ViewModels;assembly=Microclimate.Client.Core" xmlns:items="clr-namespace:Microclimate.Client.Core.Presentation;assembly=Microclimate.Client.Core" xmlns:views="clr-namespace:Microclimate.Client.Maui.Views" x:Name="PageRoot" x:Class="Microclimate.Client.Maui.Views.AlertsPage"
  x:DataType="vm:AlertsViewModel" Title="{Binding Title}">
 
 <Grid Padding="20" RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="10">
@@ -16,8 +16,8 @@
 <CollectionView.EmptyView><Label Text="Список сповіщень порожній. Оновіть список або змініть фільтр." Margin="0,20" /></CollectionView.EmptyView>
 <CollectionView.ItemTemplate><DataTemplate x:DataType="items:AlertItem"><Border Padding="16" Margin="0,0,0,12"><VerticalStackLayout Spacing="8">
 <Label Text="{Binding Message}" FontAttributes="Bold" /><Label Text="{Binding Details}" /><Label Text="{Binding Status}" />
-<Button Text="Кімната" Command="{Binding Source={x:Reference PageRoot}, Path=BindingContext.OpenRoomCommand, x:DataType=ContentPage}" CommandParameter="{Binding .}" />
-<Button Text="Підтвердити" IsVisible="{Binding CanAcknowledge}" Command="{Binding Source={x:Reference PageRoot}, Path=BindingContext.AcknowledgeCommand, x:DataType=ContentPage}" CommandParameter="{Binding .}" />
+<Button Text="Кімната" Command="{Binding Source={x:Reference PageRoot}, Path=ViewModel.OpenRoomCommand, x:DataType=views:AlertsPage}" CommandParameter="{Binding .}" />
+<Button Text="Підтвердити" IsVisible="{Binding CanAcknowledge}" Command="{Binding Source={x:Reference PageRoot}, Path=ViewModel.AcknowledgeCommand, x:DataType=views:AlertsPage}" CommandParameter="{Binding .}" />
 </VerticalStackLayout></Border></DataTemplate></CollectionView.ItemTemplate>
 <CollectionView.Footer><Button Text="Завантажити ще" Command="{Binding LoadMoreCommand}" IsVisible="{Binding HasMore}" IsEnabled="{Binding IsNotBusy}" /></CollectionView.Footer>
 </CollectionView></RefreshView></Grid></ContentPage>

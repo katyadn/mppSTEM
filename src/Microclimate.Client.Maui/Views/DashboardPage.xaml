@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
- xmlns:vm="clr-namespace:Microclimate.Client.Core.ViewModels;assembly=Microclimate.Client.Core" xmlns:cards="clr-namespace:Microclimate.Client.Core.Presentation;assembly=Microclimate.Client.Core" x:Name="PageRoot" x:Class="Microclimate.Client.Maui.Views.DashboardPage"
+ xmlns:vm="clr-namespace:Microclimate.Client.Core.ViewModels;assembly=Microclimate.Client.Core" xmlns:cards="clr-namespace:Microclimate.Client.Core.Presentation;assembly=Microclimate.Client.Core" xmlns:views="clr-namespace:Microclimate.Client.Maui.Views" x:Name="PageRoot" x:Class="Microclimate.Client.Maui.Views.DashboardPage"
  x:DataType="vm:DashboardViewModel" Title="{Binding Title}">
 
 <Grid Padding="20" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12">
@@ -14,7 +14,7 @@
 <VerticalStackLayout Spacing="8">
 <Label Text="{Binding Name}" FontSize="22" FontAttributes="Bold" />
 <Label Text="{Binding StatusText}" /><Label Text="{Binding MetricsText}" />
-<Button Text="Деталі кімнати" Command="{Binding Source={x:Reference PageRoot}, Path=BindingContext.OpenSelectedRoomCommand, x:DataType=ContentPage}" CommandParameter="{Binding .}" />
+<Button Text="Деталі кімнати" Command="{Binding Source={x:Reference PageRoot}, Path=ViewModel.OpenSelectedRoomCommand, x:DataType=views:DashboardPage}" CommandParameter="{Binding .}" />
 </VerticalStackLayout></Border></DataTemplate></CollectionView.ItemTemplate>
 <CollectionView.Footer><Button Text="Завантажити ще" Command="{Binding LoadMoreCommand}" IsVisible="{Binding HasMore}" IsEnabled="{Binding IsNotBusy}" /></CollectionView.Footer>
 </CollectionView></RefreshView></Grid></ContentPage>
