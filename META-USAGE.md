@@ -50,28 +50,14 @@
 | **Генерація OpenAPI .NET 10** | Відсутність важкої рефлексії Swashbuckle у runtime, висока швидкість cold-start сервісу. | Потребує точного узгодження версій NuGet (`Microsoft.AspNetCore.OpenApi` та `Asp.Versioning.OpenApi`). |
 | **ШІ-асистент (Antigravity / Gemini)** | Швидке проектування специфікацій, таблиць ендпоінтів, покриття контрактів коментарями та розробка інтеграційних тестів. | Ризик генерації надлишкових допоміжних сутностей; згенерований код вимагає обов'язкової компіляції (`TreatWarningsAsErrors`), перевірки тестами та людського рев'ю. |
 
-### Ключові запити до ШІ-асистента
-- *«Сформувати специфікацію REST API v1, формат ProblemDetails (RFC 9457) та діаграми взаємодії у docs/api.md».*
-- *«Створити модель безпеки у docs/security.md: ролі, матриця прав, життєвий цикл JWT, ротація refresh-токенів, X-Device-Key».*
-- *«Спроєктувати події реального часу SignalR у docs/realtime.md та HubMethods».*
-- *«Реалізувати чистий набір DTO у Microclimate.Contracts згідно з розділом 4.1 методички без зайвих залежностей».*
-- *«Підняти хост Api з версіонуванням, Swagger UI, GlobalExceptionHandler та написати 5 інтеграційних тестів WebApplicationFactory».*
+### Згенеровані артефакти та перевірка
 
-### Згенеровані артефакти та верифікація
-
-| Файл / Артефакт | Що згенеровано агентом | Що змінено вручну / скориговано | Спосіб перевірки |
-|---|---|---|---|
-| `docs/api.md` | Таблиця ендпоінтів v1, одиниці вимірювань, ProblemDetails, дві Mermaid sequence-діаграми | Погоджено структуру з методичкою та вимогами команди | Перегляд Markdown, валідація Mermaid, рев'ю Учасниками 1 і 3 |
-| `docs/security.md` | Ролі, матриця доступу, політика ротації refresh-токенів, обґрунтування X-Device-Key та CORS | Узгоджено вимоги до сутності RefreshToken з Учасником 1 | Аналітичний перегляд моделі загроз, відповідність RFC 7519 |
-| `docs/realtime.md` | Специфікація SignalR: хаб `/hubs/alerts`, групи кімнат, події, схема автоматичного реконекту | Узгоджено формат payload із DTO клієнта | Звірка назв подій із `HubMethods`, валідація діаграми |
-| `src/Microclimate.Contracts/` (36 файлів) | Усі DTO та публічні переліки для Common, Auth, Users, Buildings, Rooms, Sensors, Measurements, Analytics, Thresholds, Alerts, Realtime, Service | Видалено зайві експериментальні типи (`RoomStatus`, `RoomType`), спрощено сигнатури | `dotnet build src/Microclimate.Contracts -c Release` (0 попереджень, 0 помилок) |
-| `src/Microclimate.Api/Program.cs` | Конфігурація хоста: версіонування URL-сегментом, SwaggerUI, HealthChecks, TimeProvider, GlobalExceptionHandler | Узгоджено налаштування OpenAPI з аналізатором `Asp.Versioning` | Збірка та інтеграційні тести |
-| `src/Microclimate.Api/Middleware/GlobalExceptionHandler.cs` | Реалізація `IExceptionHandler` з генерацією ProblemDetails та маскуванням detail у Production | Додано витягування Activity TraceId | Перевірка в інтеграційному тесті 404/500 |
-| `src/Microclimate.Api/Controllers/V1/PingController.cs` | Контролер діагностики з версіонуванням 1.0 та TimeProvider | Додано атрибути `[ApiVersion("1.0")]` та `[ProducesResponseType]` | Інтеграційний тест `Ping_V1_ReturnsOkWithVersion` |
-| `tests/Microclimate.Api.IntegrationTests/` | 5 інтеграційних тестів на базі `WebApplicationFactory<Program>` | Налаштовано локальний `.editorconfig` для CA1707 (рішення D-1-010) | `dotnet test tests/Microclimate.Api.IntegrationTests -c Release` (5/5 успішно) |
-| `Directory.Packages.props` | Додано версії `Swashbuckle.AspNetCore.SwaggerUI`, `Asp.Versioning.Mvc`, `Asp.Versioning.OpenApi`, `Microsoft.AspNetCore.Mvc.Testing` | Оновлено `Microsoft.AspNetCore.OpenApi` до 10.0.10 для усунення downgrade-попередження | `dotnet restore`, `dotnet test Microclimate.Ci.slnf` |
-| `DECISIONS.md` | Записи архітектурних рішень D-2-001 … D-2-008 | Сформульовано аргументацію та наслідки | Перегляд документації |
-
+| Артефакт | Що згенеровано | Власний внесок та перевірка |
+|---|---|---|
+| **Документація** (`docs/`) | Специфікація API, безпеки (JWT, `X-Device-Key`) та SignalR-хабу. | Узгоджено структуру з командою та методичкою. Перевірено формати та логіку. |
+| **DTO Контракти** (`Microclimate.Contracts`) | 36 DTO-моделей (запити/відповіді, переліки). | Спрощено сигнатури, прибрано зайві залежності. Збірка без попереджень (Release). |
+| **Хост API** (`src/Microclimate.Api`) | Конфігурація `Program.cs`, контролер діагностики, `GlobalExceptionHandler`. | Налаштовано OpenAPI. Логіка перевірена через Swagger та запуск проєкту. |
+| **Тести** (`Microclimate.Api.IntegrationTests`) | Інтеграційні тести перевірки статусів, версіонування та помилок 404/500. | Збірка та прогін локально і в CI (`dotnet test` — 100% успішно). |
 ### Етап 1 (Реалізація API, Безпеки, Подій та Аналітики)
 
 - **Ключові задачі Етапу 1:**
@@ -85,7 +71,6 @@
 
 > **Примітка для захисту:** Учасник 2 володіє структурою коду, алгоритмом обчислення комфорту, життєвим циклом JWT/DeviceKey та ланцюжком обробки помилок через ProblemDetails.
 
-
 ## Учасник 3
 
 - **Інструменти:** OpenAI Codex, JetBrains Rider 2026.2, .NET SDK 10.0.402, GitHub CLI.
@@ -94,7 +79,15 @@
 - написати документацію (README, опис розгортання, клієнтські макети, коментарі у коді);
 - згенерувати модульні й інтеграційні тести для клієнтської логіки, HTTP-клієнта та сценаріїв взаємодії з бекендом.
 
-### Застосовані принципи метапрограмування
+### Згенеровані артефакти та перевірка
+
+| Артефакт | Що згенеровано | Власний внесок та перевірка |
+|---|---|---|
+| **MAUI Клієнт** (`Client.Maui`) | 5 базових MVVM-екранів, навігація (AppShell), підключення DI та сервісів. | Код скомпільовано, перевірено ручну навігацію та роботу на ОС Windows. |
+| **CI/CD та GitHub** (`.github/`) | Налаштування GitHub Actions (Linux/Windows jobs), шаблони PR та Issue. | Перевірено успішним проходженням пайплайнів у репозиторії (0 помилок). |
+| **Документація UI** (`docs/ui/`) | ASCII-макети екранів, опис ролей, дій та навігації. | Макети переглянуті, логіку роботи програми узгоджено з командою. |
+| **Інфраструктура** (`Microclimate.slnx`) | Загальні налаштування (`Directory.Packages.props`, `.editorconfig`). | Виправлено конфлікти версій SDK та OpenAPI. Збірка `Release` проходить успішно. |
+### Фактична перевірка та ключові уточнення
 
 | Принцип / інструмент | Де застосовано | Переваги | Обмеження |
 |---|---|---|---|
