@@ -4,8 +4,10 @@ using Microclimate.Contracts.Common;
 
 namespace Microclimate.Client.Tests;
 
+// Перевірки клієнтських сценаріїв ViewModel без нативного інтерфейсу.
 public sealed class ClientWorkflowTests
 {
+    // Перевіряє: невалідна форма не надсилає запит, успішний вхід очищає пароль.
     [Fact]
     public async Task LoginValidationDoesNotSendRequestAndSuccessfulLoginClearsPassword()
     {
@@ -15,6 +17,7 @@ public sealed class ClientWorkflowTests
         await vm.LoginCommand.ExecuteAsync(null);
         Assert.Equal("dashboard", f.Navigation.Destination); Assert.Empty(vm.Password); Assert.False(vm.IsBusy);
     }
+    // Перевіряє: невдалий вхід залишає форму відкритою й показує помилку.
     [Fact]
     public async Task FailedLoginStaysOnFormAndShowsMessage()
     {
@@ -23,6 +26,7 @@ public sealed class ClientWorkflowTests
         await vm.LoginCommand.ExecuteAsync(null);
         Assert.True(vm.HasError); Assert.Empty(f.Navigation.Destination); Assert.Empty(vm.Password);
     }
+    // Перевіряє: пагінація додає кімнати, а оновлення замінює попередній список.
     [Fact]
     public async Task DashboardLoadsNextPageAndRefreshReplacesOldItems()
     {
@@ -32,6 +36,7 @@ public sealed class ClientWorkflowTests
         await vm.RefreshCommand.ExecuteAsync(null); Assert.Single(vm.Rooms);
         await vm.OpenSelectedRoomCommand.ExecuteAsync(vm.Rooms[0]); Assert.Equal(ClientFixture.RoomId, f.Navigation.RoomId);
     }
+    // Перевіряє: hTTP 401 відкриває вхід, а недоступний endpoint показує помилку на екрані.
     [Fact]
     public async Task UnauthorizedDashboardReturnsToLoginButUnavailableEndpointShowsError()
     {
@@ -41,6 +46,7 @@ public sealed class ClientWorkflowTests
         f.Reply = _ => new(HttpStatusCode.Unauthorized); await vm.RefreshCommand.ExecuteAsync(null);
         Assert.Equal("login", f.Navigation.Destination);
     }
+    // Перевіряє: деталі використовують вибраний період і зберігають розрив графіка.
     [Fact]
     public async Task RoomDetailsUseSelectedPeriodAndPreserveChartGap()
     {
@@ -52,6 +58,7 @@ public sealed class ClientWorkflowTests
         Assert.Contains("ppm", vm.SummaryText, StringComparison.Ordinal);
         Assert.Contains(f.Requests, request => request.Uri.Query.Contains("metric=co2", StringComparison.Ordinal));
     }
+    // Перевіряє: невдалий новий запит аналітики не залишає старий графік.
     [Fact]
     public async Task FailedNewAnalyticsRequestClearsOldChart()
     {
@@ -60,6 +67,7 @@ public sealed class ClientWorkflowTests
         f.Reply = _ => new(HttpStatusCode.InternalServerError); await vm.RefreshCommand.ExecuteAsync(null);
         Assert.Empty(vm.Series); Assert.True(vm.HasNoSeries); Assert.True(vm.HasError);
     }
+    // Перевіряє: можливість підтвердження сповіщення залежить від ролі користувача.
     [Theory]
     [InlineData(UserRole.Operator, true)]
     [InlineData(UserRole.Admin, true)]
@@ -73,6 +81,7 @@ public sealed class ClientWorkflowTests
         if (permitted) Assert.False(Assert.Single(vm.Alerts).CanAcknowledge);
         else Assert.True(vm.HasError);
     }
+    // Перевіряє: вибрані фільтри сповіщень передаються в API.
     [Fact]
     public async Task AlertsPassSelectedFiltersToServer()
     {
@@ -81,6 +90,7 @@ public sealed class ClientWorkflowTests
         var request = Assert.Single(f.Requests);
         Assert.Contains("level=critical", request.Uri.Query, StringComparison.Ordinal); Assert.Contains("status=open", request.Uri.Query, StringComparison.Ordinal);
     }
+    // Перевіряє: зміна сервера очищає сесію, а некоректна адреса не змінює налаштувань.
     [Fact]
     public async Task ChangingApiAddressClearsSessionAndInvalidAddressDoesNotChangeSettings()
     {
@@ -90,12 +100,14 @@ public sealed class ClientWorkflowTests
         vm.ServerAddress = "https://new.example.test"; await vm.SaveCommand.ExecuteAsync(null);
         Assert.Null(f.Session.Current); Assert.Equal("login", f.Navigation.Destination); Assert.Equal("https://new.example.test/", f.Settings.ApiAddress);
     }
+    // Перевіряє: вихід видаляє збережену сесію.
     [Fact]
     public async Task LogoutRemovesStoredSession()
     {
         using var f = new ClientFixture(); await f.SignInAsync(); var vm = new SettingsViewModel(f.Settings, f.Session, f.Navigation);
         await vm.LogoutCommand.ExecuteAsync(null); Assert.Null(f.Store.Value); Assert.Null(f.Session.Current); Assert.Equal("login", f.Navigation.Destination);
     }
+    // Перевіряє: вихід зі сторінки скасовує запит без повідомлення про помилку.
     [Fact]
     public async Task LeavingPageCancelsPendingRequestWithoutShowingError()
     {
@@ -103,6 +115,7 @@ public sealed class ClientWorkflowTests
         var load = vm.InitializeAsync(); await f.Started.Task.WaitAsync(TimeSpan.FromSeconds(5));
         vm.CancelPending(); await load; Assert.False(vm.IsBusy); Assert.False(vm.HasError); Assert.Empty(vm.Rooms);
     }
+    // Перевіряє: невдале оновлення не показує кімнати попереднього облікового запису.
     [Fact]
     public async Task FailedRefreshDoesNotExposePreviousAccountRooms()
     {

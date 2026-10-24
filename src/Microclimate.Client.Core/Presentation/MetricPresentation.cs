@@ -2,8 +2,10 @@ using Microclimate.Contracts.Common;
 
 namespace Microclimate.Client.Core.Presentation;
 
+// Зіставляє серверні типи метрик з українськими назвами та одиницями.
 public static class MetricPresentation
 {
+    // Повертає українську назву метрики або її текстове значення для невідомого типу.
     public static string MetricName(MetricType metric) => metric switch
     {
         MetricType.Temperature => "Температура",
@@ -15,6 +17,7 @@ public static class MetricPresentation
         _ => "Невідома метрика",
     };
 
+    // Повертає одиницю вимірювання метрики або порожній рядок для невідомого типу.
     public static string MetricUnit(MetricType metric) => metric switch
     {
         MetricType.Temperature => "°C",

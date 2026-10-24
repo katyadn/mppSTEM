@@ -7,8 +7,10 @@ using Microclimate.Client.Maui.Views;
 
 namespace Microclimate.Client.Maui;
 
+// Точка спільної конфігурації MAUI: шрифти, журналювання та залежності клієнта.
 public static class MauiProgram
 {
+    // Реєструє шрифти, singleton-сервіси HTTP/сесії та окремі екземпляри сторінок і ViewModel.
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();

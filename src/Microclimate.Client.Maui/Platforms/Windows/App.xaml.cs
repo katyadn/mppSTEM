@@ -5,19 +5,15 @@ using Microsoft.UI.Xaml;
 
 namespace Microclimate.Client.Maui.WinUI;
 
-/// <summary>
-/// Provides application-specific behavior to supplement the default Application class.
-/// </summary>
+// Точка входу Windows WinUI, що підключає спільну конфігурацію MAUI.
 public partial class App : MauiWinUIApplication
 {
-	/// <summary>
-	/// Initializes the singleton application object.  This is the first line of authored code
-	/// executed, and as such is the logical equivalent of main() or WinMain().
-	/// </summary>
+	// Ініціалізує XAML-ресурси Windows-застосунку перед створенням MAUI.
 	public App()
 	{
 		this.InitializeComponent();
 	}
 
+	// Створює MAUI-застосунок зі спільною конфігурацією залежностей.
 	protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
 }

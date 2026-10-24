@@ -6,12 +6,18 @@ using Microclimate.Client.Core.ViewModels;
 
 namespace Microclimate.Client.Tests;
 
+// Тимчасовий HTTP-сервер на localhost для перевірки справжнього мережевого транспорту.
 internal sealed class LoopbackServer : IAsyncDisposable
 {
+    // Слухач HTTP-запитів на тимчасовому локальному порту.
     private readonly HttpListener listener = new();
+    // Фоновий цикл приймання й обробки локальних запитів.
     private readonly Task loop;
+    // Коренева адреса тимчасового localhost-сервера.
     public string Address { get; }
+    // Знімки отриманих запитів для перевірки HTTP-поведінки.
     public List<SeenRequest> Requests { get; } = [];
+    // Резервує локальний порт і запускає цикл обробки HTTP-запитів.
     public LoopbackServer(Func<SeenRequest, HttpResponseMessage> respond)
     {
         var portProbe = new TcpListener(IPAddress.Loopback, 0);
@@ -45,6 +51,7 @@ internal sealed class LoopbackServer : IAsyncDisposable
             }
         });
     }
+    // Зупиняє слухач і очікує завершення циклу запитів із обмеженням часу.
     public async ValueTask DisposeAsync()
     {
         listener.Stop(); listener.Close();
@@ -52,8 +59,10 @@ internal sealed class LoopbackServer : IAsyncDisposable
     }
 }
 
+// Перевірки сценаріїв і захисту облікових даних через справжній локальний HTTP.
 public sealed class LoopbackWorkflowTests
 {
+    // Перевіряє: основні клієнтські сценарії проходять через справжній локальний HTTP.
     [Fact]
     public async Task ClientCompletesMainWorkflowsThroughRealLocalHttp()
     {
@@ -76,6 +85,7 @@ public sealed class LoopbackWorkflowTests
         Assert.All(server.Requests.Where(request => !request.Uri.AbsolutePath.EndsWith("auth/login", StringComparison.Ordinal)), request => Assert.Equal("Bearer fixture-token", request.Authorization));
     }
 
+    // Перевіряє: hTTP redirect не пересилає облікові дані входу на інший маршрут.
     [Fact]
     public async Task RedirectDoesNotForwardLoginCredentials()
     {

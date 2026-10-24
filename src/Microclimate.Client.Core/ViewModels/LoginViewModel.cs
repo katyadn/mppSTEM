@@ -5,19 +5,26 @@ using Microclimate.Client.Core.Services;
 
 namespace Microclimate.Client.Core.ViewModels;
 
+// Перевіряє форму входу, відновлює сесію та очищає пароль після спроби авторизації.
 public partial class LoginViewModel : BaseViewModel
 {
+    // Клієнтський API для завантаження даних екрана.
     private readonly IClientApi api;
+    // Ініціалізує LoginViewModel та його залежності для клієнтського сценарію.
     public LoginViewModel(IClientApi api, INavigationService navigation) : base(navigation)
     { this.api = api; Title = "Вхід"; }
+    // Спостережувана адреса пошти з форми входу.
     [ObservableProperty] private string email = string.Empty;
+    // Пароль лише в пам’яті форми; очищається після спроби входу.
     [ObservableProperty] private string password = string.Empty;
 
+    // Намагається відновити чинну сесію та відкрити огляд без повторного введення пароля.
     public override Task InitializeAsync() => RunAsync(async token =>
     {
         if (await api.RestoreSessionAsync(token)) await Navigation.GoToDashboardAsync();
     }, false);
 
+    // Перевіряє email і пароль, виконує вхід та очищає пароль у finally незалежно від результату.
     [RelayCommand]
     private Task LoginAsync() => RunAsync(async token =>
     {
@@ -35,6 +42,7 @@ public partial class LoginViewModel : BaseViewModel
         finally { Password = string.Empty; }
     }, false);
 
+    // Відкриває налаштування адреси сервера з екрана входу.
     [RelayCommand]
     private Task OpenSettingsAsync() => Navigation.GoToSettingsAsync();
 }

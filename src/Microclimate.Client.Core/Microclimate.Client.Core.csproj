@@ -1,4 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <!-- Платформно незалежні HTTP, сесія, презентація та MVVM; DTO надходять із Contracts. -->
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <ProjectReference Include="../Microclimate.Contracts/Microclimate.Contracts.csproj" />

@@ -5,8 +5,10 @@ using Microclimate.Contracts.Rooms;
 namespace Microclimate.Client.Core.Presentation;
 
 // Клієнт працює з кімнатами; поля будівлі зі старого DTO не використовуються.
+// Дані картки кімнати без залежності інтерфейсу від застарілих полів будівлі.
 public sealed record RoomCard(Guid Id, string Name, int Floor, string? Type, string StatusText, string MetricsText)
 {
+    // Створює картку з доступних вимірів і серверного статусу, ігноруючи legacy-поля будівлі.
     public static RoomCard FromResponse(RoomSummaryResponse room)
     {
         ArgumentNullException.ThrowIfNull(room);

@@ -1,3 +1,5 @@
+# Без профілю запускається лише PostgreSQL; --profile app додає API та Worker.
+# Значення з deploy/.env залишаються локальними й не комітяться.
 services:
   db:
     image: postgres:17-alpine
@@ -5,6 +7,7 @@ services:
       POSTGRES_DB: microclimate
       POSTGRES_USER: microclimate
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in deploy/.env}
+    # Порт БД доступний тільки з цього комп’ютера.
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -15,6 +18,7 @@ services:
       timeout: 3s
       retries: 10
 
+  # Development потрібен для локального демонстраційного запуску; це не production-конфігурація.
   api:
     profiles: [app]
     build:
@@ -31,6 +35,7 @@ services:
       db:
         condition: service_healthy
 
+  # Залежності задають порядок запуску; Worker поки не генерує вимірів.
   simulator:
     profiles: [app]
     build:
@@ -45,5 +50,6 @@ services:
       api:
         condition: service_started
 
+# Іменований том зберігає дані БД між звичайними перезапусками контейнера.
 volumes:
   postgres-data:
