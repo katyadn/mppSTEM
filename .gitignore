@@ -488,5 +488,8 @@ TestResults/
 coveragereport/
 .DS_Store
 
+# Local deployment credentials
+deploy/.env
+
 # Локальна БД SQLite
 microclimate.db*

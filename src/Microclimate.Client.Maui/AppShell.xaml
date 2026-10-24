@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!-- Маршрути входу та головних вкладок; вміст сторінок створюється через DI в AppShell. -->
+
 <Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
        x:Class="Microclimate.Client.Maui.AppShell"
@@ -10,13 +12,13 @@
         </Tab>
     </TabBar>
     <TabBar Route="main">
-        <Tab Route="dashboard" Title="Огляд">
+        <Tab Route="dashboard" Icon="tab_overview.png" Title="Огляд">
             <ShellContent x:Name="DashboardContent" Route="dashboard-page" Title="Огляд" />
         </Tab>
-        <Tab Route="alerts" Title="Сповіщення">
+        <Tab Route="alerts" Icon="tab_alerts.png" Title="Сповіщення">
             <ShellContent x:Name="AlertsContent" Route="alerts-page" Title="Сповіщення" />
         </Tab>
-        <Tab Route="settings" Title="Налаштування">
+        <Tab Route="settings" Icon="tab_settings.png" Title="Налаштування">
             <ShellContent x:Name="SettingsContent" Route="settings-page" Title="Налаштування" />
         </Tab>
     </TabBar>

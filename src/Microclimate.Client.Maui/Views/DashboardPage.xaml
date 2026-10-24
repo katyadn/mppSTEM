@@ -1,17 +1,22 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:Microclimate.Client.Maui.ViewModels"
-             x:Class="Microclimate.Client.Maui.Views.DashboardPage"
-             x:DataType="vm:DashboardViewModel"
-             Title="{Binding Title}">
-    <ScrollView>
-        <VerticalStackLayout Padding="24" Spacing="16">
-            <Label Text="{Binding Title}" FontSize="28" FontAttributes="Bold"
-                   SemanticProperties.HeadingLevel="Level1" />
-            <Label Text="Екран у розробці (Етап 1)" />
-            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-            <Button Text="Відкрити деталі кімнати" Command="{Binding OpenRoomCommand}" />
-        </VerticalStackLayout>
-    </ScrollView>
-</ContentPage>
+<!-- Огляд кімнат із пагінацією; команди елементів звертаються до типізованої ViewModel сторінки. -->
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+ xmlns:vm="clr-namespace:Microclimate.Client.Core.ViewModels;assembly=Microclimate.Client.Core" xmlns:cards="clr-namespace:Microclimate.Client.Core.Presentation;assembly=Microclimate.Client.Core" xmlns:views="clr-namespace:Microclimate.Client.Maui.Views" x:Name="PageRoot" x:Class="Microclimate.Client.Maui.Views.DashboardPage"
+ x:DataType="vm:DashboardViewModel" Title="{Binding Title}">
+
+<Grid Padding="20" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12">
+<Label Text="Огляд кімнат" FontSize="28" FontAttributes="Bold" />
+<Label Grid.Row="1" Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" TextColor="#B00020" />
+<Button Grid.Row="2" Text="Оновити" Command="{Binding RefreshCommand}" IsEnabled="{Binding IsNotBusy}" />
+<RefreshView Grid.Row="3" Command="{Binding RefreshCommand}" IsRefreshing="{Binding IsBusy, Mode=OneWay}">
+<CollectionView ItemsSource="{Binding Rooms}" SelectionMode="None">
+<CollectionView.EmptyView><Label Text="Кімнат немає. Оновіть список або перевірте з’єднання." Margin="0,20" /></CollectionView.EmptyView>
+<CollectionView.ItemTemplate><DataTemplate x:DataType="cards:RoomCard"><Border Padding="16" Margin="0,0,0,12">
+<VerticalStackLayout Spacing="8">
+<Label Text="{Binding Name}" FontSize="22" FontAttributes="Bold" />
+<Label Text="{Binding StatusText}" /><Label Text="{Binding MetricsText}" />
+<Button Text="Деталі кімнати" Command="{Binding Source={x:Reference PageRoot}, Path=ViewModel.OpenSelectedRoomCommand, x:DataType=views:DashboardPage}" CommandParameter="{Binding .}" />
+</VerticalStackLayout></Border></DataTemplate></CollectionView.ItemTemplate>
+<CollectionView.Footer><Button Text="Завантажити ще" Command="{Binding LoadMoreCommand}" IsVisible="{Binding HasMore}" IsEnabled="{Binding IsNotBusy}" /></CollectionView.Footer>
+</CollectionView></RefreshView></Grid></ContentPage>

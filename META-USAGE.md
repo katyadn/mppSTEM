@@ -73,11 +73,11 @@
 
 ## Учасник 3
 
-- **Інструменти:** OpenAI Codex (GPT-6), JetBrains Rider 2026.2.3.1, .NET CLI 10.0.300.
-- **Запит:** виконати Етап 0 за participant-3-stage-0.md, під’єднати katyadn/mppSTEM у Rider; встановити залежності та самостійно виконати технічну роботу.
-- **Шаблони dotnet new:** створили solution, бібліотеки, API, worker, MAUI і xUnit-проєкти; перевага — стандартна структура, обмеження — демонстраційний код і залежності треба перевіряти.
-- **ШІ:** створив каркас, конфігурацію та документацію; перевага — швидкість і узгодженість, обмеження — генерація не доводить коректність, потрібні збірка, тести та рев’ю.
-- **CommunityToolkit.Mvvm 8.4.2:** `[ObservableProperty]` генерує властивості IsBusy/Title з повідомленнями змін; `[RelayCommand]` генерує ICommand з методів. Переваги — менше повторюваного коду і async commands; обмеження — потрібні partial-класи та перевірка згенерованих імен і binding на збірці.
+- **Інструменти:** OpenAI Codex, JetBrains Rider 2026.2, .NET SDK 10.0.402, GitHub CLI.
+- **Ключові запити:** зробити code review клієнтського коду, конфігурацій CI/CD та Docker;
+- перевірити дотримання MVVM, відсутність витоків стану між сесіями та коректність обробки помилок API;
+- написати документацію (README, опис розгортання, клієнтські макети, коментарі у коді);
+- згенерувати модульні й інтеграційні тести для клієнтської логіки, HTTP-клієнта та сценаріїв взаємодії з бекендом.
 
 ### Згенеровані артефакти та перевірка
 
@@ -89,14 +89,20 @@
 | **Інфраструктура** (`Microclimate.slnx`) | Загальні налаштування (`Directory.Packages.props`, `.editorconfig`). | Виправлено конфлікти версій SDK та OpenAPI. Збірка `Release` проходить успішно. |
 ### Фактична перевірка та ключові уточнення
 
-- Restore і Release build CI-фільтра: успіх, 0 warnings/0 errors. Чотири тестові заглушки проходять. Звіт покриття створено; предметного покриття це не доводить.
-- Запит до агента уточнено: користувач доручив самостійно встановити інструменти та виконати всю технічну роботу. Установлено MAUI, GitHub CLI і Docker Desktop; GitHub операції використовують уже збережені облікові дані. Перші операції не вимагали нових GitHub дозволів. Пізніше людина окремо погодила OAuth-доступ GitHub CLI та завершила авторизацію у браузері; CLI підтвердив постійний вхід як dimatsenko.
-- Помилки генерації виправлено: NuGet Audit/OpenAPI 2.0.0 → 2.7.5, конфлікт Logging.Debug → 10.0.8, шаблонний лог-параметр Worker `{time}` → `{Time}`. Ім’я Placeholder_ShouldPass має вузько обґрунтований виняток CA1707 за вимогою завдання.
-- Платформне налаштування MauiTargetFramework виправлено після виявлення поширення глобального TargetFrameworks на Contracts; тепер Contracts залишається net10.0.
-- Windows CI pipeline успішний; статус фінального MAUI-каркасу дивитися у PR. macOS C#/XAML скомпілювалися з preview SDK, але повний build/run завершився помилкою native linker через Xcode/SDK; Windows UI-виконання не перевірено.
-- Швидкий старт на чистому клоні, фінальні CI statuses та ручні перевірки фіксуються в docs/stage-0-checklist.md. До людського перегляду всі ручні правки й погодження позначаються як непідтверджені.
+| Принцип / інструмент | Де застосовано | Переваги | Обмеження |
+|---|---|---|---|
+| Source Generators `CommunityToolkit.Mvvm` (`[ObservableProperty]`, `[RelayCommand]`) | `src/Microclimate.Client.Core/ViewModels` | Автоматична генерація властивостей `INotifyPropertyChanged` та команд `ICommand`/`IAsyncRelayCommand` під час компіляції без шаблонного коду | Класи мають бути `partial`; потрібно контролювати імена згенерованих властивостей і команд для прив'язки у XAML |
+| Source Generators `System.Text.Json` (`[JsonSerializable]`, `JsonSerializerContext`) | `src/Microclimate.Client.Core/Services/ClientJsonContext.cs` | Серіалізація та десеріалізація DTO без runtime-рефлексії, швидший старт і сумісність з AOT/trimming | Кожен тип DTO потрібно явно реєструвати атрибутом `[JsonSerializable]` у контексті |
+| Compiled Bindings у XAML (`x:DataType`) | `src/Microclimate.Client.Maui/Views/*.xaml` | Перевірка типів та шляхів прив’язки даних на етапі компіляції замість повільної рефлексії в runtime | Потребує явного задання `x:DataType` для сторінок і шаблонів `DataTemplate` |
+| ШІ-агент для code review, документації та тестування | `tests/Microclimate.Client.Tests`, `docs/`, коментарі у `Client.Core` та `Client.Maui` | Швидке виявлення крайових випадків (race conditions у запитах, скидання сесії на 401), повне тестове покриття клієнтських сценаріїв і узгоджена документація | Згенеровані тести й опис потребують ручної перевірки людиною на відповідність реальній поведінці UI та API |
 
-- Завершальна перевірка: чистий GitHub-клон commit bade40a пройшов restore, Release build із 0 warnings/0 errors і всі чотири тести. Фінальний код MAUI commit f6b68b7 має успішні Linux і Windows jobs у run 38288647440. Після цього оновлено Markdown-звіт та прибрано зайві пробіли стандартних шаблонів; реалізація не змінювалася.
-- Rider відкрив Microclimate.slnx і визначив /Users/dmytro/.dotnet/dotnet, SDK 10.0.300. Робочий клон: ~/RiderProjects/mppSTEM, feature/7-stage0-docs.
+### Написані та згенеровані артефакти
 
-- Додаткова перевірка README: локальний `dotnet run --project src/Microclimate.Api --launch-profile http` запустив стандартний API на localhost:5195; GET /WeatherForecast повернув HTTP 200 і п’ять шаблонних записів. Тестовий процес завершено. Команди чистого старту містять checkout повної feature-гілки до restore, доки main очікує merge.
+| Файл | Вміст |
+|---|---|
+| `src/Microclimate.Client.Core/**` | ViewModels, HTTP-клієнт `ClientApi`, сесія, моделі представлення карток кімнат, метрик, графіків і сповіщень (написано людиною, рев'ю та коментарі — ШІ) |
+| `src/Microclimate.Client.Maui/**` | Сторінки XAML, `AppShell`, кастомний графік `TimeSeriesChart`, платформні сервіси та навігація (написано людиною, рев'ю та коментарі — ШІ) |
+| `.github/**`, `deploy/**`, кореневі файли конфігурації | CI/CD workflow (`ci.yml`), шаблони Issues/PR, `Dockerfile` та `docker-compose.yml`, `Directory.Build.props`, `Directory.Packages.props` |
+| `tests/Microclimate.Client.Tests/**` | Модульні та інтеграційні тести ViewModels, `ClientApi`, форматування аналітики, loopback HTTP та взаємодії з реальним API/SQLite (згенеровано ШІ за сценаріями учасника) |
+| `README.md`, `CONTRIBUTING.md`, `docs/ui/**`, `docs/client-progress.md`, `docs/stage-0-checklist.md` | Загальна документація репозиторію, інструкції запуску, wireframes, звіти перевірок та опис клієнтської частини (згенеровано ШІ та вичитано людиною) |
+| `DECISIONS.md` | Формулювання архітектурних рішень Учасника 3 |
