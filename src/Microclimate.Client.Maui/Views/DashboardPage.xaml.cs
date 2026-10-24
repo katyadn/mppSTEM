@@ -5,12 +5,13 @@ namespace Microclimate.Client.Maui.Views;
 public partial class DashboardPage : ContentPage
 {
     private readonly DashboardViewModel viewModel;
+    public DashboardViewModel ViewModel => viewModel;
 
     public DashboardPage(DashboardViewModel viewModel)
     {
+        this.viewModel = viewModel;
         InitializeComponent();
         BindingContext = viewModel;
-        this.viewModel = viewModel;
     }
     protected override async void OnAppearing()
     {

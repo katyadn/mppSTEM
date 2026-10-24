@@ -100,20 +100,20 @@ dotnet build src/Microclimate.Client.Maui -t:Run -f net10.0-windows10.0.19041.0 
 
 Явне `MauiTargetFramework` обмежує restore платформою Windows, тому команда не потребує Android SDK. Перевірте Login → Dashboard, деталі кімнати, вкладки Alerts/Settings і вихід; додайте реальні скриншоти у `docs/ui/screenshots/stage-0/`.
 
-Поточна локальна перешкода (2026-10-18): після оновлення Xcode до 27.1 повний Mac build з workload 27.0.10722 зупиняється на перевірці сумісності; наведені нижче команди потребують саме сумісного Xcode 27.0. Новий UI-run наразі не підтверджений.
+Середовище Mac узгоджено 2026-10-24: Xcode 27.1, .NET SDK 10.0.402, workload set 10.0.402.1 та MAUI 10.0.110. Старий workload 10.0.401.1 вимагав Xcode 27.0; для Xcode 27.1 використовуйте версії нижче.
 
 ## MAUI: macOS / Android
 
-На Mac із **Xcode 27.0** використовуйте .NET SDK **10.0.401** і workload set **10.0.401.1** ([офіційний реліз](https://github.com/dotnet/macios/releases/tag/dotnet-10.0.1xx-xcode27.0-10722)). Мінімальна версія MacCatalyst — 17.0; scene lifecycle налаштований у `Platforms/MacCatalyst/`.
+На Mac із **Xcode 27.1** використовуйте .NET SDK **10.0.402** і workload set **10.0.402.1** ([офіційний реліз](https://github.com/dotnet/macios/releases/tag/dotnet-10.0.1xx-xcode27.1-10018)). MAUI-пакети зафіксовано на **10.0.110**. Мінімальна версія MacCatalyst — 17.0; scene lifecycle налаштований у `Platforms/MacCatalyst/`.
 
 ```bash
 export PATH="$HOME/.dotnet:$PATH"
-dotnet workload install maui-maccatalyst --version 10.0.401.1
+dotnet workload install maui-maccatalyst --version 10.0.402.1
 dotnet build src/Microclimate.Client.Maui -t:Rebuild -f net10.0-maccatalyst -p:MauiTargetFramework=net10.0-maccatalyst -p:RuntimeIdentifier=maccatalyst-arm64 -p:EnableCodeSigning=true -p:CodesignKey=-
 open src/Microclimate.Client.Maui/bin/Debug/net10.0-maccatalyst/maccatalyst-arm64/Мікроклімат.app
 ```
 
-`CodesignKey=-` створює локальний ad-hoc підпис для Debug-запуску. Для розповсюдження потрібний підпис розробника. Перебудова оновлює manifest після зміни SDK та конфігурації вікна. 2026-10-13 на macOS 27 перевірено вхід → огляд → деталі → назад, вкладки сповіщень/налаштувань і вихід. Це історична перевірка каркасу; нові HTTP-сценарії перевірено окремими інтеграційними тестами.
+`CodesignKey=-` створює локальний ad-hoc підпис для Debug-запуску. Для розповсюдження потрібний підпис розробника. Перебудова оновлює manifest після зміни SDK та конфігурації вікна. 2026-10-13 на macOS 27 перевірено вхід → огляд → деталі → назад, вкладки сповіщень/налаштувань і вихід. Це історична перевірка каркасу. 2026-10-24 виконано повну нативну збірку з Xcode 27.1 та UI-прогін HTTP-сценаріїв із API/SQLite; результати — у docs/ui/mac-smoke-2026-10-24.md.
 
 На Intel Mac замініть runtime на `maccatalyst-x64`. Для Android після встановлення JDK та Android SDK:
 
