@@ -84,3 +84,32 @@
   - Компіляція Release 0 Warning(s), 0 Error(s) із увімкненим `TreatWarningsAsErrors`.
 
 > **Примітка для захисту:** Учасник 2 володіє структурою коду, алгоритмом обчислення комфорту, життєвим циклом JWT/DeviceKey та ланцюжком обробки помилок через ProblemDetails.
+
+
+## Учасник 3
+
+- **Інструменти:** OpenAI Codex, JetBrains Rider 2026.2, .NET SDK 10.0.402, GitHub CLI.
+- **Ключові запити:** зробити code review клієнтського коду, конфігурацій CI/CD та Docker;
+- перевірити дотримання MVVM, відсутність витоків стану між сесіями та коректність обробки помилок API;
+- написати документацію (README, опис розгортання, клієнтські макети, коментарі у коді);
+- згенерувати модульні й інтеграційні тести для клієнтської логіки, HTTP-клієнта та сценаріїв взаємодії з бекендом.
+
+### Застосовані принципи метапрограмування
+
+| Принцип / інструмент | Де застосовано | Переваги | Обмеження |
+|---|---|---|---|
+| Source Generators `CommunityToolkit.Mvvm` (`[ObservableProperty]`, `[RelayCommand]`) | `src/Microclimate.Client.Core/ViewModels` | Автоматична генерація властивостей `INotifyPropertyChanged` та команд `ICommand`/`IAsyncRelayCommand` під час компіляції без шаблонного коду | Класи мають бути `partial`; потрібно контролювати імена згенерованих властивостей і команд для прив'язки у XAML |
+| Source Generators `System.Text.Json` (`[JsonSerializable]`, `JsonSerializerContext`) | `src/Microclimate.Client.Core/Services/ClientJsonContext.cs` | Серіалізація та десеріалізація DTO без runtime-рефлексії, швидший старт і сумісність з AOT/trimming | Кожен тип DTO потрібно явно реєструвати атрибутом `[JsonSerializable]` у контексті |
+| Compiled Bindings у XAML (`x:DataType`) | `src/Microclimate.Client.Maui/Views/*.xaml` | Перевірка типів та шляхів прив’язки даних на етапі компіляції замість повільної рефлексії в runtime | Потребує явного задання `x:DataType` для сторінок і шаблонів `DataTemplate` |
+| ШІ-агент для code review, документації та тестування | `tests/Microclimate.Client.Tests`, `docs/`, коментарі у `Client.Core` та `Client.Maui` | Швидке виявлення крайових випадків (race conditions у запитах, скидання сесії на 401), повне тестове покриття клієнтських сценаріїв і узгоджена документація | Згенеровані тести й опис потребують ручної перевірки людиною на відповідність реальній поведінці UI та API |
+
+### Написані та згенеровані артефакти
+
+| Файл | Вміст |
+|---|---|
+| `src/Microclimate.Client.Core/**` | ViewModels, HTTP-клієнт `ClientApi`, сесія, моделі представлення карток кімнат, метрик, графіків і сповіщень (написано людиною, рев'ю та коментарі — ШІ) |
+| `src/Microclimate.Client.Maui/**` | Сторінки XAML, `AppShell`, кастомний графік `TimeSeriesChart`, платформні сервіси та навігація (написано людиною, рев'ю та коментарі — ШІ) |
+| `.github/**`, `deploy/**`, кореневі файли конфігурації | CI/CD workflow (`ci.yml`), шаблони Issues/PR, `Dockerfile` та `docker-compose.yml`, `Directory.Build.props`, `Directory.Packages.props` |
+| `tests/Microclimate.Client.Tests/**` | Модульні та інтеграційні тести ViewModels, `ClientApi`, форматування аналітики, loopback HTTP та взаємодії з реальним API/SQLite (згенеровано ШІ за сценаріями учасника) |
+| `README.md`, `CONTRIBUTING.md`, `docs/ui/**`, `docs/client-progress.md`, `docs/stage-0-checklist.md` | Загальна документація репозиторію, інструкції запуску, wireframes, звіти перевірок та опис клієнтської частини (згенеровано ШІ та вичитано людиною) |
+| `DECISIONS.md` | Формулювання архітектурних рішень Учасника 3 |
