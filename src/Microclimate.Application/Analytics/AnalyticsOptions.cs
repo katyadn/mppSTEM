@@ -19,12 +19,17 @@ public static class ComfortIndexSettings
 
     public const double AcceptableFrom = 60;
 
-    public static double Weight(MetricType metric) => metric switch
+    /// <summary>Якщо критичної межі немає, відстань до неї — 20 % від межі Warning.</summary>
+    public const double MissingCriticalSpanRatio = 0.2;
+
+    // Метрики без ваги (шум, освітленість) в індексі не враховуються.
+    private static readonly Dictionary<MetricType, double> Weights = new()
     {
-        MetricType.Temperature => 0.30,
-        MetricType.Co2 => 0.30,
-        MetricType.Humidity => 0.20,
-        MetricType.Pm25 => 0.20,
-        _ => 0,
+        [MetricType.Temperature] = 0.30,
+        [MetricType.Co2] = 0.30,
+        [MetricType.Humidity] = 0.20,
+        [MetricType.Pm25] = 0.20,
     };
+
+    public static double Weight(MetricType metric) => Weights.GetValueOrDefault(metric);
 }

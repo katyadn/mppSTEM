@@ -57,11 +57,21 @@ public sealed class ClientApi(HttpClient http, IClientSettings settings, ClientS
         return true;
     }
 
-    public Task<PagedResponse<RoomSummaryResponse>> GetRoomsAsync(int page, CancellationToken cancellationToken) =>
-        GetAsync<PagedResponse<RoomSummaryResponse>>($"rooms?page={page}&pageSize=20", cancellationToken);
+    public async Task<PagedResponse<RoomSummaryResponse>> GetRoomsAsync(int page, CancellationToken cancellationToken)
+    {
+        // Чинний API повертає RoomResponse без останніх вимірів і статусу.
+        var rooms = await GetAsync<PagedResponse<RoomResponse>>($"rooms?page={page}&pageSize=20", cancellationToken).ConfigureAwait(false);
+        var items = rooms.Items.Select(room => new RoomSummaryResponse(
+            room.Id, Guid.Empty, "", room.Name, room.Floor, room.Type, "NoData", [])).ToList();
+        return new(items, rooms.Page, rooms.PageSize, rooms.TotalCount);
+    }
     public Task<RoomResponse> GetRoomAsync(Guid roomId, CancellationToken cancellationToken) => GetAsync<RoomResponse>($"rooms/{roomId:D}", cancellationToken);
-    public Task<MetricSummaryResponse> GetSummaryAsync(Guid roomId, MetricType metric, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken) =>
-        GetAsync<MetricSummaryResponse>($"rooms/{roomId:D}/analytics/summary?{PeriodQuery(metric, from, until)}", cancellationToken);
+    public async Task<MetricSummaryResponse> GetSummaryAsync(Guid roomId, MetricType metric, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
+    {
+        var summaries = await GetAsync<List<MetricSummaryResponse>>($"rooms/{roomId:D}/analytics/summary?{PeriodQuery(metric, from, until)}", cancellationToken).ConfigureAwait(false);
+        return summaries.FirstOrDefault(summary => summary.Metric == metric)
+            ?? new MetricSummaryResponse(metric, 0, null, null, null, null);
+    }
     public async Task<IReadOnlyList<SeriesPointResponse>> GetSeriesAsync(Guid roomId, MetricType metric, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken) =>
         await GetAsync<List<SeriesPointResponse>>($"rooms/{roomId:D}/analytics/series?{PeriodQuery(metric, from, until)}&interval={((until - from).TotalDays <= 1 ? "hour" : "day")}", cancellationToken).ConfigureAwait(false);
     public Task<ComfortIndexResponse> GetComfortAsync(Guid roomId, CancellationToken cancellationToken) => GetAsync<ComfortIndexResponse>($"rooms/{roomId:D}/analytics/comfort", cancellationToken);

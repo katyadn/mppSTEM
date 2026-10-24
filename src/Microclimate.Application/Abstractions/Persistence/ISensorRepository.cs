@@ -7,6 +7,8 @@ public interface ISensorRepository
 {
     Task<Sensor?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
+    Task<Sensor?> GetByDeviceKeyHashAsync(string deviceKeyHash, CancellationToken cancellationToken);
+
     Task<bool> ExistsBySerialNumberAsync(string serialNumber, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<Sensor>> ListByRoomAsync(Guid roomId, CancellationToken cancellationToken);

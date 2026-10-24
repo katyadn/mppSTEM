@@ -1,6 +1,7 @@
 using System.Net;
 using Microclimate.Client.Core.Services;
 using Microclimate.Contracts.Common;
+using Microclimate.Contracts.Analytics;
 
 namespace Microclimate.Client.Tests;
 
@@ -68,6 +69,25 @@ public sealed class ClientApiTests
         Assert.Contains("from=", request.Uri.Query, StringComparison.Ordinal);
         Assert.Contains("to=", request.Uri.Query, StringComparison.Ordinal);
         Assert.DoesNotContain("building", request.Uri.Query, StringComparison.Ordinal);
+    }
+    [Fact]
+    public async Task EmptySummaryArrayPreservesMissingMeasurements()
+    {
+        using var f = new ClientFixture(); await f.SignInAsync();
+        f.Reply = _ => ClientFixture.Json(Array.Empty<MetricSummaryResponse>());
+        var summary = await f.Api.GetSummaryAsync(ClientFixture.RoomId, MetricType.Co2, f.Clock.Now.AddDays(-1), f.Clock.Now, CancellationToken.None);
+        Assert.Equal(MetricType.Co2, summary.Metric);
+        Assert.Equal(0, summary.Count);
+        Assert.Null(summary.Avg);
+    }
+    [Fact]
+    public async Task SummarySelectsRequestedMetricFromBackendArray()
+    {
+        using var f = new ClientFixture(); await f.SignInAsync();
+        f.Reply = _ => ClientFixture.Json(new MetricSummaryResponse[] { new(MetricType.Temperature, 1, 22, 22, 22, null), new(MetricType.Co2, 1, 900, 900, 900, null) });
+        var summary = await f.Api.GetSummaryAsync(ClientFixture.RoomId, MetricType.Co2, f.Clock.Now.AddDays(-1), f.Clock.Now, CancellationToken.None);
+        Assert.Equal(MetricType.Co2, summary.Metric);
+        Assert.Equal(900, summary.Avg);
     }
     [Fact]
     public async Task ValidationProblemIsReadable()

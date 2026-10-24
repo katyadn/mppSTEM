@@ -89,9 +89,9 @@ internal sealed class ClientFixture : IDisposable
         if (path.EndsWith("/rooms", StringComparison.Ordinal))
         {
             var second = request.Uri.Query.Contains("page=2", StringComparison.Ordinal);
-            return Json(new PagedResponse<RoomSummaryResponse>([new(second ? AlertId : RoomId, Guid.Empty, "Legacy", second ? "102" : "101", 1, "Office", "Normal", [new(MetricType.Temperature, 22, Clock.Now)])], second ? 2 : 1, 20, 2));
+            return Json(new PagedResponse<RoomResponse>([new(second ? AlertId : RoomId, Guid.Empty, second ? "102" : "101", 1, 25, "Office", Clock.Now)], second ? 2 : 1, 20, 2));
         }
-        if (path.EndsWith("/summary", StringComparison.Ordinal)) return Json(new MetricSummaryResponse(MetricType.Temperature, 2, 20, 24, 22, null));
+        if (path.EndsWith("/summary", StringComparison.Ordinal)) return Json(new MetricSummaryResponse[] { new(request.Uri.Query.Contains("metric=co2", StringComparison.Ordinal) ? MetricType.Co2 : MetricType.Temperature, 2, 20, 24, 22, null) });
         if (path.EndsWith("/series", StringComparison.Ordinal)) return Json(new SeriesPointResponse[] { new(Clock.Now.AddHours(-2), 1, 20, 20, 20), new(Clock.Now.AddHours(-1), 0, null, null, null), new(Clock.Now, 1, 24, 24, 24) });
         if (path.EndsWith("/comfort", StringComparison.Ordinal)) return Json(new ComfortIndexResponse(82, ComfortCategory.Acceptable, []));
         if (path.EndsWith("/acknowledge", StringComparison.Ordinal)) { Acknowledged = true; return new(HttpStatusCode.NoContent); }

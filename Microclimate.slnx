@@ -14,5 +14,6 @@
     <Project Path="tests/Microclimate.Application.Tests/Microclimate.Application.Tests.csproj" />
     <Project Path="tests/Microclimate.Client.Tests/Microclimate.Client.Tests.csproj" />
     <Project Path="tests/Microclimate.Domain.Tests/Microclimate.Domain.Tests.csproj" />
+    <Project Path="tests/Microclimate.Infrastructure.Tests/Microclimate.Infrastructure.Tests.csproj" />
   </Folder>
 </Solution>

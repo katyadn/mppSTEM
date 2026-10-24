@@ -2,7 +2,7 @@
 
 ![CI](https://github.com/katyadn/mppSTEM/actions/workflows/ci.yml/badge.svg)
 
-Кросплатформна .NET-система для моніторингу температури, вологості, CO₂, PM2.5, шуму й освітленості. Плануються історія вимірювань, аналітика комфорту, налаштування порогів та сповіщення. Domain уже містить кімнати, датчики, виміри, пороги, сповіщення й користувачів; будівлі до моделі не входять. Клієнт має HTTP-сценарії входу, кімнат, аналітики й сповіщень за Contracts. Реальні предметні endpoints backend ще не реалізовані; статус клієнта й перевірок — у docs/client-progress.md.
+Кросплатформна .NET-система для моніторингу температури, вологості, CO₂, PM2.5, шуму й освітленості. Плануються історія вимірювань, аналітика комфорту, налаштування порогів та сповіщення. Domain уже містить кімнати, датчики, виміри, пороги, сповіщення й користувачів; будівлі до моделі не входять. Клієнт має HTTP-сценарії входу, кімнат, аналітики й сповіщень за Contracts. API вже містить JWT, кімнати, датчики, виміри, аналітику, сповіщення та користувачів; Infrastructure — EF Core для SQLite/PostgreSQL. Клієнт узгоджено з поточними відповідями сервера; статус перевірок — у docs/client-progress.md.
 
 ## Команда
 
@@ -21,8 +21,8 @@ src/
   Microclimate.Domain/            Кімнати, датчики, виміри, пороги, сповіщення, користувачі
   Microclimate.Contracts/         Спільні DTO; частина старих контрактів ще потребує узгодження
   Microclimate.Application/       Порти сховища, прийому вимірів та аналітики
-  Microclimate.Infrastructure/    Реалізації доступу до даних; порожня бібліотека
-  Microclimate.Api/               Службові endpoints /health і /api/v1/ping
+  Microclimate.Infrastructure/    EF Core, SQLite/PostgreSQL, міграції та репозиторії
+  Microclimate.Api/               REST API, JWT, прийом вимірів, аналітика й SignalR
   Microclimate.SensorSimulator/   Стандартний Worker шаблон, без симуляції датчиків
   Microclimate.Client.Core/       ViewModels, HTTP, сесія та проєкції без MAUI
   Microclimate.Client.Maui/       Кросплатформний UI, MVVM, навігація та графік із прогалинами
@@ -30,7 +30,8 @@ tests/
   Microclimate.Domain.Tests/          Тести предметної моделі
   Microclimate.Application.Tests/     Тести прикладних типів
   Microclimate.Api.IntegrationTests/  Тести службових API endpoints
-  Microclimate.Client.Tests/          Тести HTTP, сесій, ViewModels та проєкцій
+  Microclimate.Client.Tests/          HTTP, сесії, ViewModels, проєкції та інтеграція з API/SQLite
+  Microclimate.Infrastructure.Tests/  Репозиторії та аналітика з БД
 ```
 
 Стрілки позначають **посилання на проєкти**, а не мережеві виклики:
@@ -49,6 +50,8 @@ graph LR
   ClientMaui --> ClientCore[Client.Core]
   ClientCore --> Contracts
   ClientTests[Client.Tests] --> ClientCore
+  ClientTests --> Api
+  InfrastructureTests[Infrastructure.Tests] --> Infrastructure
   DomainTests[Domain.Tests] --> Domain
   ApplicationTests[Application.Tests] --> Application
   ApiTests[Api.IntegrationTests] --> Api
@@ -83,7 +86,7 @@ dotnet test Microclimate.Ci.slnf -c Release --no-build
 dotnet run --project src/Microclimate.Api --launch-profile http
 ```
 
-Порт задається в `src/Microclimate.Api/Properties/launchSettings.json`; Службові endpoints: `/health` і `/api/v1/ping`; WeatherForecast видалено Учасником 2.
+Порт задається в `src/Microclimate.Api/Properties/launchSettings.json`. Профіль `http` використовує SQLite, застосовує міграції й додає демо-дані до порожньої БД у Development. Swagger UI: http://localhost:5195/swagger. Демо-користувачі визначені в серверному development seed; використовуйте їх лише для локальної розробки.
 
 ## MAUI: Windows
 
@@ -110,7 +113,7 @@ dotnet build src/Microclimate.Client.Maui -t:Rebuild -f net10.0-maccatalyst -p:M
 open src/Microclimate.Client.Maui/bin/Debug/net10.0-maccatalyst/maccatalyst-arm64/Мікроклімат.app
 ```
 
-`CodesignKey=-` створює локальний ad-hoc підпис для Debug-запуску. Для розповсюдження потрібний підпис розробника. Перебудова оновлює manifest після зміни SDK та конфігурації вікна. 2026-10-13 на macOS 27 перевірено вхід → огляд → деталі → назад, вкладки сповіщень/налаштувань і вихід. Екрани залишаються каркасом без серверної інтеграції.
+`CodesignKey=-` створює локальний ad-hoc підпис для Debug-запуску. Для розповсюдження потрібний підпис розробника. Перебудова оновлює manifest після зміни SDK та конфігурації вікна. 2026-10-13 на macOS 27 перевірено вхід → огляд → деталі → назад, вкладки сповіщень/налаштувань і вихід. Це історична перевірка каркасу; нові HTTP-сценарії перевірено окремими інтеграційними тестами.
 
 На Intel Mac замініть runtime на `maccatalyst-x64`. Для Android після встановлення JDK та Android SDK:
 
@@ -122,11 +125,11 @@ dotnet build src/Microclimate.Client.Maui -f net10.0-android -p:MauiTargetFramew
 
 CI має два jobs: Linux `build-test` (restore, строгий Release build, тести, coverage artifact/summary) і Windows `maui-build`. Перевіряються Domain, Application, API та Client.Core. Клієнтські тести покривають HTTP, сесію, ViewModels, NoData та розриви часового ряду; Windows job перевіряє нативну збірку.
 
-Клієнтський вхід тепер викликає API та зберігає access-сесію в системному захищеному сховищі (або лише в пам’яті, якщо сховище недоступне). Кімнати, деталі та сповіщення завантажуються HTTP-запитами; є пагінація, фільтри й повідомлення про помилки. Повний потік поки перевірено на тестовому HTTP-сервері: предметний backend очікує реалізації Учасниками 1 і 2. [Статус клієнта — орієнтир 50%](docs/client-progress.md).
+Клієнтський вхід тепер викликає API та зберігає access-сесію в системному захищеному сховищі (або лише в пам’яті, якщо сховище недоступне). Кімнати, деталі та сповіщення завантажуються HTTP-запитами; є пагінація, фільтри й повідомлення про помилки. Потік вхід → кімнати → аналітика → підтвердження сповіщення → вихід перевірено також із чинними контролерами API та SQLite через ASP.NET Core TestServer. Це автоматична інтеграційна перевірка без нативного UI. [Статус клієнта — орієнтир 50%](docs/client-progress.md).
 
 ## Запуск через Docker
 
-[Інструкція Docker Compose](deploy/README.md): PostgreSQL запускається окремо; профіль app збирає API й simulator та передає конфігурацію Database. Сховище EF Core й реальна симуляція ще не реалізовані.
+[Інструкція Docker Compose](deploy/README.md): PostgreSQL запускається окремо; профіль app збирає API й simulator та передає конфігурацію Database. API застосовує міграції PostgreSQL під час старту; simulator поки залишається шаблонним Worker.
 
 ## Документація
 

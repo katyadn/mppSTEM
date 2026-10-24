@@ -19,6 +19,8 @@ curl http://localhost:5195/api/v1/ping
 docker compose --env-file deploy/.env -f deploy/docker-compose.yml --profile app down
 ```
 
-Обидва процеси отримують `Database__Provider=Postgres` і `Database__ConnectionString` з host `db`. Зараз Infrastructure ще не містить реалізації EF Core, API має службові endpoints, simulator — шаблонний Worker. Передані змінні готують майбутнє підключення; вони не доводять запис вимірів, застосування міграцій або роботу аналітики. Схему й міграції додає Учасник 1, серверні сценарії — Учасники 1 і 2.
+Обидва процеси отримують `Database__Provider=Postgres` і `Database__ConnectionString` з host `db`. API використовує реалізовані Учасниками 1 і 2 EF Core, міграції, репозиторії та предметні endpoints. Під час старту API застосовує міграції; у Development додає демо-користувачів, кімнату й датчик до порожньої БД. Simulator поки залишається шаблонним Worker і не генерує вимірів.
+
+Демонстраційні користувачі й development-конфігурація JWT призначені лише для локальної розробки. Автоматичний клієнтський інтеграційний тест використовує SQLite; PostgreSQL слід перевіряти окремим прогоном Compose.
 
 Зупинка через `down` зберігає volume. Пароль локальний і не потрапляє у Git; не використовуйте цей development compose для публічного сервера.
