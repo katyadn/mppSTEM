@@ -22,6 +22,10 @@ jobs:
       - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
+      - name: Validate Compose configuration
+        env:
+          POSTGRES_PASSWORD: ci-configuration-validation-only
+        run: docker compose -f deploy/docker-compose.yml --profile app config --quiet
       - name: Restore
         run: dotnet restore Microclimate.Ci.slnf
       - name: Build

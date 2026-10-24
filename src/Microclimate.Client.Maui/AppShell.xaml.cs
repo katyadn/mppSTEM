@@ -13,5 +13,6 @@ public partial class AppShell : Shell
         AlertsContent.ContentTemplate = new DataTemplate(() => services.GetRequiredService<AlertsPage>());
         SettingsContent.ContentTemplate = new DataTemplate(() => services.GetRequiredService<SettingsPage>());
         Routing.RegisterRoute("room-details", typeof(RoomDetailsPage));
+        Routing.RegisterRoute("client-settings", typeof(SettingsPage));
     }
 }

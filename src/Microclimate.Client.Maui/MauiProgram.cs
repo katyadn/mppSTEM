@@ -1,7 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microclimate.Client.Maui.Services;
-using Microclimate.Client.Maui.ViewModels;
+using Microclimate.Client.Core.Services;
+using Microclimate.Client.Core.ViewModels;
 using Microclimate.Client.Maui.Views;
 
 namespace Microclimate.Client.Maui;
@@ -18,6 +19,12 @@ public static class MauiProgram
         });
 
         builder.Services.AddSingleton<INavigationService, NavigationService>();
+        builder.Services.AddSingleton<IClientSettings, PlatformClientSettings>();
+        builder.Services.AddSingleton<ISessionStore, SecureSessionStore>();
+        builder.Services.AddSingleton(TimeProvider.System);
+        builder.Services.AddSingleton<ClientSession>();
+        builder.Services.AddSingleton(ClientTransport.Create());
+        builder.Services.AddSingleton<IClientApi, ClientApi>();
         builder.Services.AddTransient<AppShell>();
         builder.Services.AddTransient<LoginViewModel>();
         builder.Services.AddTransient<DashboardViewModel>();
