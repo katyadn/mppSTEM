@@ -16,7 +16,7 @@
 <Label Text="Індекс комфорту" FontAttributes="Bold" /><Label Text="{Binding ComfortText}" FontSize="22" />
 <Label Text="Історія вимірювань" FontAttributes="Bold" />
 <Label Text="Немає вимірювань за обраний період" IsVisible="{Binding HasNoSeries}" />
-<controls:TimeSeriesChart Segments="{Binding Series}" HeightRequest="200" IsVisible="{Binding HasSeries}" />
+<controls:TimeSeriesChart Segments="{Binding Series}" Unit="{Binding ChartUnit}" HeightRequest="240" IsVisible="{Binding HasSeries}" />
 <Label Text="{Binding SummaryText}" />
 <Button Text="Назад" Command="{Binding GoBackCommand}" />
 </VerticalStackLayout></ScrollView></ContentPage>

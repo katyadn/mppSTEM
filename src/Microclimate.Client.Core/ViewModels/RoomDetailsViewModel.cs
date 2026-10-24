@@ -18,6 +18,7 @@ public partial class RoomDetailsViewModel : BaseViewModel
     [ObservableProperty] private string comfortText = "Немає даних";
     [ObservableProperty] private string summaryText = "Немає даних";
     [ObservableProperty] private string rangeText = string.Empty;
+    [ObservableProperty] private string chartUnit = string.Empty;
     [ObservableProperty] private IReadOnlyList<IReadOnlyList<ChartPoint>> series = [];
     [ObservableProperty] private bool hasSeries;
     [ObservableProperty] private bool hasNoSeries = true;
@@ -50,6 +51,7 @@ public partial class RoomDetailsViewModel : BaseViewModel
         Series = []; HasSeries = false; HasNoSeries = true; SummaryText = "Немає даних"; ComfortText = "Немає даних";
         var to = clock.GetUtcNow(); var from = to.AddDays(-SelectedPeriod.Days);
         var metric = SelectedMetric;
+        ChartUnit = metric.Unit;
         RangeText = $"{from.ToLocalTime():dd.MM HH:mm} — {to.ToLocalTime():dd.MM HH:mm} · {metric.Unit}";
         var room = await api.GetRoomAsync(roomId, token);
         var summary = await api.GetSummaryAsync(roomId, metric.Value, from, to, token);

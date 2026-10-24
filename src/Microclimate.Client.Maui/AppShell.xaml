@@ -10,13 +10,13 @@
         </Tab>
     </TabBar>
     <TabBar Route="main">
-        <Tab Route="dashboard" Title="Огляд">
+        <Tab Route="dashboard" Icon="tab_overview.png" Title="Огляд">
             <ShellContent x:Name="DashboardContent" Route="dashboard-page" Title="Огляд" />
         </Tab>
-        <Tab Route="alerts" Title="Сповіщення">
+        <Tab Route="alerts" Icon="tab_alerts.png" Title="Сповіщення">
             <ShellContent x:Name="AlertsContent" Route="alerts-page" Title="Сповіщення" />
         </Tab>
-        <Tab Route="settings" Title="Налаштування">
+        <Tab Route="settings" Icon="tab_settings.png" Title="Налаштування">
             <ShellContent x:Name="SettingsContent" Route="settings-page" Title="Налаштування" />
         </Tab>
     </TabBar>
