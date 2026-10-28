@@ -23,7 +23,7 @@ src/
   Microclimate.Application/       Порти сховища, прийому вимірів та аналітики
   Microclimate.Infrastructure/    EF Core, SQLite/PostgreSQL, міграції та репозиторії
   Microclimate.Api/               REST API, JWT, прийом вимірів, аналітика й SignalR
-  Microclimate.SensorSimulator/   Стандартний Worker шаблон, без симуляції датчиків
+  Microclimate.SensorSimulator/   Симулятор датчиків: добові коливання, сценарій перегріву, відправлення в API
   Microclimate.Client.Core/       ViewModels, HTTP, сесія та проєкції без MAUI
   Microclimate.Client.Maui/       Кросплатформний UI, MVVM, навігація та графік із прогалинами
 tests/
@@ -32,6 +32,7 @@ tests/
   Microclimate.Api.IntegrationTests/  Тести службових API endpoints
   Microclimate.Client.Tests/          HTTP, сесії, ViewModels, проєкції та інтеграція з API/SQLite
   Microclimate.Infrastructure.Tests/  Репозиторії та аналітика з БД
+  Microclimate.SensorSimulator.Tests/ Генерація значень, сценарії та відправлення вимірів
 ```
 
 Стрілки позначають **посилання на проєкти**, а не мережеві виклики:
@@ -46,6 +47,7 @@ graph LR
   Api --> Infrastructure
   Api --> Contracts
   SensorSimulator --> Contracts
+  SensorSimulator --> Domain
   ClientMaui[Client.Maui] --> Contracts
   ClientMaui --> ClientCore[Client.Core]
   ClientCore --> Contracts
@@ -55,6 +57,7 @@ graph LR
   DomainTests[Domain.Tests] --> Domain
   ApplicationTests[Application.Tests] --> Application
   ApiTests[Api.IntegrationTests] --> Api
+  SimulatorTests[SensorSimulator.Tests] --> SensorSimulator
 ```
 
 Domain і Contracts не посилаються на інші проєкти. Client.Core містить ViewModels, HTTP, сесію та логіку відображення і тестується на Linux; нативні екрани, сховище та малювання — у MAUI.
@@ -87,6 +90,16 @@ dotnet run --project src/Microclimate.Api --launch-profile http
 ```
 
 Порт задається в `src/Microclimate.Api/Properties/launchSettings.json`. Профіль `http` використовує SQLite, застосовує міграції й додає демо-дані до порожньої БД у Development. Swagger UI: http://localhost:5195/swagger. Демо-користувачі визначені в серверному development seed; використовуйте їх лише для локальної розробки.
+
+Симулятор датчиків (у другому терміналі, поки працює API). Id датчика видно в Swagger: `GET /api/v1/rooms/{roomId}/sensors`; ключ демо-датчика задано в development seed API.
+
+```bash
+dotnet user-secrets set "Simulator:Sensors:0:SensorId" "<id датчика>" --project src/Microclimate.SensorSimulator
+dotnet user-secrets set "Simulator:Sensors:0:DeviceKey" "<ключ датчика>" --project src/Microclimate.SensorSimulator
+dotnet run --project src/Microclimate.SensorSimulator
+```
+
+Сценарій перегріву: `Simulator:Sensors:0:Scenario` = `Overheat`. Налаштування й формули — [docs/simulator.md](docs/simulator.md).
 
 ## MAUI: Windows
 
@@ -129,7 +142,7 @@ CI має два jobs: Linux `build-test` (restore, строгий Release build
 
 ## Запуск через Docker
 
-[Інструкція Docker Compose](deploy/README.md): PostgreSQL запускається окремо; профіль app збирає API й simulator та передає конфігурацію Database. API застосовує міграції PostgreSQL під час старту; simulator поки залишається шаблонним Worker.
+[Інструкція Docker Compose](deploy/README.md): PostgreSQL запускається окремо; профіль app збирає API й simulator та передає конфігурацію Database. API застосовує міграції PostgreSQL під час старту; симулятор надсилає виміри від датчика, заданого в deploy/.env.
 
 ## Документація
 

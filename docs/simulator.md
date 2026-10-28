@@ -1,6 +1,6 @@
 # Симулятор датчиків
 
-Автор: Учасник 1. Реалізація — Етап 2 (`src/Microclimate.SensorSimulator`).
+Автор: Учасник 1. Реалізація — `src/Microclimate.SensorSimulator`, тести — `tests/Microclimate.SensorSimulator.Tests`.
 
 ## 1. Навіщо
 
@@ -11,7 +11,7 @@
 Для кожної метрики значення в момент `t` (година доби):
 
 ```
-x(t) = base + A · sin(2π · (t − peak) / 24) + шум
+x(t) = base + A · cos(2π · (t − peak) / 24) + шум
 ```
 
 | Метрика | base | A (добове коливання) | peak, год | Шум (±) |
@@ -21,42 +21,66 @@ x(t) = base + A · sin(2π · (t − peak) / 24) + шум
 | CO₂, ppm | 700 | 250 | 13 | 30 |
 | PM2.5, µg/m³ | 6 | 2 | 19 | 1 |
 
+Косинус дає максимум саме о годині peak. Година береться з локального часу комп'ютера, на якому працює симулятор. Параметри таблиці — `MetricSignal.Defaults`.
+
 Шум — випадкове число з рівномірного розподілу в межах ±значення з таблиці. Результат обрізається до фізичних меж метрики (`MetricLimits`) і округлюється: температура до 0.1, решта до цілих.
 
 ## 3. Сценарії
 
 | Сценарій | Що відбувається | Що має зробити система |
 |---|---|---|
-| `normal` | Лише формула з розділу 2 | Сповіщень немає |
-| `overheat` | Температура росте на 0.1 °C за вимір до 29 °C, тримається 30 вимірів, потім повертається до норми | `Warning` вище 25 °C, далі `Critical` вище 28 °C, після повернення в норму сповіщення закривається |
+| `Normal` | Лише формула з розділу 2 | Сповіщень немає |
+| `Overheat` | Температура росте на 0.1 °C за вимір до 29 °C, тримається 30 вимірів, потім повертається до норми (значення задаються в секції `Overheat`) | `Warning` вище 25 °C, далі `Critical` вище 28 °C, після повернення в норму сповіщення закривається |
 
-Сценарій задається для кожної кімнати в конфігурації.
+Сценарій задається для кожного датчика в конфігурації.
 
 ## 4. Конфігурація (`appsettings.json`)
 
 ```json
 {
   "Simulator": {
-    "ApiBaseUrl": "https://localhost:7001",
+    "ApiBaseUrl": "http://localhost:5195/",
     "Period": "00:00:10",
     "Seed": 42,
     "Sensors": [
-      { "SensorId": "00000000-0000-0000-0000-000000000000", "Scenario": "normal" }
-    ]
+      { "Scenario": "Normal" }
+    ],
+    "Overheat": {
+      "PeakTemperature": 29,
+      "StepPerMeasurement": 0.1,
+      "HoldMeasurements": 30
+    }
   }
 }
 ```
 
 - `Period` — як часто кожен датчик надсилає виміри.
 - `Seed` — початкове значення генератора випадкових чисел. З однаковим seed виходять однакові дані, що зручно для демонстрації й тестів.
-- Ключі датчиків (`X-Device-Key`) не зберігаються в `appsettings.json` у git. Їх задають через `dotnet user-secrets` або змінні середовища.
+- Id і ключі датчиків (`SensorId`, `DeviceKey`) не зберігаються в `appsettings.json` у git. Їх задають через `dotnet user-secrets` або змінні середовища, наприклад `Simulator__Sensors__0__SensorId`.
+- Налаштування перевіряються під час старту (`SimulatorOptionsValidator`): адреса API абсолютна, період не менше 1 с, у кожного датчика є id і ключ. Якщо щось не так, симулятор не запускається, а в повідомленні вказано ключ налаштування.
+
+Запуск разом з API (API вже працює за профілем `http`):
+
+```bash
+dotnet user-secrets set "Simulator:Sensors:0:SensorId" "<id датчика>" --project src/Microclimate.SensorSimulator
+dotnet user-secrets set "Simulator:Sensors:0:DeviceKey" "<ключ датчика>" --project src/Microclimate.SensorSimulator
+dotnet run --project src/Microclimate.SensorSimulator
+```
 
 ## 5. Будова
+
+| Клас | Відповідальність |
+|---|---|
+| `SimulatorOptions`, `SimulatorOptionsValidator` | Налаштування та їх перевірка |
+| `MetricSignal` | Параметри добового коливання однієї метрики |
+| `SensorSignalGenerator` | Пакет вимірів одного датчика: формула, шум, сценарій, межі `MetricLimits`, округлення |
+| `IMeasurementSender`, `MeasurementApiClient` | Відправлення пакета в API, результат `SendResult` |
+| `SimulatorWorker` | Цикли датчиків |
 
 - Симулятор — Worker Service (`BackgroundService`).
 - Кожен датчик працює в окремому асинхронному циклі з `PeriodicTimer`. Усі цикли запускаються разом і чекають через `Task.WhenAll`.
 - На кожному кроці датчик формує пакет з усіх своїх метрик і надсилає його одним запитом.
-- `HttpClient` створюється через `IHttpClientFactory`.
+- `HttpClient` береться з `IHttpClientFactory` на кожен запит, тому `MeasurementApiClient` зареєстровано як Singleton (D-1-017).
 - Зупинка відбувається через `CancellationToken`, який передає `BackgroundService`.
 - Якщо API недоступне, помилка записується в лог, а наступна спроба буде на наступному кроці. Пропущені виміри не досилаються.
 

@@ -19,7 +19,7 @@ curl http://localhost:5195/api/v1/ping
 docker compose --env-file deploy/.env -f deploy/docker-compose.yml --profile app down
 ```
 
-Обидва процеси отримують `Database__Provider=Postgres` і `Database__ConnectionString` з host `db`. API використовує реалізовані Учасниками 1 і 2 EF Core, міграції, репозиторії та предметні endpoints. Під час старту API застосовує міграції; у Development додає демо-користувачів, кімнату й датчик до порожньої БД. Simulator поки залишається шаблонним Worker і не генерує вимірів.
+API отримує `Database__Provider=Postgres` і `Database__ConnectionString` з host `db`. API використовує реалізовані Учасниками 1 і 2 EF Core, міграції, репозиторії та предметні endpoints. Під час старту API застосовує міграції; у Development додає демо-користувачів, кімнату й датчик до порожньої БД. Симулятор надсилає виміри в API за адресою `http://api:8080/`; перед його запуском задайте в `deploy/.env` `SIMULATOR_SENSOR_ID` (id датчика з `GET /api/v1/rooms/{roomId}/sensors`) і `SIMULATOR_DEVICE_KEY`. Без них симулятор зупиняється під час старту з повідомленням, яке налаштування відсутнє. Докладніше — docs/simulator.md.
 
 Демонстраційні користувачі й development-конфігурація JWT призначені лише для локальної розробки. Автоматичний клієнтський інтеграційний тест використовує SQLite; PostgreSQL слід перевіряти окремим прогоном Compose.
 

@@ -1,4 +1,4 @@
-# Публікує Worker; фінальний runtime-образ запускає його без SDK. Поточний Worker лише журналює час.
+# Публікує симулятор датчиків; фінальний runtime-образ запускає його без SDK.
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY . .
