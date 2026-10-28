@@ -1,4 +1,4 @@
-# Без профілю запускається лише PostgreSQL; --profile app додає API та Worker.
+# Без профілю запускається лише PostgreSQL; --profile app додає API та симулятор датчиків.
 # Значення з deploy/.env залишаються локальними й не комітяться.
 services:
   db:
@@ -35,18 +35,18 @@ services:
       db:
         condition: service_healthy
 
-  # Залежності задають порядок запуску; Worker поки не генерує вимірів.
+  # Симулятор надсилає виміри в API від імені датчика; id і ключ датчика задаються в deploy/.env.
   simulator:
     profiles: [app]
     build:
       context: ..
       dockerfile: deploy/simulator.Dockerfile
     environment:
-      Database__Provider: Postgres
-      Database__ConnectionString: "Host=db;Database=microclimate;Username=microclimate;Password=${POSTGRES_PASSWORD}"
+      Simulator__ApiBaseUrl: "http://api:8080/"
+      Simulator__Sensors__0__SensorId: ${SIMULATOR_SENSOR_ID:-}
+      Simulator__Sensors__0__DeviceKey: ${SIMULATOR_DEVICE_KEY:-}
+      Simulator__Sensors__0__Scenario: ${SIMULATOR_SCENARIO:-Normal}
     depends_on:
-      db:
-        condition: service_healthy
       api:
         condition: service_started
 
