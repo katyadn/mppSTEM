@@ -1,11 +1,9 @@
-using System.Globalization;
-using System.Text;
-
 using Asp.Versioning;
 
 using FluentValidation;
 
 using Microclimate.Api.Authentication;
+using Microclimate.Application.Abstractions.Files;
 using Microclimate.Application.Abstractions.Persistence;
 using Microclimate.Application.Common;
 using Microclimate.Application.Measurements;
@@ -19,6 +17,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Net.Http.Headers;
 
 namespace Microclimate.Api.Controllers.V1;
 
@@ -31,6 +30,7 @@ public sealed class MeasurementsController(
     IMeasurementIngestionService ingestionService,
     IMeasurementRepository measurements,
     IRoomRepository rooms,
+    IMeasurementExporter exporter,
     IValidator<MeasurementBatchRequest> batchValidator) : ControllerBase
 {
     /// <summary>
@@ -159,18 +159,27 @@ public sealed class MeasurementsController(
     }
 
     /// <summary>
-    /// Експорт історії вимірів приміщення у форматі CSV.
+    /// Експорт історії вимірів приміщення у CSV або JSON. Файл формується потоково під час читання з БД.
     /// </summary>
     [HttpGet("api/v{version:apiVersion}/rooms/{roomId:guid}/measurements/export")]
     [Authorize(Roles = "Operator,Admin")]
-    [Produces("text/csv")]
-    public async Task<IActionResult> ExportCsv(
+    [Produces("text/csv", "application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Export(
         Guid roomId,
         [FromQuery] MetricType? metric,
         [FromQuery] DateTimeOffset? from,
         [FromQuery] DateTimeOffset? to,
-        CancellationToken cancellationToken)
+        [FromQuery] ExportFormat format = ExportFormat.Csv,
+        CancellationToken cancellationToken = default)
     {
+        if (!Enum.IsDefined(format))
+        {
+            throw new Application.Common.ValidationException(nameof(format), "Допустимі формати: csv, json.");
+        }
+
         var room = await rooms.GetByIdAsync(roomId, cancellationToken);
         if (room is null)
         {
@@ -185,17 +194,13 @@ public sealed class MeasurementsController(
         var end = to ?? DateTimeOffset.UtcNow;
         var range = DateRange.Create(start, end);
 
-        var csv = new StringBuilder();
-        csv.AppendLine("MeasuredAt,SensorId,Metric,Value");
-
-        await foreach (var item in measurements.StreamByRoomAsync(roomId, domainMetric, range, cancellationToken))
+        Response.ContentType = ExportFormats.ContentType(format);
+        Response.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
         {
-            csv.AppendLine(string.Create(
-                CultureInfo.InvariantCulture,
-                $"{item.MeasuredAt:O},{item.SensorId},{item.Metric},{item.Value}"));
-        }
+            FileName = $"room-{roomId}-measurements.{ExportFormats.FileExtension(format)}",
+        }.ToString();
 
-        var bytes = Encoding.UTF8.GetBytes(csv.ToString());
-        return File(bytes, "text/csv", $"room-{roomId}-measurements.csv");
+        await exporter.ExportAsync(measurements.StreamByRoomAsync(roomId, domainMetric, range, cancellationToken), Response.Body, format, cancellationToken);
+        return new EmptyResult();
     }
 }
