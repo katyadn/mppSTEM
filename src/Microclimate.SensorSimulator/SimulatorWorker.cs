@@ -28,7 +28,7 @@ public sealed partial class SimulatorWorker(
     }
 
     /// <summary>Перший пакет надсилається одразу, далі — раз на період.</summary>
-    internal async Task RunSensorAsync(SimulatedSensorOptions sensor, SensorSignalGenerator generator, TimeSpan period, CancellationToken cancellationToken)
+    private async Task RunSensorAsync(SimulatedSensorOptions sensor, SensorSignalGenerator generator, TimeSpan period, CancellationToken cancellationToken)
     {
         // Наявність id перевірено SimulatorOptionsValidator під час старту.
         var sensorId = sensor.SensorId.GetValueOrDefault();

@@ -10,7 +10,4 @@
     <ProjectReference Include="../Microclimate.Contracts/Microclimate.Contracts.csproj" />
     <ProjectReference Include="../Microclimate.Domain/Microclimate.Domain.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <InternalsVisibleTo Include="Microclimate.SensorSimulator.Tests" />
-  </ItemGroup>
 </Project>

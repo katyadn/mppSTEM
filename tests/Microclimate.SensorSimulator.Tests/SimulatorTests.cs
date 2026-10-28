@@ -80,17 +80,23 @@ public class SimulatorTests
     }
 
     [Fact]
-    public async Task RunSensor_Unauthorized_StopsAfterFirstBatch()
+    public async Task Worker_UnauthorizedSensorStops_OthersKeepSendingUntilShutdown()
     {
-        var sender = new RecordingSender(SendResult.Unauthorized);
-        var sensor = new SimulatedSensorOptions { SensorId = Guid.NewGuid(), DeviceKey = "wrong" };
-        var options = Microsoft.Extensions.Options.Options.Create(new SimulatorOptions());
-        using var worker = new SimulatorWorker(options, sender, TimeProvider.System, NullLogger<SimulatorWorker>.Instance);
+        var good = new SimulatedSensorOptions { SensorId = Guid.NewGuid(), DeviceKey = "good" };
+        var wrong = new SimulatedSensorOptions { SensorId = Guid.NewGuid(), DeviceKey = "wrong" };
+        var settings = new SimulatorOptions { Period = TimeSpan.FromMilliseconds(10) };
+        settings.Sensors.Add(good);
+        settings.Sensors.Add(wrong);
+        var sender = new RecordingSender(key => key == "good" ? SendResult.Accepted : SendResult.Unauthorized, waitForGoodBatches: 3);
+        using var worker = new SimulatorWorker(
+            Microsoft.Extensions.Options.Options.Create(settings), sender, TimeProvider.System, NullLogger<SimulatorWorker>.Instance);
 
-        await worker.RunSensorAsync(sensor, new SensorSignalGenerator(SimulationScenario.Normal, 1, new OverheatOptions()), TimeSpan.FromMilliseconds(10), CancellationToken.None);
+        await worker.StartAsync(CancellationToken.None);
+        await sender.GoodBatchesSent.WaitAsync(TimeSpan.FromSeconds(10));
+        await worker.StopAsync(CancellationToken.None);
 
-        var batch = Assert.Single(sender.Batches);
-        Assert.Equal(sensor.SensorId, batch.SensorId);
+        Assert.Single(sender.Batches, b => b.SensorId == wrong.SensorId);
+        Assert.True(sender.Batches.Count(b => b.SensorId == good.SensorId) >= 3);
     }
 
     private static MeasurementBatchRequest Batch() =>
@@ -113,13 +119,24 @@ public class SimulatorTests
             new(handler, disposeHandler: false) { BaseAddress = new Uri("http://localhost:5195/") };
     }
 
-    private sealed class RecordingSender(SendResult result) : IMeasurementSender
+    private sealed class RecordingSender(Func<string, SendResult> respond, int waitForGoodBatches) : IMeasurementSender
     {
-        public List<MeasurementBatchRequest> Batches { get; } = [];
+        private readonly TaskCompletionSource _goodBatchesSent = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private int _goodCount;
+
+        public System.Collections.Concurrent.ConcurrentQueue<MeasurementBatchRequest> Batches { get; } = new();
+
+        public Task GoodBatchesSent => _goodBatchesSent.Task;
 
         public Task<SendResult> SendAsync(MeasurementBatchRequest batch, string deviceKey, CancellationToken cancellationToken)
         {
-            Batches.Add(batch);
+            Batches.Enqueue(batch);
+            var result = respond(deviceKey);
+            if (result == SendResult.Accepted && Interlocked.Increment(ref _goodCount) >= waitForGoodBatches)
+            {
+                _goodBatchesSent.TrySetResult();
+            }
+
             return Task.FromResult(result);
         }
     }
