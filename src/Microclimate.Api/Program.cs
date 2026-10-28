@@ -120,6 +120,7 @@ else
     builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IAlertRepository, Microclimate.Api.Storage.InMemoryAlertRepository>();
     builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IMeasurementRepository, Microclimate.Api.Storage.InMemoryMeasurementRepository>();
     builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IUnitOfWork, Microclimate.Api.Storage.InMemoryUnitOfWork>();
+    builder.Services.AddMeasurementExport();
 }
 
 // ── FluentValidation ──────────────────────────────────────────────────────────
