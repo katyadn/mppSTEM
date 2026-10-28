@@ -21,6 +21,8 @@ dotnet test Microclimate.Ci.slnf -c Release --collect:"XPlat Code Coverage"
 | 19.10 | 1 | Аналітика: зведення за період, часовий ряд з порожніми інтервалами, індекс комфорту |
 | 20.10 | 1 | Підключення Api до БД, пошук датчика за ключем, тест повного ланцюга «вимір → БД → аналітика» |
 | 20.10 | 1 | Огляд якості коду: довідник метрик, обов'язкові налаштування БД, прибрано дублювання |
+| 28.10 | 2 | Симулятор датчиків: добові коливання, сценарій перегріву, окремий цикл на кожен датчик, перевірка налаштувань |
+| 28.10 | 2 | Потоковий експорт вимірів у CSV і JSON, підключення до endpoint експорту |
 
 ## 2. B1. Ланцюг issue → branch → PR → merge
 
@@ -37,9 +39,11 @@ dotnet test Microclimate.Ci.slnf -c Release --collect:"XPlat Code Coverage"
 | #49 Аналітика | feature/49-analytics-service | #50 | злито |
 | #48 Infrastructure | feature/48-infrastructure | #51 | злито |
 | #55 Якість коду | feature/55-code-quality | #56 | злито |
-| #53 Підключення Api до БД | feature/53-api-database | #54 | очікує злиття PR #52 Учасника 2 |
+| #53 Підключення Api до БД | feature/53-api-database | #54 | злито |
+| #69 Симулятор датчиків | feature/69-sensor-simulator | #71 | на рев'ю |
+| #70 Експорт вимірів у CSV і JSON | feature/70-measurement-export | #72 | на рев'ю |
 
-Кожен коміт містить номер issue. Рішення з обґрунтуванням: DECISIONS.md, записи D-1-001…D-1-016.
+Кожен коміт містить номер issue. Рішення з обґрунтуванням: DECISIONS.md, записи D-1-001…D-1-018.
 
 ## 3. B3. Проведені code-review
 
@@ -83,12 +87,15 @@ dotnet test Microclimate.Ci.slnf -c Release --collect:"XPlat Code Coverage"
 
 ## 6. C3. Автотести й покриття
 
-| Проєкт | Тестів | Покриття рядків |
+| Проєкт | Тестів | Що перевіряє |
 |---|---|---|
-| Microclimate.Domain.Tests | 40 | Domain — 88.6 % |
-| Microclimate.Application.Tests | 6 | Application — 66.4 % (71.3 % разом з тестами Api) |
-| Microclimate.Infrastructure.Tests | 4 | Infrastructure без згенерованих міграцій — 67.8 % (74.8 % разом з тестами Api) |
-| DatabaseFlowTests у Microclimate.Api.IntegrationTests | 1 | ланцюг «датчик → Api → SQLite → аналітика» |
+| Microclimate.Domain.Tests | 40 | Сутності, пороги, межові значення |
+| Microclimate.Application.Tests | 6 | Індекс комфорту, часовий ряд, зведення |
+| Microclimate.Infrastructure.Tests | 6 | Репозиторії на SQLite з міграціями, транзакція, експорт CSV і JSON |
+| Microclimate.SensorSimulator.Tests | 8 | Генерація значень, сценарій перегріву, налаштування, відправлення, зупинка датчика |
+| DatabaseFlowTests у Microclimate.Api.IntegrationTests | 1 | Ланцюг «датчик → Api → SQLite → аналітика → експорт» |
+
+Покриття рядків моїх збірок за всім набором тестів CI (без згенерованих міграцій): Domain 88.9 %, Application 95.6 %, Infrastructure 91.9 %, SensorSimulator 85.1 %.
 
 Тести на xUnit: [Fact] — один сценарій, [Theory] з [InlineData] — межові значення. Час передається параметром, тому тести детерміновані. Репозиторії тестуються на SQLite в пам'яті з тими самими міграціями, що й у робочій БД. CI запускає тести на кожен pull request і збирає звіт покриття (coverlet, ReportGenerator).
 
