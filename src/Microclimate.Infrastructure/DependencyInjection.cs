@@ -1,14 +1,17 @@
+using Microclimate.Application.Abstractions.Files;
 using Microclimate.Application.Abstractions.Persistence;
+using Microclimate.Infrastructure.Files;
 using Microclimate.Infrastructure.Persistence;
 using Microclimate.Infrastructure.Repositories;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microclimate.Infrastructure;
 
-/// <summary>Реєстрація БД і репозиторіїв. Провайдер і рядок підключення обов'язково задаються в конфігурації.</summary>
+/// <summary>Реєстрація БД, репозиторіїв і експорту. Провайдер і рядок підключення обов'язково задаються в конфігурації.</summary>
 public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
@@ -41,6 +44,13 @@ public static class DependencyInjection
         services.AddScoped<IAlertRepository, AlertRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
 
+        return services.AddMeasurementExport();
+    }
+
+    /// <summary>Експорт не залежить від БД, тому його можна підключити й без AddInfrastructure.</summary>
+    public static IServiceCollection AddMeasurementExport(this IServiceCollection services)
+    {
+        services.TryAddSingleton<IMeasurementExporter, MeasurementExporter>();
         return services;
     }
 

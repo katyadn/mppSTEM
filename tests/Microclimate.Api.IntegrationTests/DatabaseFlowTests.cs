@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 using Microclimate.Contracts.Analytics;
 using Microclimate.Contracts.Auth;
@@ -26,7 +27,7 @@ public sealed class DatabaseFlowTests : IClassFixture<DatabaseFlowTests.SqliteAp
     }
 
     [Fact]
-    public async Task IngestedMeasurement_IsStoredInDatabase_AndCountedInSummary()
+    public async Task IngestedMeasurement_IsStoredInDatabase_CountedInSummary_AndExported()
     {
         var login = await _client.PostAsJsonAsync("/api/v1/auth/login", new LoginRequest("admin@microclimate.local", "AdminPassword123!"));
         var token = (await login.Content.ReadFromJsonAsync<TokenResponse>())!.AccessToken;
@@ -47,11 +48,15 @@ public sealed class DatabaseFlowTests : IClassFixture<DatabaseFlowTests.SqliteAp
 
         var summary = await _client.GetFromJsonAsync<List<MetricSummaryResponse>>(
             $"/api/v1/rooms/{roomId}/analytics/summary?metric=Temperature");
+        var export = await _client.GetAsync($"/api/v1/rooms/{roomId}/measurements/export?format=json");
+        using var exported = JsonDocument.Parse(await export.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.Accepted, ingestResponse.StatusCode);
         var temperature = Assert.Single(summary!);
         Assert.Equal(1, temperature.Count);
         Assert.Equal(22.5, temperature.Avg);
+        Assert.Equal("application/json", export.Content.Headers.ContentType?.MediaType);
+        Assert.Contains(exported.RootElement.EnumerateArray(), row => row.GetProperty("value").GetDouble() == 22.5);
     }
 
     /// <summary>Окремий файл БД на кожен запуск, щоб тести не залежали один від одного.</summary>
