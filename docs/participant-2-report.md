@@ -1,7 +1,7 @@
 # Звіт до захисту: Учасник 2
 
 Зона відповідальності: Web API (`src/Microclimate.Api`), Контракти (`src/Microclimate.Contracts`),
-JWT + X-Device-Key автентифікація, ProblemDetails обробка помилок, інтеграційні тести.
+JWT + X-Device-Key автентифікація, ProblemDetails обробка помилок, OpenTelemetry (трейсінг та метрики), інтеграційні тести.
 Структуру критеріїв узято з «Як захистити проєкт з МПП».
 
 Як відтворити цифри зі звіту:
@@ -27,6 +27,7 @@ dotnet test Microclimate.Ci.slnf -c Release --collect:"XPlat Code Coverage"
 | 20.10 | 1 | In-memory репозиторії: RoomRepository, SensorRepository, MeasurementRepository, AlertRepository, UserRepository, UnitOfWork |
 | 20.10 | 1 | Перемикання API на БД: Database:Provider=Sqlite/Postgres, тести повного ланцюжка на SQLite (#53 → PR #54) |
 | 08.11 | 2 | Оновлення META-USAGE (PR #68) |
+| 08.11 | 2 | Підключення OpenTelemetry: трейси та метрики ASP.NET Core, експортери (#71) |
 
 ## 2. B1. Ланцюг issue → branch → PR → merge
 
@@ -122,6 +123,7 @@ dotnet test Microclimate.Ci.slnf -c Release --collect:"XPlat Code Coverage"
 | 4 | ProblemDetails RFC 9457 | `AddProblemDetails()` + `UseExceptionHandler` + `MapFallback` → ніколи не повертається HTML або трасування стеку у відповідь | `Program.cs`, `ErrorHandlingTests.cs` |
 | 5 | Параметризовані запити | Усі запити через EF Core LINQ — SQL-ін'єкції виключені | `Infrastructure/Repositories/` |
 | 6 | HTTPS Redirection | `app.UseHttpsRedirection()` у Production | `Program.cs` |
+| 7 | Спостережуваність OpenTelemetry | `AddOpenTelemetry()`: трейси та метрики `Microclimate.Api`, `AspNetCoreInstrumentation`, зв'язок із W3C traceId у ProblemDetails | `Program.cs` |
 
 > **Відоме обмеження:** хешування паролів користувачів використовує SHA-256 без солі (виявлено під час Code Review у PR #52). Для продакшн-готовності рекомендовано замінити на BCrypt або ASP.NET Identity з PBKDF2. Зафіксовано в `DECISIONS.md`.
 
