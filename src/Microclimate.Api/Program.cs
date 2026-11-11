@@ -2,6 +2,10 @@ using System.Text;
 
 using Asp.Versioning;
 
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+
 using FluentValidation;
 
 using Microclimate.Api.Authentication;
@@ -20,6 +24,26 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+// ── OpenTelemetry ─────────────────────────────────────────────────────────────
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("Microclimate.Api"))
+    .WithTracing(tracing =>
+    {
+        tracing.AddAspNetCoreInstrumentation();
+        if (builder.Environment.IsDevelopment())
+        {
+            tracing.AddConsoleExporter();
+        }
+    })
+    .WithMetrics(metrics =>
+    {
+        metrics.AddAspNetCoreInstrumentation();
+        if (builder.Environment.IsDevelopment())
+        {
+            metrics.AddConsoleExporter();
+        }
+    });
 
 // ── Versioning ────────────────────────────────────────────────────────────────
 builder.Services
