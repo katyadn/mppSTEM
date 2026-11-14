@@ -9,14 +9,41 @@ public sealed class TimeSeriesChart : GraphicsView, IDrawable
     // BindableProperty сегментів; зміна даних спричиняє перемальовування.
     public static readonly BindableProperty SegmentsProperty = BindableProperty.Create(
         nameof(Segments), typeof(IReadOnlyList<IReadOnlyList<ChartPoint>>), typeof(TimeSeriesChart),
-        propertyChanged: (view, _, _) => ((TimeSeriesChart)view).Invalidate());
+        propertyChanged: (view, _, _) => ((TimeSeriesChart)view).ResetSelection());
     // BindableProperty одиниці осі значень; зміна підпису спричиняє перемальовування.
     public static readonly BindableProperty UnitProperty = BindableProperty.Create(
         nameof(Unit), typeof(string), typeof(TimeSeriesChart), string.Empty,
         propertyChanged: (view, _, _) => ((TimeSeriesChart)view).Invalidate());
 
     // Призначає сам контроль об’єктом малювання GraphicsView.
-    public TimeSeriesChart() => Drawable = this;
+    private readonly List<(ChartPoint Point, PointF Position)> renderedPoints = [];
+    private ChartPoint? selected;
+    public static readonly BindableProperty SelectedPointTextProperty = BindableProperty.Create(nameof(SelectedPointText), typeof(string), typeof(TimeSeriesChart), string.Empty);
+    public string SelectedPointText { get => (string)GetValue(SelectedPointTextProperty); private set => SetValue(SelectedPointTextProperty, value); }
+
+    public TimeSeriesChart()
+    {
+        Drawable = this;
+        StartInteraction += SelectPoint;
+        DragInteraction += SelectPoint;
+        MoveHoverInteraction += SelectPoint;
+        Loaded += (_, _) => { if (Application.Current is { } app) app.RequestedThemeChanged += OnThemeChanged; };
+        Unloaded += (_, _) => { if (Application.Current is { } app) app.RequestedThemeChanged -= OnThemeChanged; };
+        SemanticProperties.SetDescription(this, "Графік вимірювань. Торкніться точки для значення та часу.");
+    }
+
+    private void OnThemeChanged(object? sender, AppThemeChangedEventArgs e) => Invalidate();
+    private void ResetSelection() { selected = null; SelectedPointText = string.Empty; renderedPoints.Clear(); SemanticProperties.SetDescription(this, "Графік вимірювань. Торкніться точки для значення та часу."); Invalidate(); }
+    private void SelectPoint(object? sender, TouchEventArgs e)
+    {
+        if (e.Touches.Length == 0 || renderedPoints.Count == 0) return;
+        var touch = e.Touches[0];
+        var nearest = renderedPoints.MinBy(item => Math.Abs(item.Position.X - touch.X));
+        selected = nearest.Point;
+        SelectedPointText = $"{selected.Time.ToLocalTime():dd.MM.yyyy HH:mm} · {selected.Value.ToString("0.##", CultureInfo.InvariantCulture)} {Unit}";
+        SemanticProperties.SetDescription(this, SelectedPointText);
+        Invalidate();
+    }
 
     // Сегменти точок, які малюються окремо без з’єднання через прогалини.
     public IReadOnlyList<IReadOnlyList<ChartPoint>>? Segments
@@ -34,6 +61,7 @@ public sealed class TimeSeriesChart : GraphicsView, IDrawable
     // Малює сітку, округлену шкалу, місцевий час і окремі сегменти; пропускає порожню або замалу область.
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
+        renderedPoints.Clear();
         var segments = Segments;
         if (segments is null || segments.Count == 0) return;
         var points = segments.SelectMany(segment => segment).ToArray();
@@ -105,7 +133,14 @@ public sealed class TimeSeriesChart : GraphicsView, IDrawable
                     plot.Left + (float)((point.Time - start).TotalSeconds / duration) * plot.Width,
                     plot.Bottom - (float)((point.Value - lower) / (upper - lower)) * plot.Height);
                 if (previous is { } last) canvas.DrawLine(last.X, last.Y, position.X, position.Y);
-                canvas.FillCircle(position.X, position.Y, 3);
+                renderedPoints.Add((point, position));
+                canvas.FillCircle(position.X, position.Y, selected == point ? 6 : 3);
+                if (selected == point)
+                {
+                    canvas.StrokeSize = 1;
+                    canvas.DrawLine(position.X, plot.Top, position.X, plot.Bottom);
+                    canvas.StrokeSize = 2;
+                }
                 previous = position;
             }
         }

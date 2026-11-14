@@ -5,6 +5,16 @@ namespace Microclimate.Client.Maui.Services;
 // Зберігає адресу API у Preferences; для Android за замовчуванням використовує адресу емулятора.
 public sealed class PlatformClientSettings : IClientSettings
 {
+    public ClientTheme Theme
+    {
+        get => Enum.TryParse<ClientTheme>(Preferences.Default.Get("theme", "System"), out var theme) && Enum.IsDefined(theme) ? theme : ClientTheme.System;
+        set
+        {
+            Preferences.Default.Set("theme", value.ToString());
+            if (Application.Current is { } app) app.UserAppTheme = value switch { ClientTheme.Light => AppTheme.Light, ClientTheme.Dark => AppTheme.Dark, _ => AppTheme.Unspecified };
+        }
+    }
+
     // Коренева адреса сервера; ClientApi додає до неї api/v1/.
     public string ApiAddress
     {

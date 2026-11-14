@@ -11,7 +11,7 @@
 <Entry Text="{Binding Email}" Keyboard="Email" Placeholder="name@example.com" IsEnabled="{Binding IsNotBusy}" />
 <Label Text="Пароль" />
 <Entry Text="{Binding Password}" IsPassword="True" Placeholder="Пароль" IsEnabled="{Binding IsNotBusy}" ReturnType="Go" ReturnCommand="{Binding LoginCommand}" />
-<Label Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" TextColor="#B00020" />
+<Label Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" TextColor="{AppThemeBinding Light=#B00020, Dark=#FFB4AB}" />
 <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
 <Button Text="Увійти" Command="{Binding LoginCommand}" IsEnabled="{Binding IsNotBusy}" />
 <Button Text="Адреса API та налаштування" Command="{Binding OpenSettingsCommand}" IsEnabled="{Binding IsNotBusy}" />

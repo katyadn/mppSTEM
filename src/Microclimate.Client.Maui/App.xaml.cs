@@ -13,6 +13,8 @@ public partial class App : Application
     {
         InitializeComponent();
         this.services = services;
+        var settings = services.GetRequiredService<Microclimate.Client.Core.Services.IClientSettings>();
+        UserAppTheme = settings.Theme switch { Microclimate.Client.Core.Services.ClientTheme.Light => AppTheme.Light, Microclimate.Client.Core.Services.ClientTheme.Dark => AppTheme.Dark, _ => AppTheme.Unspecified };
     }
 
     // Створює вікно з новим екземпляром AppShell із DI-контейнера.

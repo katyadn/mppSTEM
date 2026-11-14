@@ -6,13 +6,13 @@
  x:DataType="vm:AlertsViewModel" Title="{Binding Title}">
 
 <Grid Padding="20" RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="10">
-<Label Text="Сповіщення" FontSize="28" FontAttributes="Bold" />
+<VerticalStackLayout Spacing="4"><Label Text="Сповіщення" FontSize="28" FontAttributes="Bold" /><Label Text="{Binding LiveStatus}" FontSize="12" /></VerticalStackLayout>
 <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10">
 <Picker Title="Рівень" ItemsSource="{Binding Levels}" ItemDisplayBinding="{Binding Name, x:DataType=vm:AlertLevelOption}" SelectedItem="{Binding SelectedLevel}" IsEnabled="{Binding IsNotBusy}" />
 <Picker Grid.Column="1" Title="Стан" ItemsSource="{Binding Statuses}" ItemDisplayBinding="{Binding Name, x:DataType=vm:AlertStatusOption}" SelectedItem="{Binding SelectedStatus}" IsEnabled="{Binding IsNotBusy}" />
 </Grid>
 <Button Grid.Row="2" Text="Застосувати / оновити" Command="{Binding RefreshCommand}" IsEnabled="{Binding IsNotBusy}" />
-<Label Grid.Row="3" Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" TextColor="#B00020" />
+<Label Grid.Row="3" Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" TextColor="{AppThemeBinding Light=#B00020, Dark=#FFB4AB}" />
 <RefreshView Grid.Row="4" Command="{Binding RefreshCommand}" IsRefreshing="{Binding IsBusy, Mode=OneWay}">
 <CollectionView ItemsSource="{Binding Alerts}" SelectionMode="None">
 <CollectionView.EmptyView><Label Text="Список сповіщень порожній. Оновіть список або змініть фільтр." Margin="0,20" /></CollectionView.EmptyView>

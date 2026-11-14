@@ -12,7 +12,8 @@ using Microclimate.Contracts.Rooms;
 namespace Microclimate.Client.Tests;
 
 // Тестові налаштування API в пам’яті без звернень до Preferences.
-internal sealed class MemorySettings : IClientSettings { 
+internal sealed class MemorySettings : IClientSettings {
+    public ClientTheme Theme { get; set; }
     // Коренева адреса сервера; ClientApi додає до неї api/v1/.
     public string ApiAddress { get; set; } = "https://api.example.test/"; }
 // Тестове сховище, яке може імітувати недоступність постійного збереження сесії.
@@ -137,6 +138,8 @@ internal sealed class ClientFixture : IDisposable
             var second = request.Uri.Query.Contains("page=2", StringComparison.Ordinal);
             return Json(new PagedResponse<RoomResponse>([new(second ? AlertId : RoomId, Guid.Empty, second ? "102" : "101", 1, 25, "Office", Clock.Now)], second ? 2 : 1, 20, 2));
         }
+        if (path.EndsWith("/latest", StringComparison.Ordinal)) return Json(Array.Empty<LatestMetricResponse>());
+        if (path.EndsWith("/thresholds", StringComparison.Ordinal)) return Json(new Microclimate.Contracts.Thresholds.ThresholdResponse[] { new(Guid.Empty, RoomId, MetricType.Temperature, 20, 25, 16, 28) });
         if (path.EndsWith("/summary", StringComparison.Ordinal)) return Json(new MetricSummaryResponse[] { new(request.Uri.Query.Contains("metric=co2", StringComparison.Ordinal) ? MetricType.Co2 : MetricType.Temperature, 2, 20, 24, 22, null) });
         if (path.EndsWith("/series", StringComparison.Ordinal)) return Json(new SeriesPointResponse[] { new(Clock.Now.AddHours(-2), 1, 20, 20, 20), new(Clock.Now.AddHours(-1), 0, null, null, null), new(Clock.Now, 1, 24, 24, 24) });
         if (path.EndsWith("/comfort", StringComparison.Ordinal)) return Json(new ComfortIndexResponse(82, ComfortCategory.Acceptable, []));

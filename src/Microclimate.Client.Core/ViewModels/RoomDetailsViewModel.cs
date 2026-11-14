@@ -50,20 +50,29 @@ public partial class RoomDetailsViewModel : BaseViewModel
     // Ідентифікатор кімнати для запитів аналітики або переходів.
     public Guid? RoomId { get; private set; }
 
+    private bool initialized;
+    private MetricType? thresholdMetric;
+    public ThresholdsViewModel Thresholds { get; }
+    public Task SelectionRefresh { get; private set; } = Task.CompletedTask;
+    partial void OnSelectedMetricChanged(MetricOption value) { if (initialized) SelectionRefresh = RefreshCommand.ExecuteAsync(null); }
+    partial void OnSelectedPeriodChanged(PeriodOption value) { if (initialized) SelectionRefresh = RefreshCommand.ExecuteAsync(null); }
+
     // Ініціалізує RoomDetailsViewModel та його залежності для клієнтського сценарію.
-    public RoomDetailsViewModel(IClientApi api, INavigationService navigation, TimeProvider clock) : base(navigation)
+    public RoomDetailsViewModel(IClientApi api, INavigationService navigation, TimeProvider clock, ClientSession session) : base(navigation)
     {
         this.api = api; this.navigation = navigation; this.clock = clock;
+        Thresholds = new ThresholdsViewModel(api, session, navigation);
         selectedMetric = Metrics[0]; selectedPeriod = Periods[0]; Title = "Деталі кімнати";
     }
     // Запам’ятовує кімнату й очищає попередню статистику та графік.
     public void SelectRoom(Guid? roomId, string? name)
     {
+        initialized = false; thresholdMetric = null;
         RoomId = roomId; Title = string.IsNullOrWhiteSpace(name) ? "Деталі кімнати" : name;
         Series = []; HasSeries = false; HasNoSeries = true; ComfortText = "Немає даних"; SummaryText = "Немає даних";
     }
     // Оновлює стан екрана під час його появи.
-    public override Task InitializeAsync() => RefreshCommand.ExecuteAsync(null);
+    public override async Task InitializeAsync() { await RefreshCommand.ExecuteAsync(null); initialized = true; }
     // Очищає старі дані, фіксує метрику й UTC-період та завантажує кімнату, статистику, ряд і комфорт.
     [RelayCommand]
     private Task RefreshAsync() => RunAsync(async token =>
@@ -88,6 +97,11 @@ public partial class RoomDetailsViewModel : BaseViewModel
             // Відсутній агрегат показуємо тире, а не вигаданим нульовим виміром.
             static string Format(double? value) => value?.ToString("0.#", CultureInfo.InvariantCulture) ?? "—";
             SummaryText = $"Мін: {Format(summary.Min)} · Середнє: {Format(summary.Avg)} · Макс: {Format(summary.Max)} {metric.Unit}";
+        }
+        if (!Thresholds.IsLoaded || thresholdMetric != metric.Value)
+        {
+            await Thresholds.LoadAsync(roomId, metric.Value);
+            thresholdMetric = metric.Value;
         }
     });
     // Повертається на попередній екран.

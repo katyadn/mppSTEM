@@ -67,6 +67,30 @@ public partial class AlertsViewModel : BaseViewModel
         appliedLevel = level; appliedStatus = status;
         page = requestedPage; HasMore = response.Items.Count > 0 && Alerts.Count < response.TotalCount;
     }
+    public Task RefreshLiveAsync() => RunAsync(async token =>
+    {
+        var items = new List<AlertItem>();
+        var total = 0;
+        var pages = SelectedLevel.Value == appliedLevel && SelectedStatus.Value == appliedStatus ? Math.Max(1, page) : 1;
+        var level = SelectedLevel.Value; var status = SelectedStatus.Value;
+        for (var requested = 1; requested <= pages; requested++)
+        {
+            var response = await api.GetAlertsAsync(requested, level, status, token);
+            total = response.TotalCount;
+            items.AddRange(response.Items.Select(alert => new AlertItem(alert, alert.Status == AlertStatus.Open && CanManageAlerts())));
+            if (items.Count >= total || response.Items.Count == 0) break;
+        }
+        token.ThrowIfCancellationRequested();
+        var unique = items.DistinctBy(item => item.Alert.Id).ToArray();
+        for (var index = 0; index < unique.Length; index++)
+        {
+            if (index >= Alerts.Count) Alerts.Add(unique[index]);
+            else if (Alerts[index] != unique[index]) Alerts[index] = unique[index];
+        }
+        while (Alerts.Count > unique.Length) Alerts.RemoveAt(Alerts.Count - 1);
+        appliedLevel = level; appliedStatus = status; page = pages; HasMore = Alerts.Count < total;
+    });
+
     // Дозволяє кнопку підтвердження для Admin та Operator; сервер додатково перевіряє права.
     private bool CanManageAlerts() => session.Current?.User.Role is UserRole.Admin or UserRole.Operator;
     // Для Admin або Operator підтверджує лише відкрите сповіщення й перезавантажує першу сторінку.

@@ -24,6 +24,8 @@ public abstract partial class BaseViewModel(INavigationService navigation) : Obs
     [NotifyPropertyChangedFor(nameof(HasError))]
     private string errorMessage = string.Empty;
 
+    [ObservableProperty] private string liveStatus = "Підключення до автооновлення…";
+
     // Чи доступний інтерфейс для запуску наступної операції.
     public bool IsNotBusy => !IsBusy;
     // Чи потрібно показувати текст помилки.

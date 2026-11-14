@@ -7,18 +7,36 @@
 
 <ScrollView><VerticalStackLayout Padding="24" Spacing="14">
 <Label Text="{Binding Title}" FontSize="28" FontAttributes="Bold" />
-<Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+<Grid ColumnDefinitions="*,*" ColumnSpacing="12" IsEnabled="{Binding Thresholds.IsNotBusy}">
 <Picker Title="Метрика" ItemsSource="{Binding Metrics}" ItemDisplayBinding="{Binding Name, x:DataType=vm:MetricOption}" SelectedItem="{Binding SelectedMetric}" IsEnabled="{Binding IsNotBusy}" />
 <Picker Grid.Column="1" Title="Період" ItemsSource="{Binding Periods}" ItemDisplayBinding="{Binding Name, x:DataType=vm:PeriodOption}" SelectedItem="{Binding SelectedPeriod}" IsEnabled="{Binding IsNotBusy}" />
 </Grid>
 <Button Text="Застосувати / оновити" Command="{Binding RefreshCommand}" IsEnabled="{Binding IsNotBusy}" />
-<Label Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" TextColor="#B00020" />
+<Label Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" TextColor="{AppThemeBinding Light=#B00020, Dark=#FFB4AB}" />
 <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+<Label Text="{Binding LiveStatus}" FontSize="12" />
 <Label Text="{Binding RangeText}" />
 <Label Text="Індекс комфорту" FontAttributes="Bold" /><Label Text="{Binding ComfortText}" FontSize="22" />
 <Label Text="Історія вимірювань" FontAttributes="Bold" />
 <Label Text="Немає вимірювань за обраний період" IsVisible="{Binding HasNoSeries}" />
-<controls:TimeSeriesChart Segments="{Binding Series}" Unit="{Binding ChartUnit}" HeightRequest="240" IsVisible="{Binding HasSeries}" />
+<controls:TimeSeriesChart x:Name="HistoryChart" Segments="{Binding Series}" Unit="{Binding ChartUnit}" HeightRequest="240" IsVisible="{Binding HasSeries}" />
+<Label Text="{Binding Source={x:Reference HistoryChart}, Path=SelectedPointText, x:DataType=controls:TimeSeriesChart}" FontAttributes="Bold" />
 <Label Text="{Binding SummaryText}" />
+<Label Text="Торкніться графіка, щоб побачити значення й час." FontSize="12" IsVisible="{Binding HasSeries}" />
+<VerticalStackLayout BindingContext="{Binding Thresholds}" x:DataType="vm:ThresholdsViewModel" Spacing="8" Margin="0,12,0,0">
+<Label Text="Пороги кімнати" FontSize="20" FontAttributes="Bold" />
+<Label Text="{Binding Unit, StringFormat='Одиниці: {0}'}" />
+<Label Text="Порожнє поле — межа не контролюється. Змінювати пороги можуть Admin та Operator." FontSize="12" />
+<VerticalStackLayout IsEnabled="{Binding CanSave}" Spacing="8">
+<Label Text="Критична нижня межа" /><Entry Text="{Binding CriticalMin}" Placeholder="Не задано" Keyboard="Numeric" />
+<Label Text="Нижня межа попередження" /><Entry Text="{Binding WarningMin}" Placeholder="Не задано" Keyboard="Numeric" />
+<Label Text="Верхня межа попередження" /><Entry Text="{Binding WarningMax}" Placeholder="Не задано" Keyboard="Numeric" />
+<Label Text="Критична верхня межа" /><Entry Text="{Binding CriticalMax}" Placeholder="Не задано" Keyboard="Numeric" />
+</VerticalStackLayout>
+<Label Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" TextColor="{AppThemeBinding Light=#B00020, Dark=#FFB4AB}" />
+<Label Text="{Binding Message}" />
+<ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+<Button Text="Зберегти пороги" Command="{Binding SaveCommand}" IsVisible="{Binding CanEdit}" IsEnabled="{Binding CanSave}" />
+</VerticalStackLayout>
 <Button Text="Назад" Command="{Binding GoBackCommand}" />
 </VerticalStackLayout></ScrollView></ContentPage>
