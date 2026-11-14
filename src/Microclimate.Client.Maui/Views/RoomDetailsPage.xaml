@@ -13,7 +13,7 @@
 </Grid>
 <Button Text="Застосувати / оновити" Command="{Binding RefreshCommand}" IsEnabled="{Binding IsNotBusy}" />
 <Label Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" TextColor="{AppThemeBinding Light=#B00020, Dark=#FFB4AB}" />
-<ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+<Grid HeightRequest="24"><ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" /></Grid>
 <Label Text="{Binding LiveStatus}" FontSize="12" />
 <Label Text="{Binding RangeText}" />
 <Label Text="Індекс комфорту" FontAttributes="Bold" /><Label Text="{Binding ComfortText}" FontSize="22" />

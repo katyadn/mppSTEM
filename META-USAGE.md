@@ -107,4 +107,4 @@
 
 Codex реалізував доповнення Client.Core/Client.Maui (пороги, latest/comfort, SignalR, тему, інтерактивний графік), нові тести, CI Android/PostgreSQL та документацію за запитом учасника завершити його частину. Це згенерований за участю ШІ код; попередня таблиця про людське авторство не описує ці нові зміни. Використано наявну архітектуру, MVVM/JSON generators і compiled XAML; impeccable — для узгодження нових UI-елементів із наявним стилем.
 
-Факти цього запуску: 165 локальних тестів, 0 warnings/errors у Release solution і native MacCatalyst Debug, HTTP smoke на ізольованій SQLite. Сценарії UI й статус інших платформ наведено в `docs/ui/mac-smoke-2026-11-15.md` та `docs/client-progress.md`. Людське рев'ю/Windows/Android UI цим записом не підтверджуються.
+Факти цього запуску: 168 локальних тестів, 0 warnings/errors у Release solution і native MacCatalyst Debug, HTTP smoke на ізольованій SQLite. Сценарії UI й статус інших платформ наведено в `docs/ui/mac-smoke-2026-11-15.md` та `docs/client-progress.md`. Людське рев'ю/Windows/Android UI цим записом не підтверджуються.

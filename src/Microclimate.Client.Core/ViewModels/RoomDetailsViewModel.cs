@@ -52,10 +52,24 @@ public partial class RoomDetailsViewModel : BaseViewModel
 
     private bool initialized;
     private MetricType? thresholdMetric;
+    private Task activeRefresh = Task.CompletedTask;
+    private int selectionVersion;
     public ThresholdsViewModel Thresholds { get; }
     public Task SelectionRefresh { get; private set; } = Task.CompletedTask;
-    partial void OnSelectedMetricChanged(MetricOption value) { if (initialized) SelectionRefresh = RefreshCommand.ExecuteAsync(null); }
-    partial void OnSelectedPeriodChanged(PeriodOption value) { if (initialized) SelectionRefresh = RefreshCommand.ExecuteAsync(null); }
+    partial void OnSelectedMetricChanged(MetricOption value)
+    {
+        Thresholds.Invalidate(); thresholdMetric = null;
+        if (initialized) SelectionRefresh = RefreshSelectionAsync();
+    }
+    partial void OnSelectedPeriodChanged(PeriodOption value) { if (initialized) SelectionRefresh = RefreshSelectionAsync(); }
+
+    private async Task RefreshSelectionAsync()
+    {
+        var version = ++selectionVersion;
+        CancelPending();
+        await activeRefresh;
+        if (version == selectionVersion) await StartRefreshAsync(live: false);
+    }
 
     // Ініціалізує RoomDetailsViewModel та його залежності для клієнтського сценарію.
     public RoomDetailsViewModel(IClientApi api, INavigationService navigation, TimeProvider clock, ClientSession session) : base(navigation)
@@ -67,7 +81,7 @@ public partial class RoomDetailsViewModel : BaseViewModel
     // Запам’ятовує кімнату й очищає попередню статистику та графік.
     public void SelectRoom(Guid? roomId, string? name)
     {
-        initialized = false; thresholdMetric = null;
+        initialized = false; thresholdMetric = null; Thresholds.Invalidate();
         RoomId = roomId; Title = string.IsNullOrWhiteSpace(name) ? "Деталі кімнати" : name;
         Series = []; HasSeries = false; HasNoSeries = true; ComfortText = "Немає даних"; SummaryText = "Немає даних";
     }
@@ -75,21 +89,35 @@ public partial class RoomDetailsViewModel : BaseViewModel
     public override async Task InitializeAsync() { await RefreshCommand.ExecuteAsync(null); initialized = true; }
     // Очищає старі дані, фіксує метрику й UTC-період та завантажує кімнату, статистику, ряд і комфорт.
     [RelayCommand]
-    private Task RefreshAsync() => RunAsync(async token =>
+    private Task RefreshAsync() => StartRefreshAsync(live: false);
+    public Task RefreshLiveAsync() => StartRefreshAsync(live: true);
+    private Task StartRefreshAsync(bool live)
+    {
+        activeRefresh = RunAsync(token => LoadAsync(live, token));
+        return activeRefresh;
+    }
+
+    private async Task LoadAsync(bool live, CancellationToken token)
     {
         if (RoomId is not { } roomId) { ErrorMessage = "Спершу виберіть кімнату в огляді."; return; }
-        // Очищаємо старі дані, щоб помилка нового запиту не показувала попередній період.
-        Series = []; HasSeries = false; HasNoSeries = true; SummaryText = "Немає даних"; ComfortText = "Немає даних";
+        // Новий період не показує старих даних; live update зберігає висоту графіка й вибрану точку.
+        if (!live) { Series = []; HasSeries = false; HasNoSeries = true; SummaryText = "Немає даних"; ComfortText = "Немає даних"; }
         var to = clock.GetUtcNow(); var from = to.AddDays(-SelectedPeriod.Days);
         var metric = SelectedMetric;
-        ChartUnit = metric.Unit;
-        RangeText = $"{from.ToLocalTime():dd.MM HH:mm} — {to.ToLocalTime():dd.MM HH:mm} · {metric.Unit}";
+        if (!Thresholds.IsLoaded || thresholdMetric != metric.Value)
+        {
+            // Пороги завантажуються незалежно від успіху запитів аналітики.
+            await Thresholds.LoadAsync(roomId, metric.Value);
+            token.ThrowIfCancellationRequested();
+            thresholdMetric = metric.Value;
+        }
         var room = await api.GetRoomAsync(roomId, token);
         var summary = await api.GetSummaryAsync(roomId, metric.Value, from, to, token);
         var points = await api.GetSeriesAsync(roomId, metric.Value, from, to, token);
         var comfort = await api.GetComfortAsync(roomId, token);
         token.ThrowIfCancellationRequested();
-        Title = room.Name;
+        Title = room.Name; ChartUnit = metric.Unit;
+        RangeText = $"{from.ToLocalTime():dd.MM HH:mm} — {to.ToLocalTime():dd.MM HH:mm} · {metric.Unit}";
         Series = AnalyticsPresentation.SplitSeries(points); HasSeries = Series.Count > 0; HasNoSeries = !HasSeries;
         ComfortText = AnalyticsPresentation.ComfortText(comfort);
         if (summary.Count > 0)
@@ -98,12 +126,8 @@ public partial class RoomDetailsViewModel : BaseViewModel
             static string Format(double? value) => value?.ToString("0.#", CultureInfo.InvariantCulture) ?? "—";
             SummaryText = $"Мін: {Format(summary.Min)} · Середнє: {Format(summary.Avg)} · Макс: {Format(summary.Max)} {metric.Unit}";
         }
-        if (!Thresholds.IsLoaded || thresholdMetric != metric.Value)
-        {
-            await Thresholds.LoadAsync(roomId, metric.Value);
-            thresholdMetric = metric.Value;
-        }
-    });
+        else SummaryText = "Немає даних";
+    }
     // Повертається на попередній екран.
     [RelayCommand] private Task GoBackAsync() => navigation.GoBackAsync();
 }

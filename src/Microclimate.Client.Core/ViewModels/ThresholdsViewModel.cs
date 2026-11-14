@@ -13,6 +13,7 @@ public partial class ThresholdsViewModel(IClientApi api, ClientSession session, 
 {
     private Guid roomId;
     private MetricType metric;
+    private int contextVersion;
     [ObservableProperty] private string warningMin = string.Empty;
     [ObservableProperty] private string warningMax = string.Empty;
     [ObservableProperty] private string criticalMin = string.Empty;
@@ -23,14 +24,22 @@ public partial class ThresholdsViewModel(IClientApi api, ClientSession session, 
     public bool CanEdit => session.Current?.User.Role is UserRole.Admin or UserRole.Operator;
     public bool CanSave => IsLoaded && CanEdit && IsNotBusy;
 
+    public void Invalidate()
+    {
+        contextVersion++; CancelPending(); IsLoaded = false;
+        WarningMin = WarningMax = CriticalMin = CriticalMax = Message = string.Empty;
+    }
+
     public Task LoadAsync(Guid id, MetricType selectedMetric) => RunAsync(async token =>
     {
+        var version = ++contextVersion;
         IsLoaded = false; Message = string.Empty;
         roomId = id; metric = selectedMetric; Unit = MetricPresentation.MetricUnit(metric);
         WarningMin = WarningMax = CriticalMin = CriticalMax = string.Empty;
         OnPropertyChanged(nameof(CanEdit));
         var thresholds = await api.GetThresholdsAsync(id, token);
         token.ThrowIfCancellationRequested();
+        if (version != contextVersion) return;
         var value = thresholds.FirstOrDefault(item => item.Metric == selectedMetric);
         if (value is null) { ErrorMessage = "Сервер не повернув порогів для цієї метрики."; return; }
         Apply(value); IsLoaded = true;
@@ -41,9 +50,11 @@ public partial class ThresholdsViewModel(IClientApi api, ClientSession session, 
     {
         Message = string.Empty;
         if (!CanEdit || !IsLoaded) { ErrorMessage = "Зміна порогів доступна Admin/Operator після завантаження."; return; }
+        var version = contextVersion;
         var request = Parse(WarningMin, WarningMax, CriticalMin, CriticalMax);
         var saved = await api.UpdateThresholdAsync(roomId, metric, request, token);
         token.ThrowIfCancellationRequested();
+        if (version != contextVersion) return;
         Apply(saved); Message = "Пороги збережено.";
     });
 

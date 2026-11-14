@@ -123,4 +123,60 @@ public sealed class CompletionWorkflowTests
         var persisted = (await api.GetThresholdsAsync(room.Id, CancellationToken.None)).Single(item => item.Metric == MetricType.Temperature);
         Assert.Equal(24.5, persisted.WarningMax);
     }
+    [Fact]
+    public async Task LiveAnalyticsKeepExistingChartAndThresholdDraftWhileLoading()
+    {
+        using var f = new ClientFixture(); await f.SignInAsync();
+        var vm = new RoomDetailsViewModel(f.Api, f.Navigation, f.Clock, f.Session);
+        vm.SelectRoom(ClientFixture.RoomId, "101"); await vm.InitializeAsync();
+        var existing = vm.Series; vm.Thresholds.WarningMax = "24";
+        f.Reply = request =>
+        {
+            Assert.True(vm.HasSeries); Assert.Same(existing, vm.Series);
+            Assert.Equal("24", vm.Thresholds.WarningMax);
+            return f.Respond(request);
+        };
+        await vm.RefreshLiveAsync();
+        Assert.False(vm.HasError); Assert.True(vm.HasSeries); Assert.Equal("24", vm.Thresholds.WarningMax);
+    }
+
+    [Fact]
+    public async Task MetricChangeInvalidatesOldThresholdsEvenWhenNewRequestFails()
+    {
+        using var f = new ClientFixture(); await f.SignInAsync();
+        var vm = new RoomDetailsViewModel(f.Api, f.Navigation, f.Clock, f.Session);
+        vm.SelectRoom(ClientFixture.RoomId, "101"); await vm.InitializeAsync();
+        Assert.True(vm.Thresholds.CanSave);
+        f.Reply = request =>
+        {
+            if (request.Uri.AbsolutePath.EndsWith("/thresholds", StringComparison.Ordinal))
+            {
+                Assert.False(vm.Thresholds.CanSave); Assert.Empty(vm.Thresholds.WarningMax);
+                return new(HttpStatusCode.InternalServerError);
+            }
+            return f.Respond(request);
+        };
+        vm.SelectedMetric = vm.Metrics[2]; await vm.SelectionRefresh;
+        Assert.False(vm.Thresholds.IsLoaded);
+        await vm.Thresholds.SaveCommand.ExecuteAsync(null);
+        Assert.DoesNotContain(f.Requests, request => request.Method == "PUT");
+    }
+
+    [Fact]
+    public async Task NewMetricThresholdsLoadIndependentlyOfAnalyticsFailure()
+    {
+        using var f = new ClientFixture(); await f.SignInAsync();
+        var vm = new RoomDetailsViewModel(f.Api, f.Navigation, f.Clock, f.Session);
+        vm.SelectRoom(ClientFixture.RoomId, "101"); await vm.InitializeAsync();
+        f.Reply = request => request.Uri.AbsolutePath.EndsWith("/thresholds", StringComparison.Ordinal)
+            ? ClientFixture.Json(new ThresholdResponse[] { new(Guid.Empty, ClientFixture.RoomId, MetricType.Co2, null, 1200, null, 1750) })
+            : new(HttpStatusCode.InternalServerError);
+        vm.SelectedMetric = vm.Metrics[2]; await vm.SelectionRefresh;
+        Assert.True(vm.HasError); Assert.True(vm.Thresholds.IsLoaded); Assert.Equal("ppm", vm.Thresholds.Unit);
+        Assert.Equal("1200", vm.Thresholds.WarningMax);
+        f.Reply = request => ClientFixture.Json(new ThresholdResponse(Guid.NewGuid(), ClientFixture.RoomId, MetricType.Co2, null, 1100, null, 1750));
+        vm.Thresholds.WarningMax = "1100"; await vm.Thresholds.SaveCommand.ExecuteAsync(null);
+        Assert.EndsWith("/thresholds/co2", f.Requests.Last().Uri.AbsolutePath, StringComparison.Ordinal);
+    }
+
 }

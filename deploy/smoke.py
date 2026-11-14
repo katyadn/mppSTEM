@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Перевіряє ізольований Development API/БД; створює лише синтетичні demo-виміри."""
 import datetime
+import http.client
 import json
 import sys
 import time
@@ -30,19 +31,16 @@ def request(path, method="GET", data=None, token=None, device=False):
 
 for attempt in range(60):
     try:
-        request("/health")
-        break
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
-        # Health може мати text/plain тіло: перевіряємо status окремо.
-        try:
-            with urllib.request.urlopen(base + "/health", timeout=2) as response:
-                if response.status == 200:
-                    break
-        except (urllib.error.URLError, TimeoutError):
-            pass
-        time.sleep(1)
+        with urllib.request.urlopen(base + "/health", timeout=2) as response:
+            if response.status == 200:
+                break
+    except (OSError, http.client.HTTPException):
+        # Поки контейнер/міграції стартують, порт може reset-нути вже прийняте з'єднання.
+        pass
+    time.sleep(1)
 else:
     raise SystemExit("API не став готовим за 60 перевірок.")
+
 
 token = request("/api/v1/auth/login", "POST", {"email": "admin@microclimate.local", "password": "AdminPassword123!"})["accessToken"]
 rooms = request("/api/v1/rooms", token=token)["items"]

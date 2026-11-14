@@ -16,7 +16,7 @@ public partial class RoomDetailsPage : ContentPage, IQueryAttributable
     {
         InitializeComponent();
         BindingContext = viewModel;
-        live = new PageLiveUpdates(realtime, viewModel, navigation, () => viewModel.RoomId is { } id ? new[] { id } : Array.Empty<Guid>(), false, () => viewModel.RefreshCommand.ExecuteAsync(null));
+        live = new PageLiveUpdates(realtime, viewModel, navigation, () => viewModel.RoomId is { } id ? new[] { id } : Array.Empty<Guid>(), false, viewModel.RefreshLiveAsync);
         this.viewModel = viewModel;
     }
 

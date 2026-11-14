@@ -38,7 +38,7 @@ dotnet build src/Microclimate.Client.Maui -c Debug -f net10.0-maccatalyst \
   -p:MauiTargetFramework=net10.0-maccatalyst -p:RuntimeIdentifier=maccatalyst-arm64
 ```
 
-Локально 2026-11-15: 165/165 тестів (64 Client, 43 API, 40 Domain, 6 Application, 4 Infrastructure, 8 Simulator). Release solution та повна нативна Debug MacCatalyst збірка: 0 warnings / 0 errors. MAUI знову має `TreatWarningsAsErrors=true`; CA1711 приглушено тільки для UIKit AppDelegate/SceneDelegate з поясненням імені.
+Локально 2026-11-15: 168/168 тестів (67 Client, 43 API, 40 Domain, 6 Application, 4 Infrastructure, 8 Simulator). Release solution та повна нативна Debug MacCatalyst збірка: 0 warnings / 0 errors. MAUI знову має `TreatWarningsAsErrors=true`; CA1711 приглушено тільки для UIKit AppDelegate/SceneDelegate з поясненням імені.
 
 Нові тести перевіряють threshold round-trip через реальний API/SQLite, ролі й 403, відсутні/неправильні межі, живі сторінки списків, тему, автоматичний період, справжній SignalR hub через TestServer/LongPolling, підписки після reconnect, busy UI, logout, fallback і заборону redirect. `deploy/smoke.py` пройшов проти ізольованого локального API/SQLite; PostgreSQL перевіряється окремим CI job, його результат не підміняється SQLite-тестами.
 

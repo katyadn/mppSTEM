@@ -9,7 +9,7 @@ public sealed class TimeSeriesChart : GraphicsView, IDrawable
     // BindableProperty сегментів; зміна даних спричиняє перемальовування.
     public static readonly BindableProperty SegmentsProperty = BindableProperty.Create(
         nameof(Segments), typeof(IReadOnlyList<IReadOnlyList<ChartPoint>>), typeof(TimeSeriesChart),
-        propertyChanged: (view, _, _) => ((TimeSeriesChart)view).ResetSelection());
+        propertyChanged: (view, _, _) => ((TimeSeriesChart)view).RefreshSelection());
     // BindableProperty одиниці осі значень; зміна підпису спричиняє перемальовування.
     public static readonly BindableProperty UnitProperty = BindableProperty.Create(
         nameof(Unit), typeof(string), typeof(TimeSeriesChart), string.Empty,
@@ -33,15 +33,23 @@ public sealed class TimeSeriesChart : GraphicsView, IDrawable
     }
 
     private void OnThemeChanged(object? sender, AppThemeChangedEventArgs e) => Invalidate();
-    private void ResetSelection() { selected = null; SelectedPointText = string.Empty; renderedPoints.Clear(); SemanticProperties.SetDescription(this, "Графік вимірювань. Торкніться точки для значення та часу."); Invalidate(); }
+    private void RefreshSelection()
+    {
+        if (selected is { } previous) selected = Segments?.SelectMany(segment => segment).FirstOrDefault(point => point.Time == previous.Time);
+        UpdateSelectedPointText(); renderedPoints.Clear(); Invalidate();
+    }
+    private void UpdateSelectedPointText()
+    {
+        SelectedPointText = selected is null ? string.Empty : $"{selected.Time.ToLocalTime():dd.MM.yyyy HH:mm} · {selected.Value.ToString("0.##", CultureInfo.InvariantCulture)} {Unit}";
+        SemanticProperties.SetDescription(this, selected is null ? "Графік вимірювань. Торкніться точки для значення та часу." : SelectedPointText);
+    }
     private void SelectPoint(object? sender, TouchEventArgs e)
     {
         if (e.Touches.Length == 0 || renderedPoints.Count == 0) return;
         var touch = e.Touches[0];
         var nearest = renderedPoints.MinBy(item => Math.Abs(item.Position.X - touch.X));
         selected = nearest.Point;
-        SelectedPointText = $"{selected.Time.ToLocalTime():dd.MM.yyyy HH:mm} · {selected.Value.ToString("0.##", CultureInfo.InvariantCulture)} {Unit}";
-        SemanticProperties.SetDescription(this, SelectedPointText);
+        UpdateSelectedPointText();
         Invalidate();
     }
 
