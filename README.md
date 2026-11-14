@@ -134,11 +134,11 @@ open src/Microclimate.Client.Maui/bin/Debug/net10.0-maccatalyst/maccatalyst-arm6
 dotnet build src/Microclimate.Client.Maui -f net10.0-android -p:MauiTargetFramework=net10.0-android
 ```
 
-## CI та межі Етапу 0
+## CI та перевірки клієнта
 
-CI має два jobs: Linux `build-test` (restore, строгий Release build, тести, coverage artifact/summary) і Windows `maui-build`. Перевіряються Domain, Application, API та Client.Core. Клієнтські тести покривають HTTP, сесію, ViewModels, NoData та розриви часового ряду; Windows job перевіряє нативну збірку.
+CI має чотири jobs: Linux `build-test` (restore, строгий Release build, тести, coverage artifact/summary), Windows `maui-build`, Android `android-build` і `postgres-smoke` з API та PostgreSQL у Compose. Клієнтські тести покривають HTTP, сесію, ViewModels, NoData, розриви часового ряду, пороги та SignalR; платформні jobs перевіряють збірку.
 
-Клієнтський вхід тепер викликає API та зберігає access-сесію в системному захищеному сховищі (або лише в пам’яті, якщо сховище недоступне). Кімнати, деталі та сповіщення завантажуються HTTP-запитами; є пагінація, фільтри й повідомлення про помилки. Потік вхід → кімнати → аналітика → підтвердження сповіщення → вихід перевірено також із чинними контролерами API та SQLite через ASP.NET Core TestServer. Це автоматична інтеграційна перевірка без нативного UI. [Статус клієнта — орієнтир 50%](docs/client-progress.md).
+Клієнтський вхід викликає API та зберігає access-сесію в системному захищеному сховищі (або лише в пам’яті, якщо сховище недоступне). Кімнати, деталі та сповіщення завантажуються HTTP-запитами; є пагінація, фільтри й повідомлення про помилки. Потік вхід → кімнати → аналітика → підтвердження сповіщення → вихід перевірено із чинними контролерами API та SQLite через ASP.NET Core TestServer, а окремий нативний MacCatalyst прогін описано у [UI-звіті](docs/ui/mac-smoke-2026-11-15.md). [Стан клієнта та межі перевірок](docs/client-progress.md).
 
 ## Запуск через Docker
 
