@@ -2,15 +2,14 @@ using Microclimate.Domain.Enums;
 
 namespace Microclimate.Application.Analytics;
 
-/// <summary>Обмеження запитів аналітики (docs/analytics.md, розділ 2).</summary>
 public static class AnalyticsLimits
 {
     public static readonly TimeSpan MaxPeriod = TimeSpan.FromDays(90);
 
-    public static readonly TimeSpan MaxHourlyPeriod = TimeSpan.FromDays(31);
+    public static readonly TimeSpan MaxHourlyPeriod = TimeSpan.FromDays(
+        31);
 }
 
-/// <summary>Параметри індексу комфорту (docs/analytics.md, розділ 3).</summary>
 public static class ComfortIndexSettings
 {
     public static readonly TimeSpan Window = TimeSpan.FromMinutes(15);
@@ -19,10 +18,11 @@ public static class ComfortIndexSettings
 
     public const double AcceptableFrom = 60;
 
-    /// <summary>Якщо критичної межі немає, відстань до неї — 20 % від межі Warning.</summary>
+    /// <summary>Якщо критичної межі немає, відстань до неї 20 % від межі
+    /// Warning.</summary>
     public const double MissingCriticalSpanRatio = 0.2;
 
-    // Метрики без ваги (шум, освітленість) в індексі не враховуються.
+    // Метрики без ваги в індексі не враховуються.
     private static readonly Dictionary<MetricType, double> Weights = new()
     {
         [MetricType.Temperature] = 0.30,
@@ -31,5 +31,6 @@ public static class ComfortIndexSettings
         [MetricType.Pm25] = 0.20,
     };
 
-    public static double Weight(MetricType metric) => Weights.GetValueOrDefault(metric);
+    public static double Weight(MetricType metric) =>
+        Weights.GetValueOrDefault(metric);
 }

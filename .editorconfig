@@ -394,3 +394,33 @@ dotnet_diagnostic.CA1848.severity = suggestion
 
 [**/Migrations/*.cs]
 generated_code = true
+
+[src/Microclimate.Domain/**.cs]
+max_line_length = 75
+
+[tests/Microclimate.Domain.Tests/**.cs]
+max_line_length = 75
+
+[src/Microclimate.Application/**.cs]
+max_line_length = 75
+
+[tests/Microclimate.Application.Tests/**.cs]
+max_line_length = 75
+
+[src/Microclimate.Infrastructure/**.cs]
+max_line_length = 75
+
+[tests/Microclimate.Infrastructure.Tests/**.cs]
+max_line_length = 75
+
+[src/Microclimate.SensorSimulator/**.cs]
+max_line_length = 75
+
+[tests/Microclimate.SensorSimulator.Tests/**.cs]
+max_line_length = 75
+
+[tests/Microclimate.Api.IntegrationTests/DatabaseFlowTests.cs]
+max_line_length = 75
+
+[src/Microclimate.Api/Storage/DatabaseSeeder.cs]
+max_line_length = 75

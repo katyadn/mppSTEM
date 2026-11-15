@@ -33,18 +33,22 @@ public sealed class Room : Entity<Guid>
 
     public DateTimeOffset CreatedAt { get; private set; }
 
-    public static Room Create(string name, int floor, decimal? areaM2, RoomType type, DateTimeOffset now)
+    public static Room Create(string name, int floor, decimal? areaM2,
+        RoomType type, DateTimeOffset now)
     {
-        var room = new Room(Guid.CreateVersion7(now), now.ToUniversalTime());
+        var room = new Room(Guid.CreateVersion7(now),
+            now.ToUniversalTime());
         room.Update(name, floor, areaM2, type);
         return room;
     }
 
-    public void Update(string name, int floor, decimal? areaM2, RoomType type)
+    public void Update(string name, int floor, decimal? areaM2,
+        RoomType type)
     {
         if (floor is < MinFloor or > MaxFloor)
         {
-            throw new DomainException($"Поверх має бути в межах від {MinFloor} до {MaxFloor}.");
+            throw new DomainException(
+                $"Поверх має бути в межах від {MinFloor} до {MaxFloor}.");
         }
 
         if (areaM2 <= 0)

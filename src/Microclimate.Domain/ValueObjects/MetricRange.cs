@@ -11,7 +11,8 @@ public sealed record MetricRange
         Guard.Finite(max, nameof(max));
         if (min > max)
         {
-            throw new DomainException("Нижня межа діапазону не може перевищувати верхню.");
+            throw new DomainException(
+                "Нижня межа діапазону не може перевищувати верхню.");
         }
 
         Min = min;

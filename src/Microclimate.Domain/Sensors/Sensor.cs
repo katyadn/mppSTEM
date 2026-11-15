@@ -2,7 +2,8 @@ using Microclimate.Domain.Common;
 
 namespace Microclimate.Domain.Sensors;
 
-/// <summary>Датчик мікроклімату, встановлений у кімнаті. Один датчик може надсилати будь-які метрики.</summary>
+/// <summary>Датчик мікроклімату, встановлений у кімнаті. Один датчик може
+/// надсилати будь-які метрики.</summary>
 public sealed class Sensor : Entity<Guid>
 {
     public const int SerialNumberMaxLength = 64;
@@ -16,7 +17,8 @@ public sealed class Sensor : Entity<Guid>
         DeviceKeyHash = string.Empty;
     }
 
-    private Sensor(Guid id, Guid roomId, string serialNumber, string? model, string deviceKeyHash, DateTimeOffset installedAt)
+    private Sensor(Guid id, Guid roomId, string serialNumber,
+        string? model, string deviceKeyHash, DateTimeOffset installedAt)
     {
         Id = id;
         RoomId = roomId;
@@ -33,7 +35,8 @@ public sealed class Sensor : Entity<Guid>
 
     public string? Model { get; private set; }
 
-    /// <summary>Хеш ключа X-Device-Key; сам ключ не зберігається.</summary>
+    /// <summary>Хеш ключа X-Device-Key; сам ключ не
+    /// зберігається.</summary>
     public string DeviceKeyHash { get; private set; }
 
     public bool IsActive { get; private set; }
@@ -42,24 +45,29 @@ public sealed class Sensor : Entity<Guid>
 
     public DateTimeOffset? LastSeenAt { get; private set; }
 
-    public static Sensor Create(Guid roomId, string serialNumber, string? model, string deviceKeyHash, DateTimeOffset now) =>
+    public static Sensor Create(Guid roomId, string serialNumber,
+        string? model, string deviceKeyHash, DateTimeOffset now) =>
         new(
             Guid.CreateVersion7(now),
             Guard.NotEmpty(roomId, "Кімната"),
-            Guard.RequiredText(serialNumber, "Серійний номер", SerialNumberMaxLength),
+            Guard.RequiredText(serialNumber, "Серійний номер",
+                SerialNumberMaxLength),
             Guard.OptionalText(model, "Модель", ModelMaxLength),
-            Guard.RequiredText(deviceKeyHash, "Хеш ключа датчика", DeviceKeyHashMaxLength),
+            Guard.RequiredText(deviceKeyHash, "Хеш ключа датчика",
+                DeviceKeyHashMaxLength),
             now.ToUniversalTime());
 
     public void EnsureActive()
     {
         if (!IsActive)
         {
-            throw new DomainException($"Датчик {SerialNumber} деактивовано.");
+            throw new DomainException(
+                $"Датчик {SerialNumber} деактивовано.");
         }
     }
 
-    /// <summary>Фіксує час останнього виміру; час не зсувається назад.</summary>
+    /// <summary>Фіксує час останнього виміру; час не зсувається
+    /// назад.</summary>
     public void MarkSeen(DateTimeOffset moment)
     {
         var utc = moment.ToUniversalTime();
@@ -75,6 +83,7 @@ public sealed class Sensor : Entity<Guid>
     public void RotateDeviceKey(string newDeviceKeyHash)
     {
         EnsureActive();
-        DeviceKeyHash = Guard.RequiredText(newDeviceKeyHash, "Хеш ключа датчика", DeviceKeyHashMaxLength);
+        DeviceKeyHash = Guard.RequiredText(newDeviceKeyHash,
+            "Хеш ключа датчика", DeviceKeyHashMaxLength);
     }
 }

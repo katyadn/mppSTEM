@@ -1,6 +1,7 @@
 namespace Microclimate.Domain.Enums;
 
-/// <summary>Показник мікроклімату. Одиниці — див. <see cref="Metrics.MetricLimits"/>.</summary>
+/// <summary>Показник мікроклімату. Одиниці див. <see
+/// cref="Metrics.MetricLimits"/>.</summary>
 public enum MetricType
 {
     /// <summary>Температура, °C.</summary>
@@ -15,7 +16,7 @@ public enum MetricType
     /// <summary>Дрібнодисперсні частки PM2.5, µg/m³.</summary>
     Pm25 = 4,
 
-    /// <summary>Рівень шуму, dB(A).</summary>
+    /// <summary>Рівень шуму, dB.</summary>
     Noise = 5,
 
     /// <summary>Освітленість, lux.</summary>

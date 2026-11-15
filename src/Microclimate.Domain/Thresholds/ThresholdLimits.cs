@@ -4,16 +4,21 @@ using Microclimate.Domain.Enums;
 namespace Microclimate.Domain.Thresholds;
 
 /// <summary>
-/// Межі порогу метрики: CriticalMin ≤ WarningMin &lt; WarningMax ≤ CriticalMax.
-/// Будь-яка межа може бути відсутня, але хоча б одна має бути задана. Межі включні.
+/// Межі порогу метрики: CriticalMin ≤ WarningMin &lt; WarningMax ≤
+/// CriticalMax.
+/// Будь-яка межа може бути відсутня, але хоча б одна має бути задана. Межі
+/// включні.
 /// </summary>
 public sealed record ThresholdLimits
 {
-    public ThresholdLimits(double? criticalMin, double? warningMin, double? warningMax, double? criticalMax)
+    public ThresholdLimits(double? criticalMin, double? warningMin,
+        double? warningMax, double? criticalMax)
     {
-        if (criticalMin is null && warningMin is null && warningMax is null && criticalMax is null)
+        if (criticalMin is null && warningMin is null && warningMax is
+            null && criticalMax is null)
         {
-            throw new DomainException("Поріг має містити хоча б одну межу.");
+            throw new DomainException(
+                "Поріг має містити хоча б одну межу.");
         }
 
         CheckFinite(criticalMin, nameof(criticalMin));
@@ -23,12 +28,16 @@ public sealed record ThresholdLimits
 
         if (criticalMin > warningMin)
         {
-            throw new DomainException("Критична нижня межа не може бути вищою за нижню межу попередження.");
+            throw new DomainException(
+                "Критична нижня межа не може бути вищою за нижню межу "
+                + "попередження.");
         }
 
         if (warningMax > criticalMax)
         {
-            throw new DomainException("Верхня межа попередження не може бути вищою за критичну верхню межу.");
+            throw new DomainException(
+                "Верхня межа попередження не може бути вищою за "
+                + "критичну верхню межу.");
         }
 
         double?[] lower = [criticalMin, warningMin];
@@ -39,7 +48,9 @@ public sealed record ThresholdLimits
             {
                 if (low >= high)
                 {
-                    throw new DomainException("Нижні межі порогу мають бути строго меншими за верхні.");
+                    throw new DomainException(
+                        "Нижні межі порогу мають бути строго меншими "
+                        + "за верхні.");
                 }
             }
         }
@@ -58,13 +69,16 @@ public sealed record ThresholdLimits
 
     public double? CriticalMax { get; }
 
-    /// <summary>Оцінює значення: <c>null</c> — норма, інакше рівень сповіщення.</summary>
+    /// <summary>Оцінює значення: <c>null</c> норма, інакше рівень
+    /// сповіщення.</summary>
     public AlertLevel? Evaluate(double value) => Check(value).Level;
 
-    /// <summary>Межа, яку перевищено значенням (знімок для сповіщення), або <c>null</c>, якщо значення в нормі.</summary>
+    /// <summary>Межа, яку перевищено значенням, або <c>null</c>, якщо
+    /// значення в нормі.</summary>
     public double? ExceededBound(double value) => Check(value).Bound;
 
-    // Межі перевіряються від суворіших до м'якших; відсутня межа (null) не спрацьовує.
+    // Межі перевіряються від суворіших до м'якших; відсутня межа не
+    // спрацьовує.
     private (AlertLevel? Level, double? Bound) Check(double value)
     {
         if (value < CriticalMin)

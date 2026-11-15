@@ -20,7 +20,8 @@ public sealed class User : Entity<Guid>
         PasswordHash = string.Empty;
     }
 
-    private User(Guid id, string email, string displayName, string passwordHash, UserRole role, DateTimeOffset createdAt)
+    private User(Guid id, string email, string displayName,
+        string passwordHash, UserRole role, DateTimeOffset createdAt)
     {
         Id = id;
         Email = email;
@@ -36,7 +37,7 @@ public sealed class User : Entity<Guid>
 
     public string DisplayName { get; private set; }
 
-    /// <summary>Хеш пароля (обчислює шар Api); сам пароль не зберігається.</summary>
+    /// <summary>Хеш пароля; сам пароль не зберігається.</summary>
     public string PasswordHash { get; private set; }
 
     public UserRole Role { get; private set; }
@@ -45,35 +46,43 @@ public sealed class User : Entity<Guid>
 
     public DateTimeOffset CreatedAt { get; private set; }
 
-    public static User Create(string email, string displayName, string passwordHash, UserRole role, DateTimeOffset now) =>
+    public static User Create(string email, string displayName,
+        string passwordHash, UserRole role, DateTimeOffset now) =>
         new(
             Guid.CreateVersion7(now),
             NormalizeEmail(email),
             Guard.RequiredText(displayName, "Ім'я", DisplayNameMaxLength),
-            Guard.RequiredText(passwordHash, "Хеш пароля", PasswordHashMaxLength),
+            Guard.RequiredText(passwordHash, "Хеш пароля",
+                PasswordHashMaxLength),
             Guard.Defined(role, "Роль"),
             now.ToUniversalTime());
 
-    /// <summary>Канонічний вигляд email без перевірки формату: без пробілів по краях, у нижньому регістрі.</summary>
+    /// <summary>Канонічний вигляд email без перевірки формату: без
+    /// пробілів по краях, у нижньому регістрі.</summary>
     public static string CanonicalEmail(string email)
     {
         ArgumentNullException.ThrowIfNull(email);
         return email.Trim().ToLowerInvariant();
     }
 
-    /// <summary>Канонічний вигляд email з перевіркою, що він заданий, не задовгий і має правильний формат.</summary>
+    /// <summary>Канонічний вигляд email з перевіркою, що він заданий, не
+    /// задовгий і має правильний формат.</summary>
     public static string NormalizeEmail(string email)
     {
-        var normalized = CanonicalEmail(Guard.RequiredText(email, "Email", EmailMaxLength));
-        if (!MailAddress.TryCreate(normalized, out var address) || address.Address != normalized)
+        var normalized = CanonicalEmail(Guard.RequiredText(email, "Email",
+            EmailMaxLength));
+        if (!MailAddress.TryCreate(normalized,
+            out var address) || address.Address != normalized)
         {
-            throw new DomainException($"Email '{normalized}' має некоректний формат.");
+            throw new DomainException(
+                $"Email '{normalized}' має некоректний формат.");
         }
 
         return normalized;
     }
 
-    public void ChangeRole(UserRole role) => Role = Guard.Defined(role, "Роль");
+    public void ChangeRole(UserRole role) => Role = Guard.Defined(role,
+        "Роль");
 
     public void Deactivate() => IsActive = false;
 }

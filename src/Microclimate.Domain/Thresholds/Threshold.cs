@@ -3,7 +3,7 @@ using Microclimate.Domain.Enums;
 
 namespace Microclimate.Domain.Thresholds;
 
-/// <summary>Пороги метрики, задані для конкретної кімнати (замість значень за замовчуванням).</summary>
+/// <summary>Пороги метрики, задані для конкретної кімнати.</summary>
 public sealed class Threshold : Entity<Guid>
 {
     // Для EF Core
@@ -30,11 +30,15 @@ public sealed class Threshold : Entity<Guid>
 
     public double? CriticalMax { get; private set; }
 
-    public ThresholdLimits Limits => new(CriticalMin, WarningMin, WarningMax, CriticalMax);
+    public ThresholdLimits Limits => new(CriticalMin, WarningMin,
+        WarningMax, CriticalMax);
 
-    public static Threshold Create(Guid roomId, MetricType metric, ThresholdLimits limits, DateTimeOffset now)
+    public static Threshold Create(Guid roomId, MetricType metric,
+        ThresholdLimits limits, DateTimeOffset now)
     {
-        var threshold = new Threshold(Guid.CreateVersion7(now), Guard.NotEmpty(roomId, "Кімната"), Guard.Defined(metric, "Метрика"));
+        var threshold = new Threshold(Guid.CreateVersion7(now),
+            Guard.NotEmpty(roomId, "Кімната"), Guard.Defined(metric,
+            "Метрика"));
         threshold.Update(limits);
         return threshold;
     }

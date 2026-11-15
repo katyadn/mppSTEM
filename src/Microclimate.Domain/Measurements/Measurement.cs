@@ -8,15 +8,18 @@ namespace Microclimate.Domain.Measurements;
 /// <summary>Один вимір метрики датчиком.</summary>
 public sealed class Measurement : Entity<long>
 {
-    /// <summary>Допустиме відставання годинника сервера від годинника датчика.</summary>
-    public static readonly TimeSpan AllowedClockSkew = TimeSpan.FromMinutes(5);
+    /// <summary>Допустиме відставання годинника сервера від годинника
+    /// датчика.</summary>
+    public static readonly TimeSpan AllowedClockSkew =
+        TimeSpan.FromMinutes(5);
 
     // Для EF Core
     private Measurement()
     {
     }
 
-    private Measurement(Guid sensorId, MetricType metric, double value, DateTimeOffset measuredAt)
+    private Measurement(Guid sensorId, MetricType metric, double value,
+        DateTimeOffset measuredAt)
     {
         SensorId = sensorId;
         Metric = metric;
@@ -32,7 +35,8 @@ public sealed class Measurement : Entity<long>
 
     public DateTimeOffset MeasuredAt { get; private set; }
 
-    public static Measurement Record(Sensor sensor, MetricType metric, double value, DateTimeOffset measuredAt, DateTimeOffset now)
+    public static Measurement Record(Sensor sensor, MetricType metric,
+        double value, DateTimeOffset measuredAt, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(sensor);
         sensor.EnsureActive();
@@ -43,13 +47,16 @@ public sealed class Measurement : Entity<long>
         if (!limits.Contains(value))
         {
             throw new DomainException(
-                $"Значення {value} {MetricLimits.Unit(metric)} поза фізичними межами [{limits.Min}; {limits.Max}] для {metric}.");
+                $"Значення {value} {MetricLimits.Unit(metric)} поза "
+                + $"фізичними межами [{limits.Min}; {limits.Max}] для "
+                + $"{metric}.");
         }
 
         var measuredUtc = measuredAt.ToUniversalTime();
         if (measuredUtc > now.ToUniversalTime() + AllowedClockSkew)
         {
-            throw new DomainException("Час виміру не може бути в майбутньому.");
+            throw new DomainException(
+                "Час виміру не може бути в майбутньому.");
         }
 
         return new Measurement(sensor.Id, metric, value, measuredUtc);

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -17,17 +17,26 @@ namespace Microclimate.Infrastructure.Persistence.Migrations.Postgres
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Floor = table.Column<int>(type: "integer", nullable: false),
-                    AreaM2 = table.Column<decimal>(type: "numeric(8,2)", precision: 8, scale: 2, nullable: true),
-                    Type = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    Name = table.Column<string>(
+                        type: "character varying(100)", maxLength: 100,
+                        nullable: false),
+                    Floor = table.Column<int>(type: "integer",
+                        nullable: false),
+                    AreaM2 = table.Column<decimal>(type: "numeric(8,2)",
+                        precision: 8, scale: 2, nullable: true),
+                    Type = table.Column<string>(
+                        type: "character varying(32)", maxLength: 32,
+                        nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(
+                        type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Rooms", x => x.Id);
-                    table.CheckConstraint("CK_Rooms_AreaM2", "\"AreaM2\" IS NULL OR \"AreaM2\" > 0");
-                    table.CheckConstraint("CK_Rooms_Floor", "\"Floor\" BETWEEN -5 AND 200");
+                    table.CheckConstraint("CK_Rooms_AreaM2",
+                        "\"AreaM2\" IS NULL OR \"AreaM2\" > 0");
+                    table.CheckConstraint("CK_Rooms_Floor",
+                        "\"Floor\" BETWEEN -5 AND 200");
                 });
 
             migrationBuilder.CreateTable(
@@ -35,12 +44,22 @@ namespace Microclimate.Infrastructure.Persistence.Migrations.Postgres
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    DisplayName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    PasswordHash = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    Role = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    Email = table.Column<string>(
+                        type: "character varying(256)", maxLength: 256,
+                        nullable: false),
+                    DisplayName = table.Column<string>(
+                        type: "character varying(100)", maxLength: 100,
+                        nullable: false),
+                    PasswordHash = table.Column<string>(
+                        type: "character varying(256)", maxLength: 256,
+                        nullable: false),
+                    Role = table.Column<string>(
+                        type: "character varying(16)", maxLength: 16,
+                        nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean",
+                        nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(
+                        type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -52,13 +71,23 @@ namespace Microclimate.Infrastructure.Persistence.Migrations.Postgres
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    RoomId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SerialNumber = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    Model = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    DeviceKeyHash = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    InstalledAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    LastSeenAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                    RoomId = table.Column<Guid>(type: "uuid",
+                        nullable: false),
+                    SerialNumber = table.Column<string>(
+                        type: "character varying(64)", maxLength: 64,
+                        nullable: false),
+                    Model = table.Column<string>(
+                        type: "character varying(100)", maxLength: 100,
+                        nullable: true),
+                    DeviceKeyHash = table.Column<string>(
+                        type: "character varying(256)", maxLength: 256,
+                        nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean",
+                        nullable: false),
+                    InstalledAt = table.Column<DateTimeOffset>(
+                        type: "timestamp with time zone", nullable: false),
+                    LastSeenAt = table.Column<DateTimeOffset>(
+                        type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -76,17 +105,34 @@ namespace Microclimate.Infrastructure.Persistence.Migrations.Postgres
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    RoomId = table.Column<Guid>(type: "uuid", nullable: false),
-                    MetricType = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    CriticalMin = table.Column<double>(type: "double precision", nullable: true),
-                    WarningMin = table.Column<double>(type: "double precision", nullable: true),
-                    WarningMax = table.Column<double>(type: "double precision", nullable: true),
-                    CriticalMax = table.Column<double>(type: "double precision", nullable: true)
+                    RoomId = table.Column<Guid>(type: "uuid",
+                        nullable: false),
+                    MetricType = table.Column<string>(
+                        type: "character varying(32)", maxLength: 32,
+                        nullable: false),
+                    CriticalMin = table.Column<double>(
+                        type: "double precision", nullable: true),
+                    WarningMin = table.Column<double>(
+                        type: "double precision", nullable: true),
+                    WarningMax = table.Column<double>(
+                        type: "double precision", nullable: true),
+                    CriticalMax = table.Column<double>(
+                        type: "double precision", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Thresholds", x => x.Id);
-                    table.CheckConstraint("CK_Thresholds_Order", "(\"CriticalMin\" IS NOT NULL OR \"WarningMin\" IS NOT NULL OR \"WarningMax\" IS NOT NULL OR \"CriticalMax\" IS NOT NULL) AND (\"CriticalMin\" IS NULL OR \"WarningMin\" IS NULL OR \"CriticalMin\" <= \"WarningMin\") AND (\"WarningMin\" IS NULL OR \"WarningMax\" IS NULL OR \"WarningMin\" < \"WarningMax\") AND (\"WarningMax\" IS NULL OR \"CriticalMax\" IS NULL OR \"WarningMax\" <= \"CriticalMax\")");
+                    table.CheckConstraint("CK_Thresholds_Order",
+                        "(\"CriticalMin\" IS NOT NULL OR "
+                        + "\"WarningMin\" IS NOT NULL OR \"WarningMax\" "
+                        + "IS NOT NULL OR \"CriticalMax\" IS NOT NULL) "
+                        + "AND (\"CriticalMin\" IS NULL OR "
+                        + "\"WarningMin\" IS NULL OR \"CriticalMin\" <= "
+                        + "\"WarningMin\") AND (\"WarningMin\" IS NULL "
+                        + "OR \"WarningMax\" IS NULL OR \"WarningMin\" "
+                        + "< \"WarningMax\") AND (\"WarningMax\" IS "
+                        + "NULL OR \"CriticalMax\" IS NULL OR "
+                        + "\"WarningMax\" <= \"CriticalMax\")");
                     table.ForeignKey(
                         name: "FK_Thresholds_Rooms_RoomId",
                         column: x => x.RoomId,
@@ -100,18 +146,34 @@ namespace Microclimate.Infrastructure.Persistence.Migrations.Postgres
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    RoomId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SensorId = table.Column<Guid>(type: "uuid", nullable: true),
-                    MetricType = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    Level = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
-                    Status = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
-                    Value = table.Column<double>(type: "double precision", nullable: false),
-                    ThresholdValue = table.Column<double>(type: "double precision", nullable: false),
-                    Message = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    RaisedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    AcknowledgedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    AcknowledgedByUserId = table.Column<Guid>(type: "uuid", nullable: true),
-                    ResolvedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                    RoomId = table.Column<Guid>(type: "uuid",
+                        nullable: false),
+                    SensorId = table.Column<Guid>(type: "uuid",
+                        nullable: true),
+                    MetricType = table.Column<string>(
+                        type: "character varying(32)", maxLength: 32,
+                        nullable: false),
+                    Level = table.Column<string>(
+                        type: "character varying(16)", maxLength: 16,
+                        nullable: false),
+                    Status = table.Column<string>(
+                        type: "character varying(16)", maxLength: 16,
+                        nullable: false),
+                    Value = table.Column<double>(type: "double precision",
+                        nullable: false),
+                    ThresholdValue = table.Column<double>(
+                        type: "double precision", nullable: false),
+                    Message = table.Column<string>(
+                        type: "character varying(500)", maxLength: 500,
+                        nullable: false),
+                    RaisedAt = table.Column<DateTimeOffset>(
+                        type: "timestamp with time zone", nullable: false),
+                    AcknowledgedAt = table.Column<DateTimeOffset>(
+                        type: "timestamp with time zone", nullable: true),
+                    AcknowledgedByUserId = table.Column<Guid>(type: "uuid",
+                        nullable: true),
+                    ResolvedAt = table.Column<DateTimeOffset>(
+                        type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -140,12 +202,20 @@ namespace Microclimate.Infrastructure.Persistence.Migrations.Postgres
                 name: "Measurements",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SensorId = table.Column<Guid>(type: "uuid", nullable: false),
-                    MetricType = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    Value = table.Column<double>(type: "double precision", nullable: false),
-                    MeasuredAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    Id = table.Column<long>(type: "bigint",
+                        nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy",
+                            NpgsqlValueGenerationStrategy
+                            .IdentityByDefaultColumn),
+                    SensorId = table.Column<Guid>(type: "uuid",
+                        nullable: false),
+                    MetricType = table.Column<string>(
+                        type: "character varying(32)", maxLength: 32,
+                        nullable: false),
+                    Value = table.Column<double>(type: "double precision",
+                        nullable: false),
+                    MeasuredAt = table.Column<DateTimeOffset>(
+                        type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
