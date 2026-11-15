@@ -117,7 +117,7 @@ dotnet build src/Microclimate.Client.Maui -t:Run -f net10.0-windows10.0.19041.0 
 
 Явне `MauiTargetFramework` обмежує restore платформою Windows, тому команда не потребує Android SDK. Перевірте Login → Dashboard, деталі кімнати, вкладки Alerts/Settings і вихід; додайте реальні скриншоти у `docs/ui/screenshots/stage-0/`.
 
-## MAUI: macOS / Android
+## MAUI: macOS / iOS / Android
 
 Перевірена поточна комбінація для Mac: **Xcode 27.2**, **.NET SDK/workload set 10.0.404**, MAUI **10.0.110**. Встановіть SDK 10.0.404 і перевірте `dotnet --version` перед командами нижче. Сумісність Apple SDK — в [офіційному релізі](https://github.com/dotnet/macios/releases/tag/dotnet-10.0.1xx-xcode27.2.10000). Мінімальна версія MacCatalyst — 17.0.
 
@@ -129,7 +129,22 @@ open src/Microclimate.Client.Maui/bin/Debug/net10.0-maccatalyst/maccatalyst-arm6
 
 `CodesignKey=-` — локальний ad-hoc підпис Debug-запуску. Якщо SecureStorage недоступне, застосунок показує «Сесія діє до закриття застосунку»; постійне сховище потребує належного підпису. API запускається в іншому терміналі за інструкцією вище. [Нативний прогін 15.11](docs/ui/mac-smoke-2026-11-15.md) містить фактичні сценарії й скриншоти. Для старого Xcode 27.1 історична комбінація SDK 10.0.402 / workload 10.0.402.1 описана у [прогоні 24.10](docs/ui/mac-smoke-2026-10-24.md).
 
-На Intel Mac замініть runtime на `maccatalyst-x64`. Для Android встановіть .NET SDK 10.0.404, JDK 21 та Android SDK. Потім:
+На Intel Mac замініть runtime на `maccatalyst-x64`.
+
+Для iOS Simulator на Apple Silicon використовуйте ту саму комбінацію Xcode/SDK:
+
+```bash
+dotnet workload install maui-ios --version 10.0.404
+dotnet build src/Microclimate.Client.Maui -c Debug -f net10.0-ios -p:MauiTargetFramework=net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64 -p:EnableCodeSigning=true -p:CodesignKey=-
+xcrun simctl list devices available
+# Після вибору й запуску потрібного Simulator:
+xcrun simctl install booted src/Microclimate.Client.Maui/bin/Debug/net10.0-ios/iossimulator-arm64/Microclimate.Client.Maui.app
+xcrun simctl launch booted com.companyname.microclimate.client.maui
+```
+
+[Прогін iOS 27.2](docs/ui/ios-smoke-2026-11-15.md) підтверджує основні екрани, live update і відновлення сесії. Simulator потребував ad-hoc підпису; `EnableCodeSigning=false` спричинив системне відхилення запуску. На фізичному iPhone потрібен окремий підпис і перевірка.
+
+Для Android встановіть .NET SDK 10.0.404, JDK 21 та Android SDK. Потім:
 
 ```bash
 dotnet workload install maui-android --version 10.0.404

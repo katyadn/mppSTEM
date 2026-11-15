@@ -38,8 +38,8 @@ dotnet build src/Microclimate.Client.Maui -c Debug -f net10.0-maccatalyst \
   -p:MauiTargetFramework=net10.0-maccatalyst -p:RuntimeIdentifier=maccatalyst-arm64
 ```
 
-Локально 2026-11-15: 168/168 тестів (67 Client, 43 API, 40 Domain, 6 Application, 4 Infrastructure, 8 Simulator). Release solution та повна нативна Debug MacCatalyst збірка: 0 warnings / 0 errors. MAUI знову має `TreatWarningsAsErrors=true`; CA1711 приглушено тільки для UIKit AppDelegate/SceneDelegate з поясненням імені.
+Локально 2026-11-15: 168/168 тестів (67 Client, 43 API, 40 Domain, 6 Application, 4 Infrastructure, 8 Simulator). Release solution та повні нативні Debug MacCatalyst/iOS Simulator збірки: 0 warnings / 0 errors. MAUI знову має `TreatWarningsAsErrors=true`; CA1711 приглушено тільки для UIKit AppDelegate/SceneDelegate з поясненням імені.
 
 Нові тести перевіряють threshold round-trip через реальний API/SQLite, ролі й 403, відсутні/неправильні межі, живі сторінки списків, тему, автоматичний період, справжній SignalR hub через TestServer/LongPolling, підписки після reconnect, busy UI, logout, fallback і заборону redirect. `deploy/smoke.py` пройшов проти ізольованого локального API/SQLite; PostgreSQL перевіряється окремим CI job, його результат не підміняється SQLite-тестами.
 
-Деталі нативного UI-прогону та межі перевірки — `docs/ui/mac-smoke-2026-11-15.md`. Ручні Windows/Android UI-прогони й постійне SecureStorage з належним підписом не підтверджені цим запуском. Збірка платформи не є доказом ручного UI-прогону. Merge виконує людина після рев'ю Учасника 2 та зеленого CI згідно `CONTRIBUTING.md`.
+Деталі нативних UI-прогонів — [Mac](ui/mac-smoke-2026-11-15.md) та [iOS](ui/ios-smoke-2026-11-15.md). На iOS Simulator підтверджено SecureStorage з відновленням сесії після завершення процесу; на Mac ad-hoc — memory-only fallback. Windows/Android UI та фізичний iPhone не перевірені. [Аудит рубрики](participant-3-rubric.md) відокремлює технічні докази від командних та особистих критеріїв захисту. Збірка платформи не є доказом ручного UI-прогону. Merge виконує людина після рев'ю Учасника 2 та зеленого CI згідно `CONTRIBUTING.md`.

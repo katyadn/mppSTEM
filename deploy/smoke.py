@@ -53,6 +53,11 @@ assert len(thresholds) == 6
 saved = request(root + "/thresholds/temperature", "PUT", {"warningMin": 20, "warningMax": 25, "criticalMin": 16, "criticalMax": 28}, token)
 assert saved["warningMax"] == 25
 now = datetime.datetime.now(datetime.timezone.utc)
+# Попередній прогін міг acknowledge-нути ту саму критичну тривогу. Спершу
+# нормалізуємо CO₂, щоб сервер закрив її, а потім перевіряємо новий перехід у Critical.
+request("/api/v1/measurements", "POST", {"sensorId": sensor, "items": [
+    {"metric": 3, "value": 800, "measuredAt": (now - datetime.timedelta(seconds=2)).isoformat()},
+]}, device=True)
 measured_at = (now - datetime.timedelta(seconds=1)).isoformat()
 request("/api/v1/measurements", "POST", {"sensorId": sensor, "items": [
     {"metric": 1, "value": 22.5, "measuredAt": measured_at},
@@ -62,8 +67,9 @@ latest = request(root + "/measurements/latest", token=token)
 assert any(item["value"] == 22.5 for item in latest)
 comfort = request(root + "/analytics/comfort", token=token)
 assert comfort["index"] is not None
-alerts = request("/api/v1/alerts?status=open&level=critical", token=token)["items"]
+alerts = request("/api/v1/alerts?roomId=" + room + "&status=open&level=critical", token=token)["items"]
 assert alerts, "Критичне сповіщення не створено"
-request("/api/v1/alerts/" + alerts[0]["id"] + "/acknowledge", "POST", token=token)
-assert request("/api/v1/alerts?status=acknowledged", token=token)["items"]
+alert_id = alerts[0]["id"]
+request("/api/v1/alerts/" + alert_id + "/acknowledge", "POST", token=token)
+assert any(item["id"] == alert_id for item in request("/api/v1/alerts?roomId=" + room + "&status=acknowledged", token=token)["items"])
 print("PASS: health, JWT, rooms, sensors, thresholds, ingestion, latest values, comfort, alerts, acknowledge")

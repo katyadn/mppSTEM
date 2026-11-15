@@ -40,6 +40,11 @@ jobs:
           dotnet build Microclimate.Ci.slnf -c Release --no-restore \
             -p:AnalysisOutputDirectory="$GITHUB_WORKSPACE/artifacts/analysis" \
             2>&1 | tee artifacts/analysis/build.log
+      - name: Static analysis summary
+        if: always()
+        run: |
+          python3 deploy/summarize_analysis.py artifacts/analysis > artifacts/analysis/summary.md
+          cat artifacts/analysis/summary.md >> "$GITHUB_STEP_SUMMARY"
       - name: Static analysis reports
         if: always()
         uses: actions/upload-artifact@v7
@@ -124,7 +129,9 @@ jobs:
       - name: Start PostgreSQL and API
         run: docker compose -f deploy/docker-compose.yml --profile app up -d --build api
       - name: Verify end-to-end HTTP workflow
-        run: python3 deploy/smoke.py http://127.0.0.1:5195
+        run: |
+          python3 deploy/smoke.py http://127.0.0.1:5195
+          python3 deploy/smoke.py http://127.0.0.1:5195
       - name: Capture container logs
         if: always()
         run: docker compose -f deploy/docker-compose.yml --profile app logs --no-color > compose-smoke.log
