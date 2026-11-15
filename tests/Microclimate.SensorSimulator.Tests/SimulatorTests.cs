@@ -1,9 +1,12 @@
 using System.Net;
+using System.Net.Sockets;
+using System.Text;
 
 using Microclimate.Contracts.Common;
 using Microclimate.Contracts.Measurements;
 
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Microclimate.SensorSimulator.Tests;
 
@@ -11,6 +14,78 @@ public class SimulatorTests
 {
     private static readonly DateTimeOffset Afternoon = new(2026, 10, 20,
         15, 0, 0, TimeSpan.Zero);
+
+    [Theory]
+    [InlineData(307)]
+    [InlineData(308)]
+    public async Task SendAsync_Redirect_DoesNotContactOtherOrigin(
+        int status)
+    {
+        using var source = new TcpListener(IPAddress.Loopback, 0);
+        using var target = new TcpListener(IPAddress.Loopback, 0);
+        source.Start();
+        target.Start();
+        var sourcePort = ((IPEndPoint)source.LocalEndpoint).Port;
+        var targetPort = ((IPEndPoint)target.LocalEndpoint).Port;
+        using var timeout = new CancellationTokenSource(
+            TimeSpan.FromSeconds(10));
+        var sourceRequest = ReplyOnceAsync(source,
+            $"HTTP/1.1 {status} Redirect\r\n"
+            + $"Location: http://127.0.0.1:{targetPort}/received\r\n",
+            timeout.Token);
+        var targetRequest = ReplyOnceAsync(target,
+            "HTTP/1.1 202 Accepted\r\n", timeout.Token);
+
+        var services = new ServiceCollection();
+        services.Configure<SimulatorOptions>(options =>
+            options.ApiBaseUrl = new Uri(
+                $"http://127.0.0.1:{sourcePort}/"));
+        services.AddMeasurementApiClient();
+        await using var provider = services.BuildServiceProvider();
+        var factory = provider.GetRequiredService<IHttpClientFactory>();
+        var client = new MeasurementApiClient(factory,
+            NullLogger<MeasurementApiClient>.Instance);
+
+        SendResult result;
+        try
+        {
+            result = await client.SendAsync(Batch(),
+                "test-key-not-a-secret", timeout.Token);
+            Assert.True(await sourceRequest);
+        }
+        finally
+        {
+            await timeout.CancelAsync();
+            await Task.WhenAll(sourceRequest, targetRequest);
+        }
+
+        Assert.Equal(SendResult.Rejected, result);
+        Assert.False(await targetRequest);
+    }
+
+    private static async Task<bool> ReplyOnceAsync(
+        TcpListener listener, string response, CancellationToken token)
+    {
+        try
+        {
+            using var socket = await listener.AcceptTcpClientAsync(token);
+            await using var stream = socket.GetStream();
+            using var reader = new StreamReader(stream, leaveOpen: true);
+            while (await reader.ReadLineAsync(token) is { Length: > 0 })
+            {
+            }
+
+            var bytes = Encoding.ASCII.GetBytes(response
+                + "Content-Length: 0\r\nConnection: close\r\n\r\n");
+            await stream.WriteAsync(bytes, token);
+            return true;
+        }
+        catch (OperationCanceledException) when (
+            token.IsCancellationRequested)
+        {
+            return false;
+        }
+    }
 
     [Fact]
     public void Next_SameSeed_ReturnsSameRoundedValuesWithinNoise()

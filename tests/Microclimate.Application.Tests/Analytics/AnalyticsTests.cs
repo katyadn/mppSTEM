@@ -66,6 +66,31 @@ public class AnalyticsTests
         Assert.Null(series[1].Avg);
     }
 
+    [Theory]
+    [InlineData(MetricType.Noise, 80, ComfortCategory.Uncomfortable)]
+    [InlineData(MetricType.Light, 100, ComfortCategory.Uncomfortable)]
+    [InlineData(MetricType.Noise, 40, ComfortCategory.Comfortable)]
+    public void Calculate_ZeroWeightMetric_AffectsOnlyCategory(
+        MetricType metric, double value, ComfortCategory category)
+    {
+        var result = new ComfortIndexCalculator().Calculate(
+            [Office(MetricType.Temperature, 22), Office(metric, value)]);
+
+        Assert.Equal(100, result.Index);
+        Assert.Equal(category, result.Category);
+        Assert.Equal(2, result.Components.Count);
+    }
+
+    [Fact]
+    public void Calculate_OnlyZeroWeightMetrics_ReturnsNoData()
+    {
+        var result = new ComfortIndexCalculator().Calculate(
+            [Office(MetricType.Noise, 80), Office(MetricType.Light, 100)]);
+
+        Assert.Null(result.Index);
+        Assert.Equal(ComfortCategory.NoData, result.Category);
+    }
+
     private sealed class FakeRooms(Room room) : IRoomRepository
     {
         public Task<Room?> GetByIdAsync(Guid id,

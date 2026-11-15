@@ -5,12 +5,15 @@ using Microclimate.Domain.Enums;
 using Microclimate.Domain.Measurements;
 using Microclimate.Domain.Rooms;
 using Microclimate.Domain.Sensors;
+using Microclimate.Domain.Thresholds;
 using Microclimate.Domain.ValueObjects;
 using Microclimate.Infrastructure.Persistence;
 using Microclimate.Infrastructure.Repositories;
 
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Microclimate.Infrastructure.Tests;
 
@@ -137,6 +140,80 @@ public sealed class RepositoryTests : IDisposable
 
         Assert.False(await rooms.ExistsByNameAsync("301",
             CancellationToken.None));
+    }
+
+    [Theory]
+    [InlineData(30d, null, 25d, null)]
+    [InlineData(30d, null, null, 25d)]
+    [InlineData(null, 30d, null, 25d)]
+    [InlineData(25d, null, 25d, null)]
+    [InlineData(25d, null, null, 25d)]
+    [InlineData(null, 25d, null, 25d)]
+    public async Task ThresholdSql_InvalidOrder_IsRejected(
+        double? criticalMin, double? warningMin,
+        double? warningMax, double? criticalMax)
+    {
+        var sensor = await SeedSensorAsync();
+        var threshold = Threshold.Create(sensor.RoomId,
+            MetricType.Temperature, new(16, 20, 25, 28), Now);
+        _db.Thresholds.Add(threshold);
+        await _db.SaveChangesAsync();
+
+        var error = await Assert.ThrowsAsync<SqliteException>(() =>
+            _db.Database.ExecuteSqlInterpolatedAsync($"""
+                UPDATE "Thresholds"
+                SET "CriticalMin" = {criticalMin},
+                    "WarningMin" = {warningMin},
+                    "WarningMax" = {warningMax},
+                    "CriticalMax" = {criticalMax}
+                WHERE "Id" = {threshold.Id}
+                """));
+
+        Assert.Equal(275, error.SqliteExtendedErrorCode);
+        _db.ChangeTracker.Clear();
+        var stored = await _db.Thresholds.SingleAsync();
+        Assert.Equal(new ThresholdLimits(16, 20, 25, 28), stored.Limits);
+    }
+
+    [Theory]
+    [InlineData(16d, null, null, null)]
+    [InlineData(null, 20d, null, null)]
+    [InlineData(null, null, 25d, null)]
+    [InlineData(null, null, null, 28d)]
+    public async Task Threshold_OneSidedLimits_AreStored(
+        double? criticalMin, double? warningMin,
+        double? warningMax, double? criticalMax)
+    {
+        var sensor = await SeedSensorAsync();
+        var limits = new ThresholdLimits(criticalMin, warningMin,
+            warningMax, criticalMax);
+        _db.Thresholds.Add(Threshold.Create(sensor.RoomId,
+            MetricType.Temperature, limits, Now));
+        await _db.SaveChangesAsync();
+        _db.ChangeTracker.Clear();
+
+        Assert.Equal(limits, (await _db.Thresholds.SingleAsync()).Limits);
+    }
+
+    [Fact]
+    public async Task ThresholdMigration_PreservesExistingLimits()
+    {
+        var migrator = _db.GetService<IMigrator>();
+        await migrator.MigrateAsync(
+            "20261020054930_AddSensorDeviceKeyIndex");
+        var sensor = await SeedSensorAsync();
+        var limits = new ThresholdLimits(16, 20, 25, 28);
+        var threshold = Threshold.Create(sensor.RoomId,
+            MetricType.Temperature, limits, Now);
+        _db.Thresholds.Add(threshold);
+        await _db.SaveChangesAsync();
+        _db.ChangeTracker.Clear();
+
+        await migrator.MigrateAsync();
+
+        var stored = await _db.Thresholds.SingleAsync();
+        Assert.Equal(threshold.Id, stored.Id);
+        Assert.Equal(limits, stored.Limits);
     }
 
     private async Task<Sensor> SeedSensorAsync()

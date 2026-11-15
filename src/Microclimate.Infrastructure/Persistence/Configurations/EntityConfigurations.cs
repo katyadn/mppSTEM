@@ -89,7 +89,13 @@ internal sealed class ThresholdConfiguration :
             + " AND (\"WarningMin\" IS NULL OR \"WarningMax\" IS "
             + "NULL OR \"WarningMin\" < \"WarningMax\")"
             + " AND (\"WarningMax\" IS NULL OR \"CriticalMax\" IS "
-            + "NULL OR \"WarningMax\" <= \"CriticalMax\")"));
+            + "NULL OR \"WarningMax\" <= \"CriticalMax\")"
+            + " AND (\"CriticalMin\" IS NULL OR \"WarningMax\" IS "
+            + "NULL OR \"CriticalMin\" < \"WarningMax\")"
+            + " AND (\"CriticalMin\" IS NULL OR \"CriticalMax\" IS "
+            + "NULL OR \"CriticalMin\" < \"CriticalMax\")"
+            + " AND (\"WarningMin\" IS NULL OR \"CriticalMax\" IS "
+            + "NULL OR \"WarningMin\" < \"CriticalMax\")"));
         builder.HasKey(t => t.Id);
         builder.Property(t => t.Id).ValueGeneratedNever();
         builder.Property(t => t.Metric).HasColumnName("MetricType");

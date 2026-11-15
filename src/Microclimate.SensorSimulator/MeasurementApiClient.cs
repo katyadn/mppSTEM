@@ -3,7 +3,27 @@ using System.Net.Http.Json;
 
 using Microclimate.Contracts.Measurements;
 
+using Microsoft.Extensions.Options;
+
 namespace Microclimate.SensorSimulator;
+
+public static class MeasurementClientRegistration
+{
+    public static IServiceCollection AddMeasurementApiClient(
+        this IServiceCollection services)
+    {
+        services.AddHttpClient(MeasurementApiClient.HttpClientName,
+            (provider, client) =>
+            {
+                var options = provider.GetRequiredService<
+                    IOptions<SimulatorOptions>>();
+                client.BaseAddress = options.Value.ApiBaseUrl;
+            })
+            .ConfigurePrimaryHttpMessageHandler(() =>
+                new HttpClientHandler { AllowAutoRedirect = false });
+        return services;
+    }
+}
 
 public enum SendResult
 {

@@ -243,7 +243,16 @@ namespace Microclimate.Infrastructure.Persistence.Migrations.Sqlite
                                 + "\"WarningMin\" < \"WarningMax\") AND "
                                 + "(\"WarningMax\" IS NULL OR "
                                 + "\"CriticalMax\" IS NULL OR "
-                                + "\"WarningMax\" <= \"CriticalMax\")");
+                                + "\"WarningMax\" <= \"CriticalMax\") "
+                                + "AND (\"CriticalMin\" IS NULL OR "
+                                + "\"WarningMax\" IS NULL OR "
+                                + "\"CriticalMin\" < \"WarningMax\") "
+                                + "AND (\"CriticalMin\" IS NULL OR "
+                                + "\"CriticalMax\" IS NULL OR "
+                                + "\"CriticalMin\" < \"CriticalMax\") "
+                                + "AND (\"WarningMin\" IS NULL OR "
+                                + "\"CriticalMax\" IS NULL OR "
+                                + "\"WarningMin\" < \"CriticalMax\")");
                         });
                 });
 
