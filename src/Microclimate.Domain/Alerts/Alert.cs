@@ -14,7 +14,9 @@ public sealed class Alert : Entity<Guid>
         Message = string.Empty;
     }
 
-    private Alert(Guid id, Guid roomId, Guid? sensorId, MetricType metric, AlertLevel level, double value, double thresholdValue, string message, DateTimeOffset raisedAt)
+    private Alert(Guid id, Guid roomId, Guid? sensorId, MetricType metric,
+        AlertLevel level, double value, double thresholdValue,
+        string message, DateTimeOffset raisedAt)
     {
         Id = id;
         RoomId = roomId;
@@ -40,7 +42,7 @@ public sealed class Alert : Entity<Guid>
 
     public double Value { get; private set; }
 
-    /// <summary>Межа, яку перевищено (знімок на момент події).</summary>
+    /// <summary>Межа, яку перевищено.</summary>
     public double ThresholdValue { get; private set; }
 
     public string Message { get; private set; }
@@ -65,7 +67,8 @@ public sealed class Alert : Entity<Guid>
     {
         if (sensorId == Guid.Empty)
         {
-            throw new DomainException("Датчик сповіщення не може мати порожній ідентифікатор.");
+            throw new DomainException(
+                "Датчик сповіщення не може мати порожній ідентифікатор.");
         }
 
         return new Alert(
@@ -80,12 +83,15 @@ public sealed class Alert : Entity<Guid>
             now.ToUniversalTime());
     }
 
-    /// <summary>Оператор підтверджує, що побачив сповіщення. Можливо лише для відкритого сповіщення.</summary>
+    /// <summary>Оператор підтверджує, що побачив сповіщення. Можливо лише
+    /// для відкритого сповіщення.</summary>
     public void Acknowledge(Guid userId, DateTimeOffset now)
     {
         if (Status != AlertStatus.Open)
         {
-            throw new DomainException($"Підтвердити можна лише відкрите сповіщення (поточний стан: {Status}).");
+            throw new DomainException(
+                $"Підтвердити можна лише відкрите сповіщення "
+                + $"(поточний стан: {Status}).");
         }
 
         AcknowledgedByUserId = Guard.NotEmpty(userId, "Користувач");
@@ -109,7 +115,9 @@ public sealed class Alert : Entity<Guid>
         var utc = now.ToUniversalTime();
         if (utc < RaisedAt)
         {
-            throw new DomainException("Час зміни стану не може бути раніше за час створення сповіщення.");
+            throw new DomainException(
+                "Час зміни стану не може бути раніше за час створення "
+                + "сповіщення.");
         }
 
         return utc;

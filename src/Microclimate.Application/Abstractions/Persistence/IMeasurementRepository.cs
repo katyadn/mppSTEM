@@ -7,12 +7,14 @@ using Microclimate.Domain.ValueObjects;
 namespace Microclimate.Application.Abstractions.Persistence;
 
 /// <summary>
-/// Доступ до вимірів. Виміри кімнати — це виміри її датчиків (JOIN Measurements → Sensors).
-/// Агрегати обчислюються в БД (GROUP BY), а не в пам'яті.
+/// Доступ до вимірів. Виміри кімнати це виміри її датчиків.
+/// Зведені агрегати обчислюються в БД.
+/// Часові інтервали групуються в пам'яті.
 /// </summary>
 public interface IMeasurementRepository
 {
-    Task AddRangeAsync(IReadOnlyCollection<Measurement> measurements, CancellationToken cancellationToken);
+    Task AddRangeAsync(IReadOnlyCollection<Measurement> measurements,
+        CancellationToken cancellationToken);
 
     Task<PagedResult<Measurement>> GetByRoomAsync(
         Guid roomId,
@@ -21,7 +23,9 @@ public interface IMeasurementRepository
         PageRequest page,
         CancellationToken cancellationToken);
 
-    IAsyncEnumerable<Measurement> StreamByRoomAsync(Guid roomId, MetricType? metric, DateRange range, CancellationToken cancellationToken);
+    IAsyncEnumerable<Measurement> StreamByRoomAsync(Guid roomId,
+        MetricType? metric, DateRange range,
+        CancellationToken cancellationToken);
 
     Task<IReadOnlyList<MetricSummary>> GetSummaryAsync(
         Guid roomId,
@@ -36,5 +40,6 @@ public interface IMeasurementRepository
         AggregationInterval interval,
         CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<Measurement>> GetLatestByRoomAsync(Guid roomId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<Measurement>> GetLatestByRoomAsync(Guid roomId,
+        CancellationToken cancellationToken);
 }

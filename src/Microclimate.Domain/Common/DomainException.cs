@@ -1,6 +1,6 @@
 namespace Microclimate.Domain.Common;
 
-/// <summary>Порушення правила предметної області (некоректні дані або заборонена зміна стану).</summary>
+/// <summary>Порушення правила предметної області.</summary>
 public sealed class DomainException : Exception
 {
     public DomainException()

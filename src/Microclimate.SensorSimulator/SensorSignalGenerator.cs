@@ -16,36 +16,45 @@ public sealed class SensorSignalGenerator
     private readonly Random _random;
     private readonly OverheatScenario? _overheat;
 
-    public SensorSignalGenerator(SimulationScenario scenario, int seed, OverheatOptions overheat, IReadOnlyList<MetricSignal>? signals = null)
+    public SensorSignalGenerator(SimulationScenario scenario, int seed,
+        OverheatOptions overheat, IReadOnlyList<MetricSignal>? signals =
+        null)
     {
         ArgumentNullException.ThrowIfNull(overheat);
         _signals = signals ?? MetricSignal.Defaults;
         _random = new Random(seed);
-        _overheat = scenario == SimulationScenario.Overheat ? new OverheatScenario(overheat) : null;
+        _overheat = scenario == SimulationScenario.Overheat ? new
+            OverheatScenario(overheat) : null;
     }
 
     public IReadOnlyList<MeasurementItem> Next(DateTimeOffset now)
     {
         var hourOfDay = now.TimeOfDay.TotalHours;
         return _signals
-            .Select(signal => new MeasurementItem(signal.Metric, Generate(signal, hourOfDay), now))
+            .Select(signal => new MeasurementItem(signal.Metric,
+                Generate(signal, hourOfDay), now))
             .ToList();
     }
 
     private double Generate(MetricSignal signal, double hourOfDay)
     {
-        var value = signal.ValueAt(hourOfDay) + (signal.Noise * ((_random.NextDouble() * 2) - 1));
-        if (_overheat is not null && signal.Metric == MetricType.Temperature)
+        var value = signal.ValueAt(hourOfDay) + (signal.Noise * ((
+            _random.NextDouble() * 2) - 1));
+        if (_overheat is not null && signal.Metric ==
+            MetricType.Temperature)
         {
             value = _overheat.Apply(value);
         }
 
-        var range = MetricLimits.For(Enum.Parse<DomainMetricType>(signal.Metric.ToString()));
-        return Math.Round(Math.Clamp(value, range.Min, range.Max), signal.Decimals, MidpointRounding.AwayFromZero);
+        var range = MetricLimits.For(Enum.Parse<DomainMetricType>(
+            signal.Metric.ToString()));
+        return Math.Round(Math.Clamp(value, range.Min, range.Max),
+            signal.Decimals, MidpointRounding.AwayFromZero);
     }
 
     /// <summary>
-    /// Перегрів: температура росте на крок за вимір до піку, тримається на ньому задану кількість вимірів,
+    /// Перегрів: температура росте на крок за вимір до піку, тримається на
+    /// ньому задану кількість вимірів,
     /// далі повертається звичайне значення.
     /// </summary>
     private sealed class OverheatScenario(OverheatOptions options)
@@ -58,7 +67,9 @@ public sealed class SensorSignalGenerator
             _current ??= normal;
             if (_current < options.PeakTemperature)
             {
-                _current = Math.Min(_current.Value + options.StepPerMeasurement, options.PeakTemperature);
+                _current = Math.Min(
+                    _current.Value + options.StepPerMeasurement,
+                    options.PeakTemperature);
                 return _current.Value;
             }
 

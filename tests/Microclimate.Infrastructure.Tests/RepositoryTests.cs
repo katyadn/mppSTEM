@@ -14,18 +14,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Microclimate.Infrastructure.Tests;
 
-/// <summary>Репозиторії на SQLite в пам'яті зі справжніми міграціями.</summary>
+/// <summary>Репозиторії на SQLite в пам'яті зі справжніми
+/// міграціями.</summary>
 public sealed class RepositoryTests : IDisposable
 {
-    private static readonly DateTimeOffset Now = new(2026, 10, 1, 12, 0, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset Now = new(2026, 10, 1, 12, 0, 0,
+        TimeSpan.Zero);
 
-    private readonly SqliteConnection _connection = new("DataSource=:memory:");
+    private readonly SqliteConnection _connection = new(
+        "DataSource=:memory:");
     private readonly SqliteAppDbContext _db;
 
     public RepositoryTests()
     {
         _connection.Open();
-        _db = new SqliteAppDbContext(new DbContextOptionsBuilder<SqliteAppDbContext>().UseSqlite(_connection).Options);
+        _db = new SqliteAppDbContext(
+            new DbContextOptionsBuilder<SqliteAppDbContext>().UseSqlite(
+            _connection).Options);
         _db.Database.Migrate();
     }
 
@@ -43,11 +48,13 @@ public sealed class RepositoryTests : IDisposable
         rooms.Add(Room.Create("101", 1, 20m, RoomType.Classroom, Now));
         await _db.SaveChangesAsync();
 
-        var page = await rooms.ListAsync(new PageRequest(1, 1), CancellationToken.None);
+        var page = await rooms.ListAsync(new PageRequest(1, 1),
+            CancellationToken.None);
 
         Assert.Equal(2, page.TotalCount);
         Assert.Equal("101", Assert.Single(page.Items).Name);
-        Assert.True(await rooms.ExistsByNameAsync("201", CancellationToken.None));
+        Assert.True(await rooms.ExistsByNameAsync("201",
+            CancellationToken.None));
     }
 
     [Fact]
@@ -57,16 +64,23 @@ public sealed class RepositoryTests : IDisposable
         var repository = new MeasurementRepository(_db);
         await repository.AddRangeAsync(
         [
-            Measurement.Record(sensor, MetricType.Temperature, 21, Now, Now.AddHours(2)),
-            Measurement.Record(sensor, MetricType.Temperature, 23, Now.AddMinutes(30), Now.AddHours(2)),
-            Measurement.Record(sensor, MetricType.Temperature, 25, Now.AddHours(1), Now.AddHours(2)),
-            Measurement.Record(sensor, MetricType.Co2, 800, Now, Now.AddHours(2)),
+            Measurement.Record(sensor, MetricType.Temperature, 21, Now,
+                Now.AddHours(2)),
+            Measurement.Record(sensor, MetricType.Temperature, 23,
+                Now.AddMinutes(30), Now.AddHours(2)),
+            Measurement.Record(sensor, MetricType.Temperature, 25,
+                Now.AddHours(1), Now.AddHours(2)),
+            Measurement.Record(sensor, MetricType.Co2, 800, Now,
+                Now.AddHours(2)),
         ], CancellationToken.None);
         await _db.SaveChangesAsync();
         var range = DateRange.Create(Now, Now.AddHours(2));
 
-        var summary = await repository.GetSummaryAsync(sensor.RoomId, MetricType.Temperature, range, CancellationToken.None);
-        var series = await repository.GetSeriesAsync(sensor.RoomId, MetricType.Temperature, range, AggregationInterval.Hour, CancellationToken.None);
+        var summary = await repository.GetSummaryAsync(sensor.RoomId,
+            MetricType.Temperature, range, CancellationToken.None);
+        var series = await repository.GetSeriesAsync(sensor.RoomId,
+            MetricType.Temperature, range, AggregationInterval.Hour,
+            CancellationToken.None);
 
         var temperature = Assert.Single(summary);
         Assert.Equal(3, temperature.Count);
@@ -74,9 +88,12 @@ public sealed class RepositoryTests : IDisposable
         Assert.Equal([2, 1], series.Select(p => p.Count));
         Assert.Equal(22, series[0].Avg);
 
-        var latest = await repository.GetLatestByRoomAsync(sensor.RoomId, CancellationToken.None);
-        Assert.Equal(25, latest.Single(m => m.Metric == MetricType.Temperature).Value);
-        Assert.Equal(800, latest.Single(m => m.Metric == MetricType.Co2).Value);
+        var latest = await repository.GetLatestByRoomAsync(sensor.RoomId,
+            CancellationToken.None);
+        Assert.Equal(25, latest.Single(
+            m => m.Metric == MetricType.Temperature).Value);
+        Assert.Equal(800, latest.Single(
+            m => m.Metric == MetricType.Co2).Value);
     }
 
     [Fact]
@@ -84,14 +101,17 @@ public sealed class RepositoryTests : IDisposable
     {
         var sensor = await SeedSensorAsync();
         var repository = new AlertRepository(_db);
-        var old = Alert.Raise(sensor.RoomId, sensor.Id, MetricType.Co2, AlertLevel.Warning, 1300, 1200, "CO2", Now);
+        var old = Alert.Raise(sensor.RoomId, sensor.Id, MetricType.Co2,
+            AlertLevel.Warning, 1300, 1200, "CO2", Now);
         old.Resolve(Now.AddMinutes(5));
-        var open = Alert.Raise(sensor.RoomId, sensor.Id, MetricType.Co2, AlertLevel.Critical, 1800, 1750, "CO2", Now.AddMinutes(10));
+        var open = Alert.Raise(sensor.RoomId, sensor.Id, MetricType.Co2,
+            AlertLevel.Critical, 1800, 1750, "CO2", Now.AddMinutes(10));
         repository.Add(old);
         repository.Add(open);
         await _db.SaveChangesAsync();
 
-        var unresolved = await repository.GetUnresolvedAsync(sensor.RoomId, MetricType.Co2, CancellationToken.None);
+        var unresolved = await repository.GetUnresolvedAsync(sensor.RoomId,
+            MetricType.Co2, CancellationToken.None);
 
         Assert.Equal(open.Id, unresolved?.Id);
     }
@@ -101,18 +121,22 @@ public sealed class RepositoryTests : IDisposable
     {
         var rooms = new RoomRepository(_db);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _db.ExecuteInTransactionAsync(
+        await Assert.ThrowsAsync<InvalidOperationException>((
+            ) => _db.ExecuteInTransactionAsync(
             async ct =>
             {
                 // Зміни вже записані в БД, але транзакцію не підтверджено.
-                rooms.Add(Room.Create("301", 3, null, RoomType.Office, Now));
+                rooms.Add(Room.Create("301", 3, null, RoomType.Office,
+                    Now));
                 await _db.SaveChangesAsync(ct);
-                throw new InvalidOperationException("Помилка під час обробки.");
+                throw new InvalidOperationException(
+                    "Помилка під час обробки.");
             },
             CancellationToken.None));
         _db.ChangeTracker.Clear();
 
-        Assert.False(await rooms.ExistsByNameAsync("301", CancellationToken.None));
+        Assert.False(await rooms.ExistsByNameAsync("301",
+            CancellationToken.None));
     }
 
     private async Task<Sensor> SeedSensorAsync()

@@ -5,8 +5,9 @@ using Microsoft.Extensions.Options;
 namespace Microclimate.SensorSimulator;
 
 /// <summary>
-/// Кожен датчик працює в окремому асинхронному циклі з PeriodicTimer; усі цикли чекають через Task.WhenAll.
-/// Зупинка — через CancellationToken від BackgroundService.
+/// Кожен датчик працює в окремому асинхронному циклі з PeriodicTimer; усі
+/// цикли чекають через Task.WhenAll.
+/// Зупинка через CancellationToken від BackgroundService.
 /// </summary>
 public sealed partial class SimulatorWorker(
     IOptions<SimulatorOptions> options,
@@ -22,23 +23,30 @@ public sealed partial class SimulatorWorker(
         return Task.WhenAll(settings.Sensors.Select((sensor, index) =>
             RunSensorAsync(
                 sensor,
-                new SensorSignalGenerator(sensor.Scenario, settings.Seed + index, settings.Overheat),
+                new SensorSignalGenerator(sensor.Scenario,
+                    settings.Seed + index, settings.Overheat),
                 settings.Period,
                 stoppingToken)));
     }
 
-    /// <summary>Перший пакет надсилається одразу, далі — раз на період.</summary>
-    private async Task RunSensorAsync(SimulatedSensorOptions sensor, SensorSignalGenerator generator, TimeSpan period, CancellationToken cancellationToken)
+    /// <summary>Перший пакет надсилається одразу, далі раз на
+    /// період.</summary>
+    private async Task RunSensorAsync(SimulatedSensorOptions sensor,
+        SensorSignalGenerator generator, TimeSpan period,
+        CancellationToken cancellationToken)
     {
-        // Наявність id перевірено SimulatorOptionsValidator під час старту.
+        // Наявність id перевірено SimulatorOptionsValidator під час
+        // старту.
         var sensorId = sensor.SensorId.GetValueOrDefault();
         using var timer = new PeriodicTimer(period, time);
         try
         {
             do
             {
-                var batch = new MeasurementBatchRequest(sensorId, generator.Next(time.GetLocalNow()));
-                var result = await sender.SendAsync(batch, sensor.DeviceKey, cancellationToken);
+                var batch = new MeasurementBatchRequest(sensorId,
+                    generator.Next(time.GetLocalNow()));
+                var result = await sender.SendAsync(batch,
+                    sensor.DeviceKey, cancellationToken);
                 if (result == SendResult.Unauthorized)
                 {
                     LogUnauthorized(sensorId);
@@ -47,18 +55,24 @@ public sealed partial class SimulatorWorker(
             }
             while (await timer.WaitForNextTickAsync(cancellationToken));
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (
+            cancellationToken.IsCancellationRequested)
         {
             LogStopped(sensorId);
         }
     }
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Симулятор запущено: датчиків {Count}, період {Period}")]
+    [LoggerMessage(Level = LogLevel.Information,
+        Message = "Симулятор запущено: датчиків {Count}, період {Period}")]
     private partial void LogStarted(int count, TimeSpan period);
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "Датчик {SensorId}: неправильний X-Device-Key (401), датчик зупинено.")]
+    [LoggerMessage(Level = LogLevel.Error,
+        Message =
+        "Датчик {SensorId}: неправильний X-Device-Key (401), датчик "
+        + "зупинено.")]
     private partial void LogUnauthorized(Guid sensorId);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Датчик {SensorId} зупинено.")]
+    [LoggerMessage(Level = LogLevel.Information,
+        Message = "Датчик {SensorId} зупинено.")]
     private partial void LogStopped(Guid sensorId);
 }

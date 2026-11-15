@@ -1,13 +1,14 @@
 namespace Microclimate.Application.Abstractions.Persistence;
 
-/// <summary>Фіксація змін і транзакції (реалізація — DbContext в Infrastructure).</summary>
+/// <summary>Фіксація змін і транзакції.</summary>
 public interface IUnitOfWork
 {
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 
     /// <summary>
-    /// Виконує дію в одній транзакції БД: або всі зміни зберігаються, або жодна.
-    /// Використовується для збереження пакета вимірів разом зі сповіщеннями (docs/db-schema.md, розділ 4).
+    /// Виконує дію в одній транзакції БД: або всі зміни зберігаються, або
+    /// жодна.
     /// </summary>
-    Task ExecuteInTransactionAsync(Func<CancellationToken, Task> action, CancellationToken cancellationToken);
+    Task ExecuteInTransactionAsync(Func<CancellationToken, Task> action,
+        CancellationToken cancellationToken);
 }
