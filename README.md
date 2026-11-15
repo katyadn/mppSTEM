@@ -89,9 +89,13 @@ dotnet test Microclimate.Ci.slnf -c Release --no-build
 dotnet run --project src/Microclimate.Api --launch-profile http
 ```
 
-Порт задається в `src/Microclimate.Api/Properties/launchSettings.json`. Профіль `http` використовує SQLite, застосовує міграції й додає демо-дані до порожньої БД у Development. Swagger UI: http://localhost:5195/swagger. Демо-користувачі визначені в серверному development seed; використовуйте їх лише для локальної розробки.
+Порт задається в `src/Microclimate.Api/Properties/launchSettings.json`. Профіль `http` використовує SQLite, застосовує міграції й додає демо-дані до порожньої БД у Development. Перевірка готовності: `http://localhost:5195/health`, Swagger UI: `http://localhost:5195/swagger`.
 
-Симулятор датчиків (у другому терміналі, поки працює API). Id датчика видно в Swagger: `GET /api/v1/rooms/{roomId}/sensors`; ключ демо-датчика задано в development seed API.
+Для входу в клієнт на цьому ж комп'ютері відкрийте «Адреса API та налаштування», задайте `http://localhost:5195/` і збережіть. Демо-вхід: `operator@microclimate.local` / `OperatorPassword123!`; адміністратор: `admin@microclimate.local` / `AdminPassword123!`. Ці публічні тестові значення походять із Development seed і не є обліковими даними для публічного сервера. Для Android Emulator адреса API — `http://10.0.2.2:5195/`; для iOS Simulator — `http://localhost:5195/`.
+
+У новій БД вимірів ще немає: це очікуваний стан «Немає даних». Для демонстрації в окремій Development-БД можна виконати `python3 deploy/smoke.py http://localhost:5195`: скрипт додає синтетичні показники й змінює тестові пороги. Подробиці змін — у [deploy/README.md](deploy/README.md).
+
+Симулятор датчиків (у другому терміналі, поки працює API). Id датчика видно в Swagger: `GET /api/v1/rooms/{roomId}/sensors`; ключ демо-датчика з Development seed — `test-device-key-12345`. У Swagger спочатку виконайте `POST /api/v1/auth/login` і передайте отриманий access token через Authorize.
 
 ```bash
 dotnet user-secrets set "Simulator:Sensors:0:SensorId" "<id датчика>" --project src/Microclimate.SensorSimulator
@@ -113,30 +117,28 @@ dotnet build src/Microclimate.Client.Maui -t:Run -f net10.0-windows10.0.19041.0 
 
 Явне `MauiTargetFramework` обмежує restore платформою Windows, тому команда не потребує Android SDK. Перевірте Login → Dashboard, деталі кімнати, вкладки Alerts/Settings і вихід; додайте реальні скриншоти у `docs/ui/screenshots/stage-0/`.
 
-Середовище Mac узгоджено 2026-10-24: Xcode 27.1, .NET SDK 10.0.402, workload set 10.0.402.1 та MAUI 10.0.110. Старий workload 10.0.401.1 вимагав Xcode 27.0; для Xcode 27.1 використовуйте версії нижче.
-
 ## MAUI: macOS / Android
 
-На Mac із **Xcode 27.1** використовуйте .NET SDK **10.0.402** і workload set **10.0.402.1** ([офіційний реліз](https://github.com/dotnet/macios/releases/tag/dotnet-10.0.1xx-xcode27.1-10018)). MAUI-пакети зафіксовано на **10.0.110**. Мінімальна версія MacCatalyst — 17.0; scene lifecycle налаштований у `Platforms/MacCatalyst/`.
+Перевірена поточна комбінація для Mac: **Xcode 27.2**, **.NET SDK/workload set 10.0.404**, MAUI **10.0.110**. Встановіть SDK 10.0.404 і перевірте `dotnet --version` перед командами нижче. Сумісність Apple SDK — в [офіційному релізі](https://github.com/dotnet/macios/releases/tag/dotnet-10.0.1xx-xcode27.2.10000). Мінімальна версія MacCatalyst — 17.0.
 
 ```bash
-export PATH="$HOME/.dotnet:$PATH"
-dotnet workload install maui-maccatalyst --version 10.0.402.1
-dotnet build src/Microclimate.Client.Maui -t:Rebuild -f net10.0-maccatalyst -p:MauiTargetFramework=net10.0-maccatalyst -p:RuntimeIdentifier=maccatalyst-arm64 -p:EnableCodeSigning=true -p:CodesignKey=-
+dotnet workload install maui-maccatalyst --version 10.0.404
+dotnet build src/Microclimate.Client.Maui -c Debug -f net10.0-maccatalyst -p:MauiTargetFramework=net10.0-maccatalyst -p:RuntimeIdentifier=maccatalyst-arm64 -p:EnableCodeSigning=true -p:CodesignKey=-
 open src/Microclimate.Client.Maui/bin/Debug/net10.0-maccatalyst/maccatalyst-arm64/Мікроклімат.app
 ```
 
-`CodesignKey=-` створює локальний ad-hoc підпис для Debug-запуску. Для розповсюдження потрібний підпис розробника. Перебудова оновлює manifest після зміни SDK та конфігурації вікна. 2026-10-13 на macOS 27 перевірено вхід → огляд → деталі → назад, вкладки сповіщень/налаштувань і вихід. Це історична перевірка каркасу. 2026-10-24 виконано повну нативну збірку з Xcode 27.1 та UI-прогін HTTP-сценаріїв із API/SQLite; результати — у docs/ui/mac-smoke-2026-10-24.md.
+`CodesignKey=-` — локальний ad-hoc підпис Debug-запуску. Якщо SecureStorage недоступне, застосунок показує «Сесія діє до закриття застосунку»; постійне сховище потребує належного підпису. API запускається в іншому терміналі за інструкцією вище. [Нативний прогін 15.11](docs/ui/mac-smoke-2026-11-15.md) містить фактичні сценарії й скриншоти. Для старого Xcode 27.1 історична комбінація SDK 10.0.402 / workload 10.0.402.1 описана у [прогоні 24.10](docs/ui/mac-smoke-2026-10-24.md).
 
-На Intel Mac замініть runtime на `maccatalyst-x64`. Для Android після встановлення JDK та Android SDK:
+На Intel Mac замініть runtime на `maccatalyst-x64`. Для Android встановіть .NET SDK 10.0.404, JDK 21 та Android SDK. Потім:
 
 ```bash
-dotnet build src/Microclimate.Client.Maui -f net10.0-android -p:MauiTargetFramework=net10.0-android
+dotnet workload install maui-android --version 10.0.404
+dotnet build src/Microclimate.Client.Maui -c Release -f net10.0-android -p:MauiTargetFramework=net10.0-android
 ```
 
 ## CI та перевірки клієнта
 
-CI має чотири jobs: Linux `build-test` (restore, строгий Release build, тести, coverage artifact/summary), Windows `maui-build`, Android `android-build` і `postgres-smoke` з API та PostgreSQL у Compose. Клієнтські тести покривають HTTP, сесію, ViewModels, NoData, розриви часового ряду, пороги та SignalR; платформні jobs перевіряють збірку.
+CI має чотири jobs: Linux `build-test` (restore, строгий Release build, тести, coverage artifact/summary), Windows `maui-build`, Android `android-build` і `postgres-smoke` з API та PostgreSQL у Compose. Клієнтські тести покривають HTTP, сесію, ViewModels, NoData, розриви часового ряду, пороги та SignalR; платформні jobs перевіряють збірку. Artifact `static-analysis` містить SARIF кожного .NET-проєкту та журнал збірки; `coverage-report` — справжній звіт покриття, `test-results` — TRX.
 
 Клієнтський вхід викликає API та зберігає access-сесію в системному захищеному сховищі (або лише в пам’яті, якщо сховище недоступне). Кімнати, деталі та сповіщення завантажуються HTTP-запитами; є пагінація, фільтри й повідомлення про помилки. Потік вхід → кімнати → аналітика → підтвердження сповіщення → вихід перевірено із чинними контролерами API та SQLite через ASP.NET Core TestServer, а окремий нативний MacCatalyst прогін описано у [UI-звіті](docs/ui/mac-smoke-2026-11-15.md). [Стан клієнта та межі перевірок](docs/client-progress.md).
 
