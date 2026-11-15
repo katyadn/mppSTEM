@@ -31,6 +31,7 @@ public interface IClientApi
     Task<PagedResponse<RoomSummaryResponse>> GetRoomsAsync(int page, CancellationToken cancellationToken);
 
     Task<RoomResponse> GetRoomAsync(Guid roomId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<LatestMetricResponse>> GetLatestAsync(Guid roomId, CancellationToken cancellationToken);
 
     // Обирає статистику запитаної метрики з серверного масиву; за її відсутності повертає Count = 0 і null-значення.
     Task<MetricSummaryResponse> GetSummaryAsync(
@@ -168,6 +169,13 @@ public sealed class ClientApi(HttpClient http, IClientSettings settings, ClientS
 
     public Task<RoomResponse> GetRoomAsync(Guid roomId, CancellationToken cancellationToken) =>
         GetAsync<RoomResponse>($"rooms/{roomId:D}", cancellationToken);
+
+    public async Task<IReadOnlyList<LatestMetricResponse>> GetLatestAsync(
+        Guid roomId,
+        CancellationToken cancellationToken
+    ) =>
+        await GetAsync<List<LatestMetricResponse>>($"rooms/{roomId:D}/measurements/latest", cancellationToken)
+            .ConfigureAwait(false);
 
     public async Task<MetricSummaryResponse> GetSummaryAsync(
         Guid roomId,

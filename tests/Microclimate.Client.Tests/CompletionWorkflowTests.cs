@@ -125,6 +125,7 @@ public sealed class CompletionWorkflowTests
         var vm = new RoomDetailsViewModel(f.Api, f.Navigation, f.Clock, f.Session);
         vm.SelectRoom(ClientFixture.RoomId, "101");
         await vm.InitializeAsync();
+        await vm.OpenThresholdsCommand.ExecuteAsync(vm.Charts[0]);
         vm.Thresholds.WarningMax = "24";
         vm.SelectedPeriod = vm.Periods[1];
         await vm.SelectionRefresh;
@@ -178,18 +179,19 @@ public sealed class CompletionWorkflowTests
         var vm = new RoomDetailsViewModel(f.Api, f.Navigation, f.Clock, f.Session);
         vm.SelectRoom(ClientFixture.RoomId, "101");
         await vm.InitializeAsync();
-        var existing = vm.Series;
+        var existing = vm.Charts[0].Series;
+        await vm.OpenThresholdsCommand.ExecuteAsync(vm.Charts[0]);
         vm.Thresholds.WarningMax = "24";
         f.Reply = request =>
         {
-            Assert.True(vm.HasSeries);
-            Assert.Same(existing, vm.Series);
+            Assert.True(vm.Charts[0].HasSeries);
+            Assert.Same(existing, vm.Charts[0].Series);
             Assert.Equal("24", vm.Thresholds.WarningMax);
             return f.Respond(request);
         };
         await vm.RefreshLiveAsync();
         Assert.False(vm.HasError);
-        Assert.True(vm.HasSeries);
+        Assert.True(vm.Charts[0].HasSeries);
         Assert.Equal("24", vm.Thresholds.WarningMax);
     }
 
@@ -201,6 +203,7 @@ public sealed class CompletionWorkflowTests
         var vm = new RoomDetailsViewModel(f.Api, f.Navigation, f.Clock, f.Session);
         vm.SelectRoom(ClientFixture.RoomId, "101");
         await vm.InitializeAsync();
+        await vm.OpenThresholdsCommand.ExecuteAsync(vm.Charts[0]);
         Assert.True(vm.Thresholds.CanSave);
         f.Reply = request =>
         {
@@ -236,9 +239,9 @@ public sealed class CompletionWorkflowTests
                     }
                 )
                 : new(HttpStatusCode.InternalServerError);
-        vm.SelectedMetric = vm.Metrics[2];
-        await vm.SelectionRefresh;
+        await vm.RefreshCommand.ExecuteAsync(null);
         Assert.True(vm.HasError);
+        await vm.OpenThresholdsCommand.ExecuteAsync(vm.Charts[2]);
         Assert.True(vm.Thresholds.IsLoaded);
         Assert.Equal("ppm", vm.Thresholds.Unit);
         Assert.Equal("1200", vm.Thresholds.WarningMax);

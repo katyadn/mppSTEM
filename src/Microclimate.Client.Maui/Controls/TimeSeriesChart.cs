@@ -1,5 +1,7 @@
 using System.Globalization;
 using Microclimate.Client.Core.Presentation;
+using Microclimate.Contracts.Common;
+using Microclimate.Contracts.Thresholds;
 
 namespace Microclimate.Client.Maui.Controls;
 
@@ -20,6 +22,33 @@ public sealed class TimeSeriesChart : GraphicsView, IDrawable
         string.Empty,
         propertyChanged: (view, _, _) => ((TimeSeriesChart)view).Invalidate()
     );
+
+    public static readonly BindableProperty LineColorProperty = BindableProperty.Create(
+        nameof(LineColor),
+        typeof(Color),
+        typeof(TimeSeriesChart),
+        Colors.MediumPurple,
+        propertyChanged: (view, _, _) => ((TimeSeriesChart)view).Invalidate()
+    );
+
+    public Color LineColor
+    {
+        get => (Color)GetValue(LineColorProperty);
+        set => SetValue(LineColorProperty, value);
+    }
+
+    public static readonly BindableProperty ThresholdsProperty = BindableProperty.Create(
+        nameof(Thresholds),
+        typeof(ThresholdResponse),
+        typeof(TimeSeriesChart),
+        propertyChanged: (view, _, _) => ((TimeSeriesChart)view).Invalidate()
+    );
+
+    public ThresholdResponse? Thresholds
+    {
+        get => (ThresholdResponse?)GetValue(ThresholdsProperty);
+        set => SetValue(ThresholdsProperty, value);
+    }
 
     private readonly List<(ChartPoint Point, PointF Position)> renderedPoints = [];
     private ChartPoint? selected;
@@ -208,29 +237,46 @@ public sealed class TimeSeriesChart : GraphicsView, IDrawable
             VerticalAlignment.Top
         );
 
-        canvas.StrokeColor = Colors.MediumPurple;
-        canvas.FillColor = Colors.MediumPurple;
+        Color ColorFor(AlertLevel? level) =>
+            level switch
+            {
+                AlertLevel.Critical => Color.FromArgb(dark ? "#FF798B" : "#BF3045"),
+                AlertLevel.Warning => Color.FromArgb(dark ? "#F0CC5D" : "#997000"),
+                _ => Thresholds is null ? labelColor : LineColor,
+            };
+        PointF Position(ChartPoint point) =>
+            new(
+                plot.Left + (float)((point.Time - start).TotalSeconds / duration) * plot.Width,
+                plot.Bottom - (float)((point.Value - lower) / (upper - lower)) * plot.Height
+            );
         canvas.StrokeSize = 2;
         foreach (var segment in segments)
         {
-            PointF? previous = null;
+            ChartPoint? previous = null;
             foreach (var point in segment)
             {
-                var position = new PointF(
-                    plot.Left + (float)((point.Time - start).TotalSeconds / duration) * plot.Width,
-                    plot.Bottom - (float)((point.Value - lower) / (upper - lower)) * plot.Height
-                );
+                var position = Position(point);
                 if (previous is { } last)
-                    canvas.DrawLine(last.X, last.Y, position.X, position.Y);
+                {
+                    foreach (var section in ThresholdPresentation.SplitLine(last, point, Thresholds))
+                    {
+                        var from = Position(section.Start);
+                        var to = Position(section.End);
+                        canvas.StrokeColor = ColorFor(section.Level);
+                        canvas.DrawLine(from.X, from.Y, to.X, to.Y);
+                    }
+                }
                 renderedPoints.Add((point, position));
+                canvas.FillColor = ColorFor(ThresholdPresentation.Level(point.Value, Thresholds));
                 canvas.FillCircle(position.X, position.Y, selected == point ? 6 : 3);
                 if (selected == point)
                 {
+                    canvas.StrokeColor = labelColor;
                     canvas.StrokeSize = 1;
                     canvas.DrawLine(position.X, plot.Top, position.X, plot.Bottom);
                     canvas.StrokeSize = 2;
                 }
-                previous = position;
+                previous = point;
             }
         }
         canvas.RestoreState();

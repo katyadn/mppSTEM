@@ -77,12 +77,35 @@ public sealed class ClientWorkflowTests
         vm.SelectedPeriod = vm.Periods[1];
         vm.SelectedMetric = vm.Metrics[2];
         await vm.InitializeAsync();
-        Assert.Equal(2, vm.Series.Count);
-        Assert.True(vm.HasSeries);
-        Assert.False(vm.HasNoSeries);
+        Assert.Equal(6, vm.Charts.Count);
+        var chart = vm.Charts[2];
+        Assert.All(vm.Charts, item => Assert.Equal(2, item.Series.Count));
+        Assert.All(vm.Charts, item => Assert.True(item.HasSeries));
+        Assert.False(chart.HasNoSeries);
         Assert.Equal("82/100 · Прийнятно", vm.ComfortText);
-        Assert.Contains("ppm", vm.SummaryText, StringComparison.Ordinal);
-        Assert.Contains(f.Requests, request => request.Uri.Query.Contains("metric=co2", StringComparison.Ordinal));
+        Assert.Contains("ppm", chart.SummaryText, StringComparison.Ordinal);
+        var seriesRequests = f
+            .Requests.Where(request => request.Uri.AbsolutePath.EndsWith("/series", StringComparison.Ordinal))
+            .ToArray();
+        Assert.Equal(6, seriesRequests.Length);
+        Assert.All(seriesRequests, request =>
+            Assert.Contains("interval=day", request.Uri.Query, StringComparison.Ordinal)
+        );
+        Assert.Single(
+            seriesRequests
+                .Select(request =>
+                    string.Join(
+                        "&",
+                        request
+                            .Uri.Query.Split('&')
+                            .Where(part =>
+                                part.StartsWith("from=", StringComparison.Ordinal)
+                                || part.StartsWith("to=", StringComparison.Ordinal)
+                            )
+                    )
+                )
+                .Distinct()
+        );
     }
 
     [Fact]
@@ -93,11 +116,11 @@ public sealed class ClientWorkflowTests
         var vm = new RoomDetailsViewModel(f.Api, f.Navigation, f.Clock, f.Session);
         vm.SelectRoom(ClientFixture.RoomId, "101");
         await vm.InitializeAsync();
-        Assert.True(vm.HasSeries);
+        Assert.All(vm.Charts, item => Assert.True(item.HasSeries));
         f.Reply = _ => new(HttpStatusCode.InternalServerError);
         await vm.RefreshCommand.ExecuteAsync(null);
-        Assert.Empty(vm.Series);
-        Assert.True(vm.HasNoSeries);
+        Assert.All(vm.Charts, item => Assert.Empty(item.Series));
+        Assert.All(vm.Charts, item => Assert.True(item.HasNoSeries));
         Assert.True(vm.HasError);
     }
 
