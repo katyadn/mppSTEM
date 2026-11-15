@@ -1,0 +1,80 @@
+diff --git a/src/Microclimate.Client.Core/ViewModels/AlertsViewModel.cs b/src/Microclimate.Client.Core/ViewModels/AlertsViewModel.cs
+index 49dfa85..3270b31 100644
+--- a/src/Microclimate.Client.Core/ViewModels/AlertsViewModel.cs
++++ b/src/Microclimate.Client.Core/ViewModels/AlertsViewModel.cs
+@@ -43,7 +43,7 @@ public partial class AlertsViewModel : BaseViewModel
+     public AlertsViewModel(IClientApi api, ClientSession session, INavigationService navigation) : base(navigation)
+     {
+         this.api = api; this.session = session; this.navigation = navigation;
+-        selectedLevel = Levels[0]; selectedStatus = Statuses[0]; Title = "Сповіщення";
++        selectedLevel = Levels[0]; selectedStatus = Statuses.Single(option => option.Value == AlertStatus.Open); Title = "Сповіщення";
+     }
+     // Оновлює стан екрана під час його появи.
+     public override Task InitializeAsync() => RefreshCommand.ExecuteAsync(null);
+diff --git a/src/Microclimate.Client.Core/ViewModels/RoomDetailsViewModel.cs b/src/Microclimate.Client.Core/ViewModels/RoomDetailsViewModel.cs
+index fcc7f83..014540d 100644
+--- a/src/Microclimate.Client.Core/ViewModels/RoomDetailsViewModel.cs
++++ b/src/Microclimate.Client.Core/ViewModels/RoomDetailsViewModel.cs
+@@ -45,8 +45,8 @@ public partial class RoomDetailsViewModel : BaseViewModel
+         new(MetricType.Temperature, "Температура", "°C"), new(MetricType.Humidity, "Вологість", "%"),
+         new(MetricType.Co2, "CO₂", "ppm"), new(MetricType.Pm25, "PM2.5", "µg/m³"),
+         new(MetricType.Noise, "Шум", "dB(A)"), new(MetricType.Light, "Освітленість", "lux")];
+-    // Підтримувані періоди: 24 години, 7 днів і 30 днів.
+-    public IReadOnlyList<PeriodOption> Periods { get; } = [new(1, "24 години"), new(7, "7 днів"), new(30, "30 днів")];
++    // Підтримувані періоди: 24 години, 7, 14 і 30 днів.
++    public IReadOnlyList<PeriodOption> Periods { get; } = [new(1, "24 години"), new(7, "7 днів"), new(14, "14 днів"), new(30, "30 днів")];
+     // Ідентифікатор кімнати для запитів аналітики або переходів.
+     public Guid? RoomId { get; private set; }
+ 
+diff --git a/tests/Microclimate.Client.Tests/DefensePracticeTests.cs b/tests/Microclimate.Client.Tests/DefensePracticeTests.cs
+new file mode 100644
+index 0000000..d99fd8c
+--- /dev/null
++++ b/tests/Microclimate.Client.Tests/DefensePracticeTests.cs
+@@ -0,0 +1,46 @@
++using System.Globalization;
++using Microsoft.AspNetCore.WebUtilities;
++using Microclimate.Client.Core.ViewModels;
++using Microclimate.Contracts.Common;
++
++namespace Microclimate.Client.Tests;
++
++// Лише тренувальна копія: перевіряє дві мікрозміни для захисту.
++public sealed class DefensePracticeTests
++{
++    [Fact]
++    public async Task FourteenDaysSelectionAutomaticallyRequestsExactUtcRange()
++    {
++        using var f = new ClientFixture(); await f.SignInAsync();
++        var vm = new RoomDetailsViewModel(f.Api, f.Navigation, f.Clock, f.Session);
++        vm.SelectRoom(ClientFixture.RoomId, "101"); await vm.InitializeAsync();
++        f.Requests.Clear();
++        vm.SelectedPeriod = vm.Periods.Single(option => option.Days == 14);
++        await vm.SelectionRefresh;
++        var request = Assert.Single(f.Requests, item => item.Uri.AbsolutePath.EndsWith("/series", StringComparison.Ordinal));
++        var query = QueryHelpers.ParseQuery(request.Uri.Query);
++        var from = DateTimeOffset.Parse(query["from"].ToString(), CultureInfo.InvariantCulture);
++        var to = DateTimeOffset.Parse(query["to"].ToString(), CultureInfo.InvariantCulture);
++        Assert.Equal(f.Clock.Now, to);
++        Assert.Equal(TimeSpan.FromDays(14), to - from);
++        Assert.Equal("day", query["interval"].ToString());
++        Assert.Equal("temperature", query["metric"].ToString());
++    }
++
++    [Fact]
++    public async Task AlertsDefaultToOpenAndAllStatesRemovesQueryFilter()
++    {
++        using var f = new ClientFixture(); await f.SignInAsync();
++        var vm = new AlertsViewModel(f.Api, f.Session, f.Navigation);
++        Assert.Equal(AlertStatus.Open, vm.SelectedStatus.Value);
++        await vm.InitializeAsync();
++        var query = QueryHelpers.ParseQuery(Assert.Single(f.Requests).Uri.Query);
++        Assert.Equal("open", query["status"].ToString());
++        f.Requests.Clear();
++        vm.SelectedStatus = vm.Statuses.Single(option => option.Value == null);
++        await vm.RefreshCommand.ExecuteAsync(null);
++        query = QueryHelpers.ParseQuery(Assert.Single(f.Requests).Uri.Query);
++        Assert.False(query.ContainsKey("status"));
++        Assert.Equal("1", query["page"].ToString());
++    }
++}

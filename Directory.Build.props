@@ -8,6 +8,8 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- Окремий SARIF кожного проєкту: CI зберігає справжній звіт аналізатора для C4. -->
+    <ErrorLog Condition="'$(AnalysisOutputDirectory)' != ''">$(AnalysisOutputDirectory)/$(MSBuildProjectName).sarif,version=2.1</ErrorLog>
     <!-- XML-коментарі доступні в IDE; окремий XML-файл за замовчуванням не генерується. -->
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>

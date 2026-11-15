@@ -7,6 +7,7 @@ using Microclimate.Contracts.Analytics;
 using Microclimate.Contracts.Auth;
 using Microclimate.Contracts.Common;
 using Microclimate.Contracts.Rooms;
+using Microclimate.Contracts.Thresholds;
 
 namespace Microclimate.Client.Core.Services;
 
@@ -38,6 +39,9 @@ public interface IClientApi
     Task<PagedResponse<AlertResponse>> GetAlertsAsync(int page, AlertLevel? level, AlertStatus? status, CancellationToken cancellationToken);
     // Надсилає підтвердження сповіщення; остаточну перевірку прав виконує сервер.
     Task AcknowledgeAsync(Guid alertId, CancellationToken cancellationToken);
+    // Читає ефективні пороги (власні або типові) та зберігає межі вибраної метрики.
+    Task<IReadOnlyList<ThresholdResponse>> GetThresholdsAsync(Guid roomId, CancellationToken cancellationToken);
+    Task<ThresholdResponse> UpdateThresholdAsync(Guid roomId, MetricType metric, UpdateThresholdRequest request, CancellationToken cancellationToken);
 }
 
 // Виконує запити до api/v1, прив’язує access-сесію до сервера та перетворює помилки HTTP на зрозумілі повідомлення.
@@ -75,10 +79,21 @@ public sealed class ClientApi(HttpClient http, IClientSettings settings, ClientS
     // Отримує сторінку кімнат; відсутні в серверній відповіді виміри позначає як NoData.
     public async Task<PagedResponse<RoomSummaryResponse>> GetRoomsAsync(int page, CancellationToken cancellationToken)
     {
-        // Чинний API повертає RoomResponse без останніх вимірів і статусу.
         var rooms = await GetAsync<PagedResponse<RoomResponse>>($"rooms?page={page}&pageSize=20", cancellationToken).ConfigureAwait(false);
-        var items = rooms.Items.Select(room => new RoomSummaryResponse(
-            room.Id, Guid.Empty, "", room.Name, room.Floor, room.Type, "NoData", [])).ToList();
+        // Дані доповнюються чинними endpoints; не обчислюємо доменний комфорт на клієнті.
+        // Чотири кімнати одночасно обмежують навантаження при сторінці з 20 кімнат.
+        using var slots = new SemaphoreSlim(4);
+        var items = await Task.WhenAll(rooms.Items.Select(async room =>
+        {
+            await slots.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                var latest = await GetAsync<List<LatestMetricResponse>>($"rooms/{room.Id:D}/measurements/latest", cancellationToken).ConfigureAwait(false);
+                var comfort = await GetComfortAsync(room.Id, cancellationToken).ConfigureAwait(false);
+                return new RoomSummaryResponse(room.Id, Guid.Empty, "", room.Name, room.Floor, room.Type, comfort.Category.ToString(), latest);
+            }
+            finally { slots.Release(); }
+        })).ConfigureAwait(false);
         return new(items, rooms.Page, rooms.PageSize, rooms.TotalCount);
     }
     // Отримує поточні дані кімнати за ідентифікатором.
@@ -106,6 +121,17 @@ public sealed class ClientApi(HttpClient http, IClientSettings settings, ClientS
         using var response = await SendAsync(HttpMethod.Post, $"alerts/{alertId:D}/acknowledge", cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<IReadOnlyList<ThresholdResponse>> GetThresholdsAsync(Guid roomId, CancellationToken cancellationToken) =>
+        await GetAsync<List<ThresholdResponse>>($"rooms/{roomId:D}/thresholds", cancellationToken).ConfigureAwait(false);
+
+    public async Task<ThresholdResponse> UpdateThresholdAsync(Guid roomId, MetricType metric, UpdateThresholdRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        using var response = await SendAsync(HttpMethod.Put, $"rooms/{roomId:D}/thresholds/{metric.ToString().ToLowerInvariant()}",
+            cancellationToken, body: request).ConfigureAwait(false);
+        return await ReadAsync<ThresholdResponse>(response, cancellationToken).ConfigureAwait(false);
+    }
+
     // Формує query-параметри метрики та меж періоду в UTC ISO 8601 з URI-кодуванням.
     private static string PeriodQuery(MetricType metric, DateTimeOffset from, DateTimeOffset until) =>
         $"metric={metric.ToString().ToLowerInvariant()}&from={Uri.EscapeDataString(from.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture))}&to={Uri.EscapeDataString(until.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture))}";
@@ -131,7 +157,7 @@ public sealed class ClientApi(HttpClient http, IClientSettings settings, ClientS
 
     // Додає Bearer-токен для потрібного сервера; HTTP 401 очищає сесію, 403 зберігає її, помилки мережі та валідації локалізуються.
     private async Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, CancellationToken cancellationToken,
-        LoginRequest? body = null, string? server = null, bool anonymous = false, string? explicitToken = null)
+        object? body = null, string? server = null, bool anonymous = false, string? explicitToken = null)
     {
         server ??= ApiAddress.Normalize(settings.ApiAddress);
         using var request = new HttpRequestMessage(method, new Uri(new Uri(server), "api/v1/" + path));
@@ -143,7 +169,7 @@ public sealed class ClientApi(HttpClient http, IClientSettings settings, ClientS
         }
         if (body is not null)
         {
-            request.Content = new ByteArrayContent(JsonSerializer.SerializeToUtf8Bytes(body, ClientJsonContext.Default.LoginRequest));
+            request.Content = new ByteArrayContent(JsonSerializer.SerializeToUtf8Bytes(body, body.GetType(), ClientJsonContext.Default));
             request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
         }
         HttpResponseMessage response;

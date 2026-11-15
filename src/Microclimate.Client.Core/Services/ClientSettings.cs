@@ -5,6 +5,15 @@ public interface IClientSettings
 {
     // Коренева адреса сервера; ClientApi додає до неї api/v1/.
     string ApiAddress { get; set; }
+    ClientTheme Theme { get; set; }
+}
+
+// Локальна тема не змінює одиниць або серверних даних.
+public enum ClientTheme
+{
+    System,
+    Light,
+    Dark,
 }
 
 // Перевіряє адресу сервера: HTTPS для віддалених вузлів, HTTP лише для локальної розробки.

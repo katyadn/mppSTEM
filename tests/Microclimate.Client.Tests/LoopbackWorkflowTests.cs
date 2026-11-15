@@ -76,7 +76,7 @@ public sealed class LoopbackWorkflowTests
         Assert.Equal("dashboard", fixture.Navigation.Destination);
         var dashboard = new DashboardViewModel(api, fixture.Navigation); await dashboard.InitializeAsync();
         Assert.Single(dashboard.Rooms);
-        var details = new RoomDetailsViewModel(api, fixture.Navigation, fixture.Clock);
+        var details = new RoomDetailsViewModel(api, fixture.Navigation, fixture.Clock, fixture.Session);
         details.SelectRoom(ClientFixture.RoomId, "101"); await details.InitializeAsync();
         Assert.Equal(2, details.Series.Count); Assert.Equal("82/100 · Прийнятно", details.ComfortText);
         var alerts = new AlertsViewModel(api, fixture.Session, fixture.Navigation); await alerts.InitializeAsync();

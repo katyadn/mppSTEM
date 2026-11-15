@@ -4,6 +4,7 @@ using Microclimate.Contracts.Analytics;
 using Microclimate.Contracts.Auth;
 using Microclimate.Contracts.Common;
 using Microclimate.Contracts.Rooms;
+using Microclimate.Contracts.Thresholds;
 
 namespace Microclimate.Client.Core.Services;
 
@@ -23,4 +24,10 @@ public sealed record ClientProblem(Dictionary<string, string[]>? Errors);
 [JsonSerializable(typeof(List<SeriesPointResponse>))]
 [JsonSerializable(typeof(ComfortIndexResponse))]
 [JsonSerializable(typeof(ClientProblem))]
+[JsonSerializable(typeof(List<LatestMetricResponse>))]
+[JsonSerializable(typeof(List<ThresholdResponse>))]
+[JsonSerializable(typeof(ThresholdResponse))]
+[JsonSerializable(typeof(UpdateThresholdRequest))]
+[JsonSerializable(typeof(System.Text.Json.JsonElement))]
+[JsonSerializable(typeof(Guid))]
 public partial class ClientJsonContext : JsonSerializerContext;

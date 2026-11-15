@@ -22,13 +22,16 @@ public partial class SettingsViewModel : BaseViewModel
     // Пояснення, чи зберігається сесія між запусками або діє лише в пам’яті.
     [ObservableProperty] private string sessionText = string.Empty;
 
+    public IReadOnlyList<ThemeOption> Themes { get; } = [new(ClientTheme.System, "Як у системі"), new(ClientTheme.Light, "Світла"), new(ClientTheme.Dark, "Темна")];
+    [ObservableProperty] private ThemeOption selectedTheme = new(ClientTheme.System, "Як у системі");
+
     // Ініціалізує SettingsViewModel та його залежності для клієнтського сценарію.
     public SettingsViewModel(IClientSettings settings, ClientSession session, INavigationService navigation) : base(navigation)
     { this.settings = settings; this.session = session; this.navigation = navigation; Title = "Налаштування"; }
     // Оновлює поля адреси, профілю та фактичного способу зберігання сесії.
     public override Task InitializeAsync()
     {
-        ServerAddress = settings.ApiAddress; Message = string.Empty;
+        ServerAddress = settings.ApiAddress; SelectedTheme = Themes.First(option => option.Value == settings.Theme); Message = string.Empty;
         ProfileText = session.Current is { } current ? $"{current.User.Email} · {current.User.Role}" : "Вхід не виконано";
         SessionText = session.Current is null ? string.Empty : session.IsPersistent ? "Сесію збережено на пристрої" : "Сесія діє до закриття застосунку";
         return Task.CompletedTask;
@@ -39,7 +42,7 @@ public partial class SettingsViewModel : BaseViewModel
         var normalized = ApiAddress.Normalize(ServerAddress);
         var changed = normalized != ApiAddress.Normalize(settings.ApiAddress);
         if (changed) await session.ClearAsync();
-        settings.ApiAddress = normalized; ServerAddress = normalized; Message = "Адресу API збережено.";
+        settings.ApiAddress = normalized; settings.Theme = SelectedTheme.Value; ServerAddress = normalized; Message = "Налаштування збережено.";
         if (changed) await navigation.GoToLoginAsync();
     });
     // Видаляє поточну сесію та відкриває вхід.
@@ -47,3 +50,5 @@ public partial class SettingsViewModel : BaseViewModel
     // Відкриває екран входу.
     [RelayCommand] private Task GoToLoginAsync() => navigation.GoToLoginAsync();
 }
+
+public sealed record ThemeOption(ClientTheme Value, string Name);

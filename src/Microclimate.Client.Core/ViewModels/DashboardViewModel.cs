@@ -45,6 +45,29 @@ public partial class DashboardViewModel : BaseViewModel
         page = requestedPage;
         HasMore = response.Items.Count > 0 && Rooms.Count < response.TotalCount;
     }
+    // Зберігає завантажені сторінки й позицію списку під час фонових подій.
+    public Task RefreshLiveAsync() => RunAsync(async token =>
+    {
+        var cards = new List<RoomCard>();
+        var total = 0;
+        for (var requested = 1; requested <= Math.Max(1, page); requested++)
+        {
+            var response = await api.GetRoomsAsync(requested, token);
+            total = response.TotalCount;
+            cards.AddRange(response.Items.Select(RoomCard.FromResponse));
+            if (cards.Count >= total || response.Items.Count == 0) break;
+        }
+        token.ThrowIfCancellationRequested();
+        var unique = cards.DistinctBy(card => card.Id).ToArray();
+        for (var index = 0; index < unique.Length; index++)
+        {
+            if (index >= Rooms.Count) Rooms.Add(unique[index]);
+            else if (Rooms[index] != unique[index]) Rooms[index] = unique[index];
+        }
+        while (Rooms.Count > unique.Length) Rooms.RemoveAt(Rooms.Count - 1);
+        HasMore = Rooms.Count < total;
+    });
+
     // Передає ідентифікатор і назву вибраної кімнати екрану деталей.
     [RelayCommand] private Task OpenSelectedRoomAsync(RoomCard room) => navigation.GoToRoomDetailsAsync(room.Id, room.Name);
 }

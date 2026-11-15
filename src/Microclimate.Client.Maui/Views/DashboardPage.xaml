@@ -6,8 +6,8 @@
  x:DataType="vm:DashboardViewModel" Title="{Binding Title}">
 
 <Grid Padding="20" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12">
-<Label Text="Огляд кімнат" FontSize="28" FontAttributes="Bold" />
-<Label Grid.Row="1" Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" TextColor="#B00020" />
+<VerticalStackLayout Spacing="4"><Label Text="Огляд кімнат" FontSize="28" FontAttributes="Bold" /><Label Text="{Binding LiveStatus}" FontSize="12" /></VerticalStackLayout>
+<Label Grid.Row="1" Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" TextColor="{AppThemeBinding Light=#B00020, Dark=#FFB4AB}" />
 <Button Grid.Row="2" Text="Оновити" Command="{Binding RefreshCommand}" IsEnabled="{Binding IsNotBusy}" />
 <RefreshView Grid.Row="3" Command="{Binding RefreshCommand}" IsRefreshing="{Binding IsBusy, Mode=OneWay}">
 <CollectionView ItemsSource="{Binding Rooms}" SelectionMode="None">
@@ -15,7 +15,7 @@
 <CollectionView.ItemTemplate><DataTemplate x:DataType="cards:RoomCard"><Border Padding="16" Margin="0,0,0,12">
 <VerticalStackLayout Spacing="8">
 <Label Text="{Binding Name}" FontSize="22" FontAttributes="Bold" />
-<Label Text="{Binding StatusText}" /><Label Text="{Binding MetricsText}" />
+<Label Text="{Binding StatusText}" /><Label Text="{Binding MetricsText}" /><Label Text="{Binding UpdatedText}" FontSize="12" />
 <Button Text="Деталі кімнати" Command="{Binding Source={x:Reference PageRoot}, Path=ViewModel.OpenSelectedRoomCommand, x:DataType=views:DashboardPage}" CommandParameter="{Binding .}" />
 </VerticalStackLayout></Border></DataTemplate></CollectionView.ItemTemplate>
 <CollectionView.Footer><Button Text="Завантажити ще" Command="{Binding LoadMoreCommand}" IsVisible="{Binding HasMore}" IsEnabled="{Binding IsNotBusy}" /></CollectionView.Footer>

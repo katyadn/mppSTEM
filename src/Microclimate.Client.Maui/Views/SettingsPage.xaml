@@ -11,10 +11,13 @@
 <Label Text="Адреса API" FontAttributes="Bold" />
 <Entry Text="{Binding ServerAddress}" Keyboard="Url" Placeholder="https://api.example.com/" IsEnabled="{Binding IsNotBusy}" />
 <Label Text="Після зміни сервера потрібно увійти знову." />
-<Label Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" TextColor="#B00020" />
+<Label Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" TextColor="{AppThemeBinding Light=#B00020, Dark=#FFB4AB}" />
 <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
 <Label Text="{Binding Message}" />
-<Button Text="Зберегти адресу" Command="{Binding SaveCommand}" IsEnabled="{Binding IsNotBusy}" />
+<Label Text="Тема" FontAttributes="Bold" />
+<Picker Title="Тема застосунку" ItemsSource="{Binding Themes}" ItemDisplayBinding="{Binding Name, x:DataType=vm:ThemeOption}" SelectedItem="{Binding SelectedTheme}" IsEnabled="{Binding IsNotBusy}" />
+<Label Text="Одиниці: °C · % · ppm · µg/m³ · dB(A) · lux" />
+<Button Text="Зберегти налаштування" Command="{Binding SaveCommand}" IsEnabled="{Binding IsNotBusy}" />
 <Button Text="Вийти з облікового запису" Command="{Binding LogoutCommand}" IsEnabled="{Binding IsNotBusy}" />
 <Button Text="До входу" Command="{Binding GoToLoginCommand}" />
 </VerticalStackLayout></ScrollView></ContentPage>

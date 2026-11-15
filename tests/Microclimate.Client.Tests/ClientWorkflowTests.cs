@@ -50,7 +50,7 @@ public sealed class ClientWorkflowTests
     [Fact]
     public async Task RoomDetailsUseSelectedPeriodAndPreserveChartGap()
     {
-        using var f = new ClientFixture(); await f.SignInAsync(); var vm = new RoomDetailsViewModel(f.Api, f.Navigation, f.Clock);
+        using var f = new ClientFixture(); await f.SignInAsync(); var vm = new RoomDetailsViewModel(f.Api, f.Navigation, f.Clock, f.Session);
         vm.SelectRoom(ClientFixture.RoomId, "101"); vm.SelectedPeriod = vm.Periods[1]; vm.SelectedMetric = vm.Metrics[2];
         await vm.InitializeAsync();
         Assert.Equal(2, vm.Series.Count); Assert.True(vm.HasSeries); Assert.False(vm.HasNoSeries);
@@ -62,7 +62,7 @@ public sealed class ClientWorkflowTests
     [Fact]
     public async Task FailedNewAnalyticsRequestClearsOldChart()
     {
-        using var f = new ClientFixture(); await f.SignInAsync(); var vm = new RoomDetailsViewModel(f.Api, f.Navigation, f.Clock);
+        using var f = new ClientFixture(); await f.SignInAsync(); var vm = new RoomDetailsViewModel(f.Api, f.Navigation, f.Clock, f.Session);
         vm.SelectRoom(ClientFixture.RoomId, "101"); await vm.InitializeAsync(); Assert.True(vm.HasSeries);
         f.Reply = _ => new(HttpStatusCode.InternalServerError); await vm.RefreshCommand.ExecuteAsync(null);
         Assert.Empty(vm.Series); Assert.True(vm.HasNoSeries); Assert.True(vm.HasError);

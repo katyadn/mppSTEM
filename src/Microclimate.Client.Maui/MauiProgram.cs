@@ -25,6 +25,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<ISessionStore, SecureSessionStore>();
         builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddSingleton<ClientSession>();
+        builder.Services.AddSingleton<ClientRealtime>();
         builder.Services.AddSingleton(ClientTransport.Create());
         builder.Services.AddSingleton<IClientApi, ClientApi>();
         builder.Services.AddTransient<AppShell>();

@@ -39,7 +39,7 @@ public sealed class BackendWorkflowTests
         Assert.Equal("Немає даних", room.StatusText);
         Assert.False(dashboard.HasMore);
 
-        var details = new RoomDetailsViewModel(api, navigation, TimeProvider.System);
+        var details = new RoomDetailsViewModel(api, navigation, TimeProvider.System, session);
         details.SelectRoom(room.Id, room.Name);
         await details.InitializeAsync();
         Assert.False(details.HasError, details.ErrorMessage);
@@ -65,7 +65,7 @@ public sealed class BackendWorkflowTests
         Assert.Equal(22.5, Assert.Single(details.Series.SelectMany(segment => segment)).Value);
         Assert.NotEqual("Немає даних", details.ComfortText);
         details.SelectedPeriod = details.Periods[1];
-        await details.RefreshCommand.ExecuteAsync(null);
+        await details.SelectionRefresh;
         Assert.False(details.HasError, details.ErrorMessage);
         Assert.True(details.HasSeries);
 
@@ -90,7 +90,7 @@ public sealed class BackendWorkflowTests
     }
 
     // Запускає чинний API в Development з окремою тимчасовою SQLite-базою для інтеграційного тесту.
-    private sealed class SqliteBackendFactory : WebApplicationFactory<Program>
+    internal sealed class SqliteBackendFactory : WebApplicationFactory<Program>
     {
         // Шлях до окремої тимчасової SQLite-бази цього запуску.
         private readonly string databasePath = Path.Combine(Path.GetTempPath(), $"microclimate-client-{Guid.NewGuid():N}.db");
