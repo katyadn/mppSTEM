@@ -2,9 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-
 using Microclimate.Domain.Users;
-
 using Microsoft.IdentityModel.Tokens;
 
 namespace Microclimate.Api.Services;
@@ -26,8 +24,7 @@ internal sealed class JwtTokenService : IJwtTokenService
         var jwtSection = configuration.GetSection("Jwt");
         _issuer = jwtSection["Issuer"] ?? "microclimate-api";
         _audience = jwtSection["Audience"] ?? "microclimate-client";
-        var secret = jwtSection["SecretKey"]
-            ?? throw new InvalidOperationException("Jwt:SecretKey is not configured.");
+        var secret = jwtSection["SecretKey"] ?? throw new InvalidOperationException("Jwt:SecretKey is not configured.");
         _signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
     }
 
@@ -68,18 +65,22 @@ internal sealed class JwtTokenService : IJwtTokenService
         try
         {
             var handler = new JwtSecurityTokenHandler();
-            var principal = handler.ValidateToken(refreshToken, new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidIssuer = _issuer,
-                ValidateAudience = false,
-                ValidateLifetime = true,
-                IssuerSigningKey = _signingKey,
-                ClockSkew = TimeSpan.Zero,
-            }, out _);
+            var principal = handler.ValidateToken(
+                refreshToken,
+                new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = _issuer,
+                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                    IssuerSigningKey = _signingKey,
+                    ClockSkew = TimeSpan.Zero,
+                },
+                out _
+            );
 
             var sub = principal.FindFirstValue(ClaimTypes.NameIdentifier)
-                   ?? principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
+                ?? principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
             return sub is not null && Guid.TryParse(sub, out var id) ? id : null;
         }
         catch (Exception)
@@ -90,11 +91,7 @@ internal sealed class JwtTokenService : IJwtTokenService
 
     private string GenerateRefreshToken(Guid userId, DateTimeOffset expires)
     {
-        var claims = new[]
-        {
-            new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
-            new Claim("typ", "refresh"),
-        };
+        var claims = new[] { new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()), new Claim("typ", "refresh") };
 
         var descriptor = new SecurityTokenDescriptor
         {

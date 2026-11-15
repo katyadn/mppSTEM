@@ -6,5 +6,4 @@ namespace Microclimate.Contracts.Users;
 /// Запит адміністратора на зміну ролі існуючого користувача.
 /// </summary>
 /// <param name="Role">Нова роль користувача.</param>
-public sealed record ChangeRoleRequest(
-    UserRole Role);
+public sealed record ChangeRoleRequest(UserRole Role);

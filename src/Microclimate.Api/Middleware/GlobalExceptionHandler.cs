@@ -1,8 +1,6 @@
 using System.Diagnostics;
-
 using Microclimate.Application.Common;
 using Microclimate.Domain.Common;
-
 using Microsoft.AspNetCore.Diagnostics;
 
 namespace Microclimate.Api.Middleware;
@@ -14,12 +12,14 @@ namespace Microclimate.Api.Middleware;
 public sealed class GlobalExceptionHandler(
     IProblemDetailsService problemDetailsService,
     IHostEnvironment environment,
-    ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
+    ILogger<GlobalExceptionHandler> logger
+) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         Exception exception,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var traceId = Activity.Current?.Id ?? httpContext.TraceIdentifier;
 
@@ -29,29 +29,34 @@ public sealed class GlobalExceptionHandler(
                 StatusCodes.Status404NotFound,
                 "https://api.microclimate.local/errors/not_found",
                 "Resource Not Found",
-                nfe.Message),
+                nfe.Message
+            ),
             ConflictException ce => (
                 StatusCodes.Status409Conflict,
                 "https://api.microclimate.local/errors/conflict",
                 "Conflict",
-                ce.Message),
+                ce.Message
+            ),
             ValidationException ve => (
                 StatusCodes.Status400BadRequest,
                 "https://api.microclimate.local/errors/validation_error",
                 "Validation Failed",
-                ve.Message),
+                ve.Message
+            ),
             DomainException de => (
                 StatusCodes.Status400BadRequest,
                 "https://api.microclimate.local/errors/domain_rule_violation",
                 "Domain Rule Violation",
-                de.Message),
+                de.Message
+            ),
             _ => (
                 StatusCodes.Status500InternalServerError,
                 "https://api.microclimate.local/errors/internal_error",
                 "Internal Server Error",
                 environment.IsDevelopment()
                     ? exception.Message
-                    : "Сталася внутрішня помилка сервера. Будь ласка, зверніться до адміністратора."),
+                    : "Сталася внутрішня помилка сервера. Будь ласка, зверніться до адміністратора."
+            ),
         };
 
         if (statusCode >= 500)
@@ -60,7 +65,8 @@ public sealed class GlobalExceptionHandler(
                 exception,
                 "Неперехоплений виняток під час обробки запиту {Path}. TraceId: {TraceId}",
                 httpContext.Request.Path,
-                traceId);
+                traceId
+            );
         }
         else
         {
@@ -68,7 +74,8 @@ public sealed class GlobalExceptionHandler(
                 "Бізнес-помилка під час обробки запиту {Path}: {Message}. TraceId: {TraceId}",
                 httpContext.Request.Path,
                 exception.Message,
-                traceId);
+                traceId
+            );
         }
 
         httpContext.Response.StatusCode = statusCode;
@@ -80,10 +87,7 @@ public sealed class GlobalExceptionHandler(
             Status = statusCode,
             Detail = detail,
             Instance = httpContext.Request.Path,
-            Extensions =
-            {
-                ["traceId"] = traceId,
-            },
+            Extensions = { ["traceId"] = traceId },
         };
 
         if (exception is ValidationException validationException)
@@ -91,10 +95,8 @@ public sealed class GlobalExceptionHandler(
             problemDetails.Extensions["errors"] = validationException.Errors;
         }
 
-        return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
-        {
-            HttpContext = httpContext,
-            ProblemDetails = problemDetails,
-        });
+        return await problemDetailsService.TryWriteAsync(
+            new ProblemDetailsContext { HttpContext = httpContext, ProblemDetails = problemDetails }
+        );
     }
 }

@@ -1,11 +1,9 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-
 using Microclimate.Contracts.Auth;
 using Microclimate.Contracts.Common;
 using Microclimate.Contracts.Rooms;
-
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Microclimate.Api.IntegrationTests;

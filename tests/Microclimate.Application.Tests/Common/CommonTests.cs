@@ -13,11 +13,9 @@ public class CommonTests
     [Theory]
     [InlineData(0, 20, "page")]
     [InlineData(1, PageRequest.MaxPageSize + 1, "pageSize")]
-    public void PageRequest_InvalidValues_ThrowsForField(int page,
-        int pageSize, string field)
+    public void PageRequest_InvalidValues_ThrowsForField(int page, int pageSize, string field)
     {
-        var exception = Assert.Throws<ValidationException>((
-            ) => new PageRequest(page, pageSize));
+        var exception = Assert.Throws<ValidationException>(() => new PageRequest(page, pageSize));
 
         Assert.True(exception.Errors.ContainsKey(field));
     }

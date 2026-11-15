@@ -4,8 +4,14 @@ using Microclimate.Client.Core.ViewModels;
 namespace Microclimate.Client.Maui.Services;
 
 // Події SignalR приходять поза UI-потоком; тільки цей адаптер змінює стан MAUI-сторінки.
-public sealed class PageLiveUpdates(ClientRealtime realtime, BaseViewModel viewModel, INavigationService navigation,
-    Func<IReadOnlyCollection<Guid>> rooms, bool includeAlerts, Func<Task> refresh)
+public sealed class PageLiveUpdates(
+    ClientRealtime realtime,
+    BaseViewModel viewModel,
+    INavigationService navigation,
+    Func<IReadOnlyCollection<Guid>> rooms,
+    bool includeAlerts,
+    Func<Task> refresh
+)
 {
     private CancellationTokenSource? lifetime;
     private Task running = Task.CompletedTask;
@@ -15,18 +21,35 @@ public sealed class PageLiveUpdates(ClientRealtime realtime, BaseViewModel viewM
     {
         Stop();
         window = currentWindow;
-        if (window is not null) { window.Stopped += OnStopped; window.Resumed += OnResumed; }
+        if (window is not null)
+        {
+            window.Stopped += OnStopped;
+            window.Resumed += OnResumed;
+        }
         Begin();
     }
 
     public void Stop()
     {
-        lifetime?.Cancel(); lifetime = null;
-        if (window is not null) { window.Stopped -= OnStopped; window.Resumed -= OnResumed; window = null; }
+        lifetime?.Cancel();
+        lifetime = null;
+        if (window is not null)
+        {
+            window.Stopped -= OnStopped;
+            window.Resumed -= OnResumed;
+            window = null;
+        }
     }
 
-    private void OnStopped(object? sender, EventArgs e) { lifetime?.Cancel(); lifetime = null; viewModel.CancelPending(); }
+    private void OnStopped(object? sender, EventArgs e)
+    {
+        lifetime?.Cancel();
+        lifetime = null;
+        viewModel.CancelPending();
+    }
+
     private void OnResumed(object? sender, EventArgs e) => Begin();
+
     private void Begin()
     {
         lifetime?.Cancel();
@@ -42,38 +65,55 @@ public sealed class PageLiveUpdates(ClientRealtime realtime, BaseViewModel viewM
             try
             {
                 await previous;
-                if (source.IsCancellationRequested) return;
+                if (source.IsCancellationRequested)
+                    return;
                 var connection = realtime.CreateConnection();
-                await realtime.WatchAsync(connection,
-                    () => MainThread.InvokeOnMainThreadAsync(rooms), includeAlerts,
-                    () => MainThread.InvokeOnMainThreadAsync(async () =>
-                    {
-                        if (source.IsCancellationRequested || viewModel.IsBusy) return false;
-                        // Під час збереження порогів не запускаємо паралельну аналітику.
-                        if (viewModel is RoomDetailsViewModel details && details.Thresholds.IsBusy) return false;
-                        await refresh(); return true;
-                    }),
-                    state => MainThread.InvokeOnMainThreadAsync(async () =>
-                    {
-                        if (source.IsCancellationRequested) return;
-                        viewModel.LiveStatus = state switch
+                await realtime.WatchAsync(
+                    connection,
+                    () => MainThread.InvokeOnMainThreadAsync(rooms),
+                    includeAlerts,
+                    () =>
+                        MainThread.InvokeOnMainThreadAsync(async () =>
                         {
-                            LiveConnectionState.Connected => "Дані оновлюються автоматично",
-                            LiveConnectionState.Reconnecting => "Відновлення з’єднання…",
-                            LiveConnectionState.SignedOut => "Сесія завершилася",
-                            LiveConnectionState.Connecting => "Підключення до автооновлення…",
-                            _ => "Канал подій недоступний · перевірка даних кожні 30 с",
-                        };
-                        if (state == LiveConnectionState.SignedOut) await navigation.GoToLoginAsync();
-                    }), source.Token);
+                            if (source.IsCancellationRequested || viewModel.IsBusy)
+                                return false;
+                            // Під час збереження порогів не запускаємо паралельну аналітику.
+                            if (viewModel is RoomDetailsViewModel details && details.Thresholds.IsBusy)
+                                return false;
+                            await refresh();
+                            return true;
+                        }),
+                    state =>
+                        MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            if (source.IsCancellationRequested)
+                                return;
+                            viewModel.LiveStatus = state switch
+                            {
+                                LiveConnectionState.Connected => "Дані оновлюються автоматично",
+                                LiveConnectionState.Reconnecting => "Відновлення з’єднання…",
+                                LiveConnectionState.SignedOut => "Сесія завершилася",
+                                LiveConnectionState.Connecting => "Підключення до автооновлення…",
+                                _ => "Канал подій недоступний · перевірка даних кожні 30 с",
+                            };
+                            if (state == LiveConnectionState.SignedOut)
+                                await navigation.GoToLoginAsync();
+                        }),
+                    source.Token
+                );
             }
             catch (OperationCanceledException) when (source.IsCancellationRequested) { }
             catch (Exception exception)
             {
                 System.Diagnostics.Debug.WriteLine($"Live updates stopped: {exception.GetType().Name}");
-                if (!source.IsCancellationRequested) viewModel.LiveStatus = "Автооновлення недоступне. Натисніть «Оновити».";
+                if (!source.IsCancellationRequested)
+                    viewModel.LiveStatus = "Автооновлення недоступне. Натисніть «Оновити».";
             }
-            finally { if (ReferenceEquals(lifetime, source)) lifetime = null; }
+            finally
+            {
+                if (ReferenceEquals(lifetime, source))
+                    lifetime = null;
+            }
         }
     }
 }

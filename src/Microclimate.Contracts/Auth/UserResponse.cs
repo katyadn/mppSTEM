@@ -9,8 +9,4 @@ namespace Microclimate.Contracts.Auth;
 /// <param name="Email">Електронна пошта користувача.</param>
 /// <param name="Role">Роль користувача в системі.</param>
 /// <param name="CreatedAt">Час реєстрації користувача (UTC).</param>
-public sealed record UserResponse(
-    Guid Id,
-    string Email,
-    UserRole Role,
-    DateTimeOffset CreatedAt);
+public sealed record UserResponse(Guid Id, string Email, UserRole Role, DateTimeOffset CreatedAt);

@@ -1,8 +1,6 @@
 # Схема бази даних
 
-Автор: Учасник 1. Статус: на погодженні з Учасниками 2 і 3.
-
-Тут описано логічну модель даних. На Етапі 1 вона переноситься в EF Core через Fluent API (`Infrastructure/Persistence/Configurations`) і має повністю відповідати цьому документу.
+Реалізація: `Infrastructure/Persistence/Configurations` та міграції SQLite/PostgreSQL. Типи в таблицях нижче логічні; фізичне представлення залежить від провайдера (розділ 6).
 
 ## 1. Загальні правила
 
@@ -14,7 +12,7 @@
 | Enum-и | Зберігаються як рядки (`varchar(32)`) | Значення видно в БД без коду, зміна порядку в enum нічого не ламає |
 | Видалення | `RESTRICT` за замовчуванням, `CASCADE` лише для порогів кімнати | Історія вимірів і сповіщень не має зникати разом з кімнатою чи датчиком |
 
-Метрики (`MetricType`): `Temperature` (°C), `Humidity` (%), `Co2` (ppm), `Pm25` (µg/m³), `Noise` (dB), `Light` (lux).
+Метрики (`MetricType`): `Temperature` (°C), `Humidity` (%), `Co2` (ppm), `Pm25` (µg/m³), `Noise` (dB(A)), `Light` (lux).
 
 ## 2. ER-діаграма
 
@@ -113,7 +111,7 @@ erDiagram
 | `DeviceKeyHash` | varchar(256) | ні | Хеш ключа `X-Device-Key`, сам ключ не зберігається; індекс `IX_Sensors_DeviceKeyHash` для пошуку датчика при кожному запиті з вимірами |
 | `IsActive` | bool | ні | Неактивний датчик не приймає виміри |
 | `InstalledAt` | timestamptz | ні | |
-| `LastSeenAt` | timestamptz | так | Час останнього прийнятого виміру |
+| `LastSeenAt` | timestamptz | так | Час останнього контакту; оновлюється також під час DeviceKey authentication |
 
 Один датчик може надсилати кілька метрик (наприклад, температуру, вологість і CO₂).
 
@@ -136,7 +134,7 @@ JOIN Sensors s ON s.Id = m.SensorId
 WHERE s.RoomId = @roomId AND m.MetricType = @metric AND m.MeasuredAt >= @from AND m.MeasuredAt < @to
 ```
 
-У кімнаті кілька датчиків, тому БД знаходить їх через `IX_Sensors_RoomId`, а для кожного датчика бере потрібний діапазон з індексу вимірів. Порядок колонок в індексі такий: спочатку поля з умовою рівності (`SensorId`, `MetricType`), потім поле діапазону (`MeasuredAt`). Тоді індекс використовується повністю, а рядки вже впорядковані за часом.
+У кімнаті кілька датчиків, тому БД знаходить їх через `IX_Sensors_RoomId`, а для кожного датчика бере потрібний діапазон з індексу вимірів. Порядок колонок в індексі такий: спочатку поля з умовою рівності (`SensorId`, `MetricType`), потім поле діапазону (`MeasuredAt`). Фактичний план обирає провайдер; порядок результату задається `OrderBy` у репозиторії.
 
 ### 3.4. `Thresholds`
 
@@ -145,9 +143,9 @@ WHERE s.RoomId = @roomId AND m.MetricType = @metric AND m.MeasuredAt >= @from AN
 | `Id` | uuid | ні | PK |
 | `RoomId` | uuid | ні | FK → `Rooms.Id`, `CASCADE` |
 | `MetricType` | varchar(32) | ні | UNIQUE (`RoomId`, `MetricType`) |
-| `CriticalMin`, `WarningMin`, `WarningMax`, `CriticalMax` | double | так | CHECK: `CriticalMin <= WarningMin < WarningMax <= CriticalMax` для заданих значень |
+| `CriticalMin`, `WarningMin`, `WarningMax`, `CriticalMax` | double | так | CHECK непорожності й порядку всіх пар заданих меж |
 
-Якщо для кімнати порогу немає, діють значення за замовчуванням з `docs/analytics.md`. Те саме правило порядку меж перевіряє доменний клас `ThresholdLimits`, тож CHECK у БД — додатковий захист.
+Якщо для кімнати порогу немає, діють значення за замовчуванням з `docs/analytics.md`. `ThresholdLimits` і CHECK перевіряють порядок сусідніх меж та всі пари нижня/верхня. Виправлення nullable-комбінацій додано окремими міграціями `EnforceThresholdOrder` у [PR #82](https://github.com/katyadn/mppSTEM/pull/82).
 
 ### 3.5. `Alerts`
 
@@ -168,6 +166,7 @@ WHERE s.RoomId = @roomId AND m.MetricType = @metric AND m.MeasuredAt >= @from AN
 | `ResolvedAt` | timestamptz | так | |
 
 Індекси:
+
 - `IX_Alerts_Status_RaisedAt` (`Status`, `RaisedAt`) — стрічка сповіщень на екрані Alerts;
 - `IX_Alerts_Room_Metric_Status` (`RoomId`, `MetricType`, `Status`) — пошук незакритого сповіщення під час прийому вимірів.
 
@@ -185,10 +184,10 @@ WHERE s.RoomId = @roomId AND m.MetricType = @metric AND m.MeasuredAt >= @from AN
 
 ## 4. Транзакції
 
-| Операція | Що має бути атомарним |
+| Операція | Реалізація |
 |---|---|
-| Прийом пакета вимірів | Вставка всіх вимірів пакета, оновлення `Sensors.LastSeenAt`, створення та закриття сповіщень. Якщо хоч один вимір некоректний, пакет відхиляється повністю |
-| Видалення кімнати | Перевірка, що в кімнаті немає датчиків, і видалення її порогів |
+| Прийом пакета вимірів | Вставка всіх вимірів пакета, оновлення `Sensors.LastSeenAt`, створення та закриття сповіщень. Якщо хоч один вимір некоректний, пакет відхиляється. DeviceKey authentication окремо оновлює LastSeenAt ще до валідації пакета |
+| Видалення кімнати | API перевіряє наявність датчиків до SaveChanges; видалення порогів каскадне. Перевірка й запис не обгорнуті окремою спільною транзакцією |
 
 Усі запити йдуть через EF Core, тобто параметризовано, що захищає від SQL-ін'єкцій.
 
@@ -199,6 +198,7 @@ WHERE s.RoomId = @roomId AND m.MetricType = @metric AND m.MeasuredAt >= @from AN
 - **3НФ:** транзитивних залежностей немає. Кімнату виміру отримуємо через `Sensors.RoomId`, а не дублюємо в `Measurements`. Роль зберігається тільки в `Users`, межі порогів — тільки в `Thresholds`.
 
 Два атрибути в `Alerts` можуть здатися дублюванням, але ним не є:
+
 - `ThresholdValue` — значення межі на момент події; поріг у `Thresholds` пізніше можуть змінити, а сповіщення має показувати, що саме було перевищено тоді;
 - `RoomId` — сповіщення стосується кімнати навіть тоді, коли датчик видалено (`SensorId` стає NULL).
 

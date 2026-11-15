@@ -28,8 +28,7 @@ public sealed record DateRange
         var toUtc = to.ToUniversalTime();
         if (fromUtc >= toUtc)
         {
-            throw new DomainException(
-                "Початок періоду має бути раніше за його кінець.");
+            throw new DomainException("Початок періоду має бути раніше за його кінець.");
         }
 
         return new DateRange(fromUtc, toUtc);
@@ -37,21 +36,17 @@ public sealed record DateRange
 
     /// <summary>Створює інтервал і перевіряє, що він не довший за
     /// <paramref name="maxDuration"/>.</summary>
-    public static DateRange Create(DateTimeOffset from, DateTimeOffset to,
-        TimeSpan maxDuration)
+    public static DateRange Create(DateTimeOffset from, DateTimeOffset to, TimeSpan maxDuration)
     {
         var range = Create(from, to);
         if (range.Duration > maxDuration)
         {
-            throw new DomainException(
-                $"Період не може перевищувати "
-                + $"{maxDuration.TotalDays:0.##} дн.");
+            throw new DomainException($"Період не може перевищувати " + $"{maxDuration.TotalDays:0.##} дн.");
         }
 
         return range;
     }
 
     /// <summary>Чи належить момент часу інтервалу.</summary>
-    public bool Contains(DateTimeOffset moment) => moment >= From &&
-        moment < To;
+    public bool Contains(DateTimeOffset moment) => moment >= From && moment < To;
 }

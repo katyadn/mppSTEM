@@ -6,8 +6,7 @@ public static class AnalyticsLimits
 {
     public static readonly TimeSpan MaxPeriod = TimeSpan.FromDays(90);
 
-    public static readonly TimeSpan MaxHourlyPeriod = TimeSpan.FromDays(
-        31);
+    public static readonly TimeSpan MaxHourlyPeriod = TimeSpan.FromDays(31);
 }
 
 public static class ComfortIndexSettings
@@ -31,6 +30,5 @@ public static class ComfortIndexSettings
         [MetricType.Pm25] = 0.20,
     };
 
-    public static double Weight(MetricType metric) =>
-        Weights.GetValueOrDefault(metric);
+    public static double Weight(MetricType metric) => Weights.GetValueOrDefault(metric);
 }

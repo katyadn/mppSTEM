@@ -1,14 +1,11 @@
 using Asp.Versioning;
-
 using FluentValidation;
-
 using Microclimate.Application.Abstractions.Persistence;
 using Microclimate.Application.Common;
 using Microclimate.Contracts.Common;
 using Microclimate.Contracts.Thresholds;
 using Microclimate.Domain.Metrics;
 using Microclimate.Domain.Thresholds;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -26,7 +23,8 @@ public sealed class ThresholdsController(
     IRoomRepository rooms,
     IUnitOfWork unitOfWork,
     TimeProvider time,
-    IValidator<UpdateThresholdRequest> updateValidator) : ControllerBase
+    IValidator<UpdateThresholdRequest> updateValidator
+) : ControllerBase
 {
     private static readonly MetricType[] AllMetrics =
     [
@@ -47,7 +45,8 @@ public sealed class ThresholdsController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<ThresholdResponse>>> GetByRoom(
         Guid roomId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var room = await rooms.GetByIdAsync(roomId, cancellationToken);
         if (room is null)
@@ -72,14 +71,17 @@ public sealed class ThresholdsController(
             else
             {
                 var defaultLimits = DefaultThresholds.For(room.Type, domainMetric);
-                responses.Add(new ThresholdResponse(
-                    Guid.Empty,
-                    roomId,
-                    metric,
-                    defaultLimits.WarningMin,
-                    defaultLimits.WarningMax,
-                    defaultLimits.CriticalMin,
-                    defaultLimits.CriticalMax));
+                responses.Add(
+                    new ThresholdResponse(
+                        Guid.Empty,
+                        roomId,
+                        metric,
+                        defaultLimits.WarningMin,
+                        defaultLimits.WarningMax,
+                        defaultLimits.CriticalMin,
+                        defaultLimits.CriticalMax
+                    )
+                );
             }
         }
 
@@ -98,7 +100,8 @@ public sealed class ThresholdsController(
         Guid roomId,
         MetricType metric,
         [FromBody] UpdateThresholdRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var validation = await updateValidator.ValidateAsync(request, cancellationToken);
         if (!validation.IsValid)
@@ -122,7 +125,12 @@ public sealed class ThresholdsController(
             ? dm
             : Domain.Enums.MetricType.Temperature;
 
-        var limits = new ThresholdLimits(request.CriticalMin, request.WarningMin, request.WarningMax, request.CriticalMax);
+        var limits = new ThresholdLimits(
+            request.CriticalMin,
+            request.WarningMin,
+            request.WarningMax,
+            request.CriticalMax
+        );
 
         var existing = await thresholds.GetAsync(roomId, domainMetric, cancellationToken);
         if (existing is null)
@@ -152,6 +160,7 @@ public sealed class ThresholdsController(
             threshold.WarningMin,
             threshold.WarningMax,
             threshold.CriticalMin,
-            threshold.CriticalMax);
+            threshold.CriticalMax
+        );
     }
 }

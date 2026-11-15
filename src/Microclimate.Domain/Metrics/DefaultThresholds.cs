@@ -9,16 +9,14 @@ namespace Microclimate.Domain.Metrics;
 /// </summary>
 public static class DefaultThresholds
 {
-    private static readonly Dictionary<(RoomType RoomType,
-        MetricType Metric), ThresholdLimits> RoomTypeOverrides = new()
-    {
-        [(RoomType.ServerRoom, MetricType.Temperature)] =
-            new(15, 18, 27, 32),
-        [(RoomType.ServerRoom, MetricType.Humidity)] = new(8, 20, 70, 80),
-    };
+    private static readonly Dictionary<(RoomType RoomType, MetricType Metric), ThresholdLimits> RoomTypeOverrides =
+        new()
+        {
+            [(RoomType.ServerRoom, MetricType.Temperature)] = new(15, 18, 27, 32),
+            [(RoomType.ServerRoom, MetricType.Humidity)] = new(8, 20, 70, 80),
+        };
 
-    public static ThresholdLimits For(RoomType roomType,
-        MetricType metric) =>
+    public static ThresholdLimits For(RoomType roomType, MetricType metric) =>
         RoomTypeOverrides.TryGetValue((roomType, metric), out var limits)
             ? limits
             : MetricCatalog.Get(metric).DefaultLimits;

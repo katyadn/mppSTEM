@@ -7,9 +7,7 @@ namespace Microclimate.Domain.Thresholds;
 public sealed class Threshold : Entity<Guid>
 {
     // Для EF Core
-    private Threshold()
-    {
-    }
+    private Threshold() { }
 
     private Threshold(Guid id, Guid roomId, MetricType metric)
     {
@@ -30,15 +28,15 @@ public sealed class Threshold : Entity<Guid>
 
     public double? CriticalMax { get; private set; }
 
-    public ThresholdLimits Limits => new(CriticalMin, WarningMin,
-        WarningMax, CriticalMax);
+    public ThresholdLimits Limits => new(CriticalMin, WarningMin, WarningMax, CriticalMax);
 
-    public static Threshold Create(Guid roomId, MetricType metric,
-        ThresholdLimits limits, DateTimeOffset now)
+    public static Threshold Create(Guid roomId, MetricType metric, ThresholdLimits limits, DateTimeOffset now)
     {
-        var threshold = new Threshold(Guid.CreateVersion7(now),
-            Guard.NotEmpty(roomId, "Кімната"), Guard.Defined(metric,
-            "Метрика"));
+        var threshold = new Threshold(
+            Guid.CreateVersion7(now),
+            Guard.NotEmpty(roomId, "Кімната"),
+            Guard.Defined(metric, "Метрика")
+        );
         threshold.Update(limits);
         return threshold;
     }

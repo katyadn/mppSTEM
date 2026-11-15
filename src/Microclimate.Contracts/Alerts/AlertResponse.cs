@@ -31,4 +31,5 @@ public sealed record AlertResponse(
     DateTimeOffset RaisedAt,
     DateTimeOffset? AcknowledgedAt,
     Guid? AcknowledgedByUserId,
-    DateTimeOffset? ResolvedAt);
+    DateTimeOffset? ResolvedAt
+);

@@ -11,4 +11,5 @@ public sealed record UpdateThresholdRequest(
     double? WarningMin = null,
     double? WarningMax = null,
     double? CriticalMin = null,
-    double? CriticalMax = null);
+    double? CriticalMax = null
+);

@@ -1,14 +1,11 @@
 using Asp.Versioning;
-
 using FluentValidation;
-
 using Microclimate.Application.Abstractions.Persistence;
 using Microclimate.Application.Common;
 using Microclimate.Contracts.Common;
 using Microclimate.Contracts.Rooms;
 using Microclimate.Domain.Enums;
 using Microclimate.Domain.Rooms;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -26,7 +23,8 @@ public sealed class RoomsController(
     IUnitOfWork unitOfWork,
     TimeProvider time,
     IValidator<CreateRoomRequest> createValidator,
-    IValidator<UpdateRoomRequest> updateValidator) : ControllerBase
+    IValidator<UpdateRoomRequest> updateValidator
+) : ControllerBase
 {
     /// <summary>
     /// Отримання пагінованого списку кімнат.
@@ -37,7 +35,8 @@ public sealed class RoomsController(
     public async Task<ActionResult<PagedResponse<RoomResponse>>> List(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = PageRequest.DefaultPageSize,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         var pageRequest = new PageRequest(page, pageSize);
         var result = await rooms.ListAsync(pageRequest, cancellationToken);
@@ -53,9 +52,7 @@ public sealed class RoomsController(
     [HttpGet("{id:guid}")]
     [ProducesResponseType<RoomResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<RoomResponse>> GetById(
-        Guid id,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<RoomResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var room = await rooms.GetByIdAsync(id, cancellationToken);
         if (room is null)
@@ -76,7 +73,8 @@ public sealed class RoomsController(
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<RoomResponse>> Create(
         [FromBody] CreateRoomRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var validation = await createValidator.ValidateAsync(request, cancellationToken);
         if (!validation.IsValid)
@@ -101,7 +99,8 @@ public sealed class RoomsController(
             request.Floor,
             request.AreaSqM.HasValue ? (decimal)request.AreaSqM.Value : null,
             roomType,
-            time.GetUtcNow());
+            time.GetUtcNow()
+        );
 
         rooms.Add(room);
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -121,7 +120,8 @@ public sealed class RoomsController(
     public async Task<ActionResult<RoomResponse>> Update(
         Guid id,
         [FromBody] UpdateRoomRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var validation = await updateValidator.ValidateAsync(request, cancellationToken);
         if (!validation.IsValid)
@@ -141,8 +141,10 @@ public sealed class RoomsController(
             throw NotFoundException.For("Кімната", id);
         }
 
-        if (!room.Name.Equals(request.Name, StringComparison.OrdinalIgnoreCase) &&
-            await rooms.ExistsByNameAsync(request.Name, cancellationToken))
+        if (
+            !room.Name.Equals(request.Name, StringComparison.OrdinalIgnoreCase)
+            && await rooms.ExistsByNameAsync(request.Name, cancellationToken)
+        )
         {
             throw new ConflictException($"Кімната з назвою '{request.Name}' вже існує.");
         }
@@ -152,7 +154,8 @@ public sealed class RoomsController(
             request.Name,
             request.Floor,
             request.AreaSqM.HasValue ? (decimal)request.AreaSqM.Value : null,
-            roomType);
+            roomType
+        );
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return Ok(MapToResponse(room));
@@ -166,9 +169,7 @@ public sealed class RoomsController(
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Delete(
-        Guid id,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         var room = await rooms.GetByIdAsync(id, cancellationToken);
         if (room is null)
@@ -198,5 +199,6 @@ public sealed class RoomsController(
             room.Floor,
             room.AreaM2.HasValue ? (double)room.AreaM2.Value : null,
             room.Type.ToString(),
-            room.CreatedAt);
+            room.CreatedAt
+        );
 }

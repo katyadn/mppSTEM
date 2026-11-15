@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using System.Text;
-
 using Microclimate.Application.Abstractions.Persistence;
 using Microclimate.Application.Analytics;
 using Microclimate.Application.Common;
@@ -40,17 +39,13 @@ public sealed class InMemoryDataStore
             "Головний Адміністратор",
             passwordHash,
             UserRole.Admin,
-            now);
+            now
+        );
         Users.Add(admin);
 
         // Оператор: email: operator@microclimate.local, password: OperatorPassword123!
         var operatorHash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("OperatorPassword123!")));
-        var op = User.Create(
-            "operator@microclimate.local",
-            "Черговий Оператор",
-            operatorHash,
-            UserRole.Operator,
-            now);
+        var op = User.Create("operator@microclimate.local", "Черговий Оператор", operatorHash, UserRole.Operator, now);
         Users.Add(op);
 
         // Базова тестова кімната та датчик
@@ -69,7 +64,10 @@ public sealed class InMemoryUnitOfWork : IUnitOfWork
 {
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken) => Task.FromResult(1);
 
-    public async Task ExecuteInTransactionAsync(Func<CancellationToken, Task> action, CancellationToken cancellationToken)
+    public async Task ExecuteInTransactionAsync(
+        Func<CancellationToken, Task> action,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(action);
         await action(cancellationToken);
@@ -142,7 +140,9 @@ public sealed class InMemorySensorRepository(InMemoryDataStore store) : ISensorR
     {
         lock (store.Sensors)
         {
-            return Task.FromResult(store.Sensors.Exists(s => s.SerialNumber.Equals(serialNumber, StringComparison.OrdinalIgnoreCase)));
+            return Task.FromResult(
+                store.Sensors.Exists(s => s.SerialNumber.Equals(serialNumber, StringComparison.OrdinalIgnoreCase))
+            );
         }
     }
 
@@ -178,10 +178,7 @@ public sealed class InMemoryRoomRepository(InMemoryDataStore store) : IRoomRepos
         lock (store.Rooms)
         {
             var total = store.Rooms.Count;
-            var items = store.Rooms
-                .Skip(page.Skip)
-                .Take(page.PageSize)
-                .ToList();
+            var items = store.Rooms.Skip(page.Skip).Take(page.PageSize).ToList();
 
             return Task.FromResult(new PagedResult<Room>(items, page.Page, page.PageSize, total));
         }
@@ -261,7 +258,9 @@ public sealed class InMemoryAlertRepository(InMemoryDataStore store) : IAlertRep
     {
         lock (store.Alerts)
         {
-            return Task.FromResult(store.Alerts.Find(a => a.RoomId == roomId && a.Metric == metric && a.Status != AlertStatus.Resolved));
+            return Task.FromResult(
+                store.Alerts.Find(a => a.RoomId == roomId && a.Metric == metric && a.Status != AlertStatus.Resolved)
+            );
         }
     }
 
@@ -319,13 +318,16 @@ public sealed class InMemoryMeasurementRepository(InMemoryDataStore store) : IMe
         MetricType metric,
         DateRange range,
         PageRequest page,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         lock (store.Measurements)
         {
             var sensorIds = store.Sensors.Where(s => s.RoomId == roomId).Select(s => s.Id).ToHashSet();
-            var query = store.Measurements
-                .Where(m => sensorIds.Contains(m.SensorId) && m.Metric == metric && range.Contains(m.MeasuredAt))
+            var query = store
+                .Measurements.Where(m =>
+                    sensorIds.Contains(m.SensorId) && m.Metric == metric && range.Contains(m.MeasuredAt)
+                )
                 .OrderByDescending(m => m.MeasuredAt)
                 .ToList();
 
@@ -340,14 +342,19 @@ public sealed class InMemoryMeasurementRepository(InMemoryDataStore store) : IMe
         Guid roomId,
         MetricType? metric,
         DateRange range,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken
+    )
     {
         List<Measurement> snapshot;
         lock (store.Measurements)
         {
             var sensorIds = store.Sensors.Where(s => s.RoomId == roomId).Select(s => s.Id).ToHashSet();
-            snapshot = store.Measurements
-                .Where(m => sensorIds.Contains(m.SensorId) && (!metric.HasValue || m.Metric == metric.Value) && range.Contains(m.MeasuredAt))
+            snapshot = store
+                .Measurements.Where(m =>
+                    sensorIds.Contains(m.SensorId)
+                    && (!metric.HasValue || m.Metric == metric.Value)
+                    && range.Contains(m.MeasuredAt)
+                )
                 .OrderBy(m => m.MeasuredAt)
                 .ToList();
         }
@@ -364,20 +371,26 @@ public sealed class InMemoryMeasurementRepository(InMemoryDataStore store) : IMe
         Guid roomId,
         MetricType? metric,
         DateRange range,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         lock (store.Measurements)
         {
             var sensorIds = store.Sensors.Where(s => s.RoomId == roomId).Select(s => s.Id).ToHashSet();
-            var query = store.Measurements
-                .Where(m => sensorIds.Contains(m.SensorId) && (!metric.HasValue || m.Metric == metric.Value) && range.Contains(m.MeasuredAt))
+            var query = store
+                .Measurements.Where(m =>
+                    sensorIds.Contains(m.SensorId)
+                    && (!metric.HasValue || m.Metric == metric.Value)
+                    && range.Contains(m.MeasuredAt)
+                )
                 .GroupBy(m => m.Metric)
                 .Select(g => new MetricSummary(
                     g.Key,
                     g.Count(),
                     g.Min(x => (double?)x.Value),
                     g.Max(x => (double?)x.Value),
-                    g.Average(x => x.Value)))
+                    g.Average(x => x.Value)
+                ))
                 .ToList();
 
             return Task.FromResult<IReadOnlyList<MetricSummary>>(query);
@@ -389,13 +402,16 @@ public sealed class InMemoryMeasurementRepository(InMemoryDataStore store) : IMe
         MetricType metric,
         DateRange range,
         AggregationInterval interval,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         lock (store.Measurements)
         {
             var sensorIds = store.Sensors.Where(s => s.RoomId == roomId).Select(s => s.Id).ToHashSet();
-            var points = store.Measurements
-                .Where(m => sensorIds.Contains(m.SensorId) && m.Metric == metric && range.Contains(m.MeasuredAt))
+            var points = store
+                .Measurements.Where(m =>
+                    sensorIds.Contains(m.SensorId) && m.Metric == metric && range.Contains(m.MeasuredAt)
+                )
                 .OrderBy(m => m.MeasuredAt)
                 .Select(m => new SeriesPoint(m.MeasuredAt, 1, m.Value, m.Value, m.Value))
                 .ToList();
@@ -409,8 +425,8 @@ public sealed class InMemoryMeasurementRepository(InMemoryDataStore store) : IMe
         lock (store.Measurements)
         {
             var sensorIds = store.Sensors.Where(s => s.RoomId == roomId).Select(s => s.Id).ToHashSet();
-            var latest = store.Measurements
-                .Where(m => sensorIds.Contains(m.SensorId))
+            var latest = store
+                .Measurements.Where(m => sensorIds.Contains(m.SensorId))
                 .GroupBy(m => m.Metric)
                 .Select(g => g.OrderByDescending(m => m.MeasuredAt).First())
                 .ToList();

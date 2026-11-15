@@ -9,8 +9,6 @@ public static class DatabaseSettings
     public const string Postgres = "Postgres";
 
     // Лише для dotnet ef: генерація міграцій і локальна БД розробника.
-    public const string DesignTimeSqliteConnection =
-        "Data Source=microclimate.db";
-    public const string DesignTimePostgresConnection =
-        "Host=localhost;Database=microclimate";
+    public const string DesignTimeSqliteConnection = "Data Source=microclimate.db";
+    public const string DesignTimePostgresConnection = "Host=localhost;Database=microclimate";
 }

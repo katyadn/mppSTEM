@@ -1,26 +1,21 @@
 using System.Net;
 using System.Net.Http.Json;
-
 using Microclimate.Contracts.Measurements;
-
 using Microsoft.Extensions.Options;
 
 namespace Microclimate.SensorSimulator;
 
 public static class MeasurementClientRegistration
 {
-    public static IServiceCollection AddMeasurementApiClient(
-        this IServiceCollection services)
+    public static IServiceCollection AddMeasurementApiClient(this IServiceCollection services)
     {
-        services.AddHttpClient(MeasurementApiClient.HttpClientName,
-            (provider, client) =>
+        services
+            .AddHttpClient(MeasurementApiClient.HttpClientName, (provider, client) =>
             {
-                var options = provider.GetRequiredService<
-                    IOptions<SimulatorOptions>>();
+                var options = provider.GetRequiredService<IOptions<SimulatorOptions>>();
                 client.BaseAddress = options.Value.ApiBaseUrl;
             })
-            .ConfigurePrimaryHttpMessageHandler(() =>
-                new HttpClientHandler { AllowAutoRedirect = false });
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         return services;
     }
 }
@@ -36,8 +31,7 @@ public enum SendResult
 /// <summary>Відправлення пакета вимірів в API.</summary>
 public interface IMeasurementSender
 {
-    Task<SendResult> SendAsync(MeasurementBatchRequest batch,
-        string deviceKey, CancellationToken cancellationToken);
+    Task<SendResult> SendAsync(MeasurementBatchRequest batch, string deviceKey, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -47,24 +41,31 @@ public interface IMeasurementSender
 /// </summary>
 public sealed partial class MeasurementApiClient(
     IHttpClientFactory httpClientFactory,
-    ILogger<MeasurementApiClient> logger) : IMeasurementSender
+    ILogger<MeasurementApiClient> logger
+) : IMeasurementSender
 {
     public const string HttpClientName = "MeasurementsApi";
     public const string DeviceKeyHeader = "X-Device-Key";
     public const string MeasurementsPath = "api/v1/measurements";
 
-    public async Task<SendResult> SendAsync(MeasurementBatchRequest batch,
-        string deviceKey, CancellationToken cancellationToken)
+    public async Task<SendResult> SendAsync(
+        MeasurementBatchRequest batch,
+        string deviceKey,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(batch);
-        using var request = new HttpRequestMessage(HttpMethod.Post,
-            MeasurementsPath) { Content = JsonContent.Create(batch) };
+        using var request = new HttpRequestMessage(HttpMethod.Post, MeasurementsPath)
+        {
+            Content = JsonContent.Create(batch),
+        };
         request.Headers.Add(DeviceKeyHeader, deviceKey);
 
         try
         {
-            using var response = await httpClientFactory.CreateClient(
-                HttpClientName).SendAsync(request, cancellationToken);
+            using var response = await httpClientFactory
+                .CreateClient(HttpClientName)
+                .SendAsync(request, cancellationToken);
             if (response.IsSuccessStatusCode)
             {
                 return SendResult.Accepted;
@@ -75,8 +76,7 @@ public sealed partial class MeasurementApiClient(
                 return SendResult.Unauthorized;
             }
 
-            var body = await response.Content.ReadAsStringAsync(
-                cancellationToken);
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
             LogRejected(batch.SensorId, (int)response.StatusCode, body);
             return SendResult.Rejected;
         }
@@ -85,8 +85,7 @@ public sealed partial class MeasurementApiClient(
             LogUnavailable(batch.SensorId, ex.Message);
             return SendResult.Unavailable;
         }
-        catch (TaskCanceledException ex) when (
-            !cancellationToken.IsCancellationRequested)
+        catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
             // Тайм-аут HttpClient, а не зупинка симулятора.
             LogUnavailable(batch.SensorId, ex.Message);
@@ -94,15 +93,12 @@ public sealed partial class MeasurementApiClient(
         }
     }
 
-    [LoggerMessage(Level = LogLevel.Warning,
-        Message =
-        "Пакет датчика {SensorId} відхилено: {StatusCode} {Body}")]
-    private partial void LogRejected(Guid sensorId, int statusCode,
-        string body);
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Пакет датчика {SensorId} відхилено: {StatusCode} {Body}")]
+    private partial void LogRejected(Guid sensorId, int statusCode, string body);
 
-    [LoggerMessage(Level = LogLevel.Warning,
-        Message =
-        "API недоступне для датчика {SensorId}: {Reason}. Наступна "
-        + "спроба на наступному кроці.")]
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "API недоступне для датчика {SensorId}: {Reason}. Наступна " + "спроба на наступному кроці."
+    )]
     private partial void LogUnavailable(Guid sensorId, string reason);
 }

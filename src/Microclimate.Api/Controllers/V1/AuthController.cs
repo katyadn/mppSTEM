@@ -1,15 +1,11 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-
 using Asp.Versioning;
-
 using FluentValidation;
-
 using Microclimate.Api.Services;
 using Microclimate.Application.Abstractions.Persistence;
 using Microclimate.Contracts.Auth;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -25,7 +21,8 @@ namespace Microclimate.Api.Controllers.V1;
 public sealed class AuthController(
     IUserRepository users,
     IJwtTokenService jwtTokenService,
-    IValidator<LoginRequest> loginValidator) : ControllerBase
+    IValidator<LoginRequest> loginValidator
+) : ControllerBase
 {
     /// <summary>
     /// Автентифікація за email і паролем. Повертає access + refresh токени.
@@ -36,7 +33,8 @@ public sealed class AuthController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<TokenResponse>> Login(
         [FromBody] LoginRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var validation = await loginValidator.ValidateAsync(request, cancellationToken);
         if (!validation.IsValid)
@@ -53,11 +51,9 @@ public sealed class AuthController(
         var user = await users.GetByEmailAsync(request.Email.Trim().ToLowerInvariant(), cancellationToken);
         if (user is null || !VerifyPassword(request.Password, user.PasswordHash))
         {
-            return Unauthorized(new ProblemDetails
-            {
-                Title = "Невірний email або пароль.",
-                Status = StatusCodes.Status401Unauthorized,
-            });
+            return Unauthorized(
+                new ProblemDetails { Title = "Невірний email або пароль.", Status = StatusCodes.Status401Unauthorized }
+            );
         }
 
         var (accessToken, refreshToken, expiresIn) = jwtTokenService.GenerateTokens(user);
@@ -72,26 +68,27 @@ public sealed class AuthController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<TokenResponse>> Refresh(
         [FromBody] RefreshTokenRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var userId = jwtTokenService.ValidateRefreshToken(request.RefreshToken);
         if (userId is null)
         {
-            return Unauthorized(new ProblemDetails
-            {
-                Title = "Refresh-токен недійсний або прострочений.",
-                Status = StatusCodes.Status401Unauthorized,
-            });
+            return Unauthorized(
+                new ProblemDetails
+                {
+                    Title = "Refresh-токен недійсний або прострочений.",
+                    Status = StatusCodes.Status401Unauthorized,
+                }
+            );
         }
 
         var user = await users.GetByIdAsync(userId.Value, cancellationToken);
         if (user is null)
         {
-            return Unauthorized(new ProblemDetails
-            {
-                Title = "Користувача не знайдено.",
-                Status = StatusCodes.Status401Unauthorized,
-            });
+            return Unauthorized(
+                new ProblemDetails { Title = "Користувача не знайдено.", Status = StatusCodes.Status401Unauthorized }
+            );
         }
 
         var (accessToken, refreshToken, expiresIn) = jwtTokenService.GenerateTokens(user);
@@ -107,8 +104,7 @@ public sealed class AuthController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<UserResponse>> Me(CancellationToken cancellationToken)
     {
-        var sub = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-               ?? User.FindFirst("sub")?.Value;
+        var sub = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
 
         if (sub is null || !Guid.TryParse(sub, out var userId))
         {

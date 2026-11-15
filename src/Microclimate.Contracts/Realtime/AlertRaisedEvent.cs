@@ -23,4 +23,5 @@ public sealed record AlertRaisedEvent(
     double Value,
     double Threshold,
     string Message,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt
+);

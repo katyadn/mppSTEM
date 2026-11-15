@@ -13,4 +13,5 @@ public sealed record LatestMetricResponse(
     MetricType Metric,
     double Value,
     DateTimeOffset MeasuredAt,
-    AlertLevel? Level = null);
+    AlertLevel? Level = null
+);

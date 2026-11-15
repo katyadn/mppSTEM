@@ -10,9 +10,7 @@ namespace Microclimate.Domain.Metrics;
 /// </summary>
 public static class MetricLimits
 {
-    public static MetricRange For(MetricType metric) => MetricCatalog.Get(
-        metric).PhysicalRange;
+    public static MetricRange For(MetricType metric) => MetricCatalog.Get(metric).PhysicalRange;
 
-    public static string Unit(MetricType metric) => MetricCatalog.Get(
-        metric).Unit;
+    public static string Unit(MetricType metric) => MetricCatalog.Get(metric).Unit;
 }

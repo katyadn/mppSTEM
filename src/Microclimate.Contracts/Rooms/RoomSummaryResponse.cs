@@ -19,4 +19,5 @@ public sealed record RoomSummaryResponse(
     int Floor,
     string? Type,
     string Status,
-    IReadOnlyList<LatestMetricResponse> LatestMetrics);
+    IReadOnlyList<LatestMetricResponse> LatestMetrics
+);

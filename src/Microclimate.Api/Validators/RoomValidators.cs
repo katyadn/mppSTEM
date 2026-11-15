@@ -1,5 +1,4 @@
 using FluentValidation;
-
 using Microclimate.Contracts.Rooms;
 using Microclimate.Domain.Rooms;
 
@@ -10,15 +9,18 @@ public sealed class CreateRoomRequestValidator : AbstractValidator<CreateRoomReq
     public CreateRoomRequestValidator()
     {
         RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Назва кімнати обов'язкова.")
-            .MaximumLength(Room.NameMaxLength).WithMessage($"Назва кімнати не може перевищувати {Room.NameMaxLength} символів.");
+            .NotEmpty()
+            .WithMessage("Назва кімнати обов'язкова.")
+            .MaximumLength(Room.NameMaxLength)
+            .WithMessage($"Назва кімнати не може перевищувати {Room.NameMaxLength} символів.");
 
         RuleFor(x => x.Floor)
             .InclusiveBetween(Room.MinFloor, Room.MaxFloor)
             .WithMessage($"Поверх має бути в межах від {Room.MinFloor} до {Room.MaxFloor}.");
 
         RuleFor(x => x.AreaSqM)
-            .GreaterThan(0).When(x => x.AreaSqM.HasValue)
+            .GreaterThan(0)
+            .When(x => x.AreaSqM.HasValue)
             .WithMessage("Площа кімнати має бути додатною.");
     }
 }
@@ -28,15 +30,18 @@ public sealed class UpdateRoomRequestValidator : AbstractValidator<UpdateRoomReq
     public UpdateRoomRequestValidator()
     {
         RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Назва кімнати обов'язкова.")
-            .MaximumLength(Room.NameMaxLength).WithMessage($"Назва кімнати не може перевищувати {Room.NameMaxLength} символів.");
+            .NotEmpty()
+            .WithMessage("Назва кімнати обов'язкова.")
+            .MaximumLength(Room.NameMaxLength)
+            .WithMessage($"Назва кімнати не може перевищувати {Room.NameMaxLength} символів.");
 
         RuleFor(x => x.Floor)
             .InclusiveBetween(Room.MinFloor, Room.MaxFloor)
             .WithMessage($"Поверх має бути в межах від {Room.MinFloor} до {Room.MaxFloor}.");
 
         RuleFor(x => x.AreaSqM)
-            .GreaterThan(0).When(x => x.AreaSqM.HasValue)
+            .GreaterThan(0)
+            .When(x => x.AreaSqM.HasValue)
             .WithMessage("Площа кімнати має бути додатною.");
     }
 }

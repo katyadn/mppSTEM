@@ -1,9 +1,7 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-
 using Microclimate.Application.Abstractions.Persistence;
-
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 
@@ -20,16 +18,18 @@ internal sealed class DeviceKeyAuthHandler(
     System.Text.Encodings.Web.UrlEncoder encoder,
     ISensorRepository sensors,
     IUnitOfWork unitOfWork,
-    TimeProvider time)
-    : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+    TimeProvider time
+) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
     public const string SchemeName = "DeviceKey";
     public const string HeaderName = "X-Device-Key";
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        if (!Request.Headers.TryGetValue(HeaderName, out var keyValues) ||
-            string.IsNullOrWhiteSpace(keyValues.FirstOrDefault()))
+        if (
+            !Request.Headers.TryGetValue(HeaderName, out var keyValues)
+            || string.IsNullOrWhiteSpace(keyValues.FirstOrDefault())
+        )
         {
             return AuthenticateResult.NoResult();
         }

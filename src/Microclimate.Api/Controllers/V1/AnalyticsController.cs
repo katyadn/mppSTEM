@@ -1,10 +1,8 @@
 using Asp.Versioning;
-
 using Microclimate.Application.Analytics;
 using Microclimate.Contracts.Analytics;
 using Microclimate.Contracts.Common;
 using Microclimate.Domain.ValueObjects;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -31,23 +29,25 @@ public sealed class AnalyticsController(IAnalyticsService analytics) : Controlle
         [FromQuery] MetricType? metric,
         [FromQuery] DateTimeOffset? from,
         [FromQuery] DateTimeOffset? to,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var start = from ?? DateTimeOffset.UtcNow.AddDays(-7);
         var end = to ?? DateTimeOffset.UtcNow;
         var range = DateRange.Create(start, end, AnalyticsLimits.MaxPeriod);
 
-        Domain.Enums.MetricType? domainMetric = metric.HasValue && Enum.TryParse<Domain.Enums.MetricType>(metric.Value.ToString(), out var dm)
-            ? dm
-            : null;
+        Domain.Enums.MetricType? domainMetric =
+            metric.HasValue && Enum.TryParse<Domain.Enums.MetricType>(metric.Value.ToString(), out var dm) ? dm : null;
 
         var summaries = await analytics.GetSummaryAsync(roomId, domainMetric, range, cancellationToken);
 
-        var responses = summaries.Select(s =>
-        {
-            var m = Enum.TryParse<MetricType>(s.Metric.ToString(), out var mt) ? mt : MetricType.Temperature;
-            return new MetricSummaryResponse(m, s.Count, s.Min, s.Max, s.Avg, null);
-        }).ToList();
+        var responses = summaries
+            .Select(s =>
+            {
+                var m = Enum.TryParse<MetricType>(s.Metric.ToString(), out var mt) ? mt : MetricType.Temperature;
+                return new MetricSummaryResponse(m, s.Count, s.Min, s.Max, s.Avg, null);
+            })
+            .ToList();
 
         return Ok(responses);
     }
@@ -65,14 +65,16 @@ public sealed class AnalyticsController(IAnalyticsService analytics) : Controlle
         [FromQuery] Contracts.Common.AggregationInterval interval = Contracts.Common.AggregationInterval.Hour,
         [FromQuery] DateTimeOffset? from = null,
         [FromQuery] DateTimeOffset? to = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         var start = from ?? DateTimeOffset.UtcNow.AddDays(-1);
         var end = to ?? DateTimeOffset.UtcNow;
 
-        var maxPeriod = interval == Contracts.Common.AggregationInterval.Hour
-            ? AnalyticsLimits.MaxHourlyPeriod
-            : AnalyticsLimits.MaxPeriod;
+        var maxPeriod =
+            interval == Contracts.Common.AggregationInterval.Hour
+                ? AnalyticsLimits.MaxHourlyPeriod
+                : AnalyticsLimits.MaxPeriod;
 
         var range = DateRange.Create(start, end, maxPeriod);
 
@@ -80,18 +82,16 @@ public sealed class AnalyticsController(IAnalyticsService analytics) : Controlle
             ? dm
             : Domain.Enums.MetricType.Temperature;
 
-        var appInterval = interval == Contracts.Common.AggregationInterval.Hour
-            ? Application.Analytics.AggregationInterval.Hour
-            : Application.Analytics.AggregationInterval.Day;
+        var appInterval =
+            interval == Contracts.Common.AggregationInterval.Hour
+                ? Application.Analytics.AggregationInterval.Hour
+                : Application.Analytics.AggregationInterval.Day;
 
         var points = await analytics.GetSeriesAsync(roomId, domainMetric, range, appInterval, cancellationToken);
 
-        var responses = points.Select(p => new SeriesPointResponse(
-            p.BucketStart,
-            p.Count,
-            p.Avg,
-            p.Min,
-            p.Max)).ToList();
+        var responses = points
+            .Select(p => new SeriesPointResponse(p.BucketStart, p.Count, p.Avg, p.Min, p.Max))
+            .ToList();
 
         return Ok(responses);
     }
@@ -104,7 +104,8 @@ public sealed class AnalyticsController(IAnalyticsService analytics) : Controlle
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ComfortIndexResponse>> GetComfortIndex(
         Guid roomId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var result = await analytics.GetComfortIndexAsync(roomId, cancellationToken);
 
@@ -112,11 +113,13 @@ public sealed class AnalyticsController(IAnalyticsService analytics) : Controlle
             ? cat
             : Contracts.Analytics.ComfortCategory.NoData;
 
-        var components = result.Components.Select(c =>
-        {
-            var m = Enum.TryParse<MetricType>(c.Metric.ToString(), out var mt) ? mt : MetricType.Temperature;
-            return new ComfortScoreComponentResponse(m, c.Value, c.Score, c.Weight);
-        }).ToList();
+        var components = result
+            .Components.Select(c =>
+            {
+                var m = Enum.TryParse<MetricType>(c.Metric.ToString(), out var mt) ? mt : MetricType.Temperature;
+                return new ComfortScoreComponentResponse(m, c.Value, c.Score, c.Weight);
+            })
+            .ToList();
 
         return Ok(new ComfortIndexResponse(result.Index, category, components));
     }

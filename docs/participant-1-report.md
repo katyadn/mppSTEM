@@ -2,13 +2,7 @@
 
 Зона відповідальності: шари Domain, Application, Infrastructure (модель даних, правила, база даних, аналітика), симулятор датчиків. Структуру критеріїв узято з «Як захищати проєкт з МПП».
 
-Як відтворити цифри зі звіту:
-
-```bash
-dotnet tool restore
-dotnet build Microclimate.Ci.slnf -c Release
-dotnet test Microclimate.Ci.slnf -c Release --collect:"XPlat Code Coverage"
-```
+Команди, актуальні тести й coverage — [verification.md](verification.md).
 
 ## 1. Хід роботи
 
@@ -40,18 +34,14 @@ dotnet test Microclimate.Ci.slnf -c Release --collect:"XPlat Code Coverage"
 | #48 Infrastructure | feature/48-infrastructure | #51 | злито |
 | #55 Якість коду | feature/55-code-quality | #56 | злито |
 | #53 Підключення Api до БД | feature/53-api-database | #54 | злито |
-| #69 Симулятор датчиків | feature/69-sensor-simulator | #71 | на рев'ю |
-| #70 Експорт вимірів у CSV і JSON | feature/70-measurement-export | #72 | на рев'ю |
+| #69 Симулятор датчиків | feature/69-sensor-simulator | #71 | злито 08.11 |
+| #70 Експорт вимірів у CSV і JSON | feature/70-measurement-export | #72 | злито 15.11 |
 
 Кожен коміт містить номер issue. Рішення з обґрунтуванням: DECISIONS.md, записи D-1-001…D-1-018.
 
 ## 3. B3. Проведені code-review
 
-| PR (автор) | Знайдена проблема або пропозиція | Реакція автора | Перевірено |
-|---|---|---|---|
-| | | | |
-
-Кандидати для рев'ю PR #52 (Учасник 2): хешування паролів SHA-256 без солі; невикористані сервіси аналітики в Api/Services після підключення AddApplication.
+Завершені цикли змістовного рев'ю в цьому звіті не підтверджені. Поточні зауваження до модулів — [known-limitations.md](known-limitations.md).
 
 ## 4. C1. Приймальні тест-кейси аналітики
 
@@ -90,18 +80,18 @@ dotnet test Microclimate.Ci.slnf -c Release --collect:"XPlat Code Coverage"
 | Проєкт | Тестів | Що перевіряє |
 |---|---|---|
 | Microclimate.Domain.Tests | 40 | Сутності, пороги, межові значення |
-| Microclimate.Application.Tests | 6 | Індекс комфорту, часовий ряд, зведення |
-| Microclimate.Infrastructure.Tests | 6 | Репозиторії на SQLite з міграціями, транзакція, експорт CSV і JSON |
-| Microclimate.SensorSimulator.Tests | 8 | Генерація значень, сценарій перегріву, налаштування, відправлення, зупинка датчика |
+| Microclimate.Application.Tests | 10 | Індекс комфорту, часовий ряд, зведення |
+| Microclimate.Infrastructure.Tests | 17 | Репозиторії на SQLite з міграціями, транзакція, експорт CSV і JSON |
+| Microclimate.SensorSimulator.Tests | 10 | Генерація значень, сценарій перегріву, налаштування, відправлення, зупинка датчика |
 | DatabaseFlowTests у Microclimate.Api.IntegrationTests | 1 | Ланцюг «датчик → Api → SQLite → аналітика → експорт» |
 
-Покриття рядків моїх збірок за всім набором тестів CI (без згенерованих міграцій): Domain 88.9 %, Application 95.6 %, Infrastructure 91.9 %, SensorSimulator 85.1 %.
+Coverage залежить від складу збірок і виключень; датований звіт — [verification.md](verification.md).
 
 Тести на xUnit: [Fact] — один сценарій, [Theory] з [InlineData] — межові значення. Час передається параметром, тому тести детерміновані. Репозиторії тестуються на SQLite в пам'яті з тими самими міграціями, що й у робочій БД. CI запускає тести на кожен pull request і збирає звіт покриття (coverlet, ReportGenerator).
 
 ## 7. C4. Статичний аналіз
 
-- Directory.Build.props: AnalysisLevel latest-recommended, EnforceCodeStyleInBuild, TreatWarningsAsErrors — будь-яке зауваження аналізатора зупиняє збірку.
+- Directory.Build.props: AnalysisLevel latest-recommended, EnforceCodeStyleInBuild, TreatWarningsAsErrors — warning або error зупиняє збірку; інформаційні note залишаються у звіті.
 - Release-збірка: 0 warnings, 0 errors.
 - Згенерований код міграцій виключено з аналізу (.editorconfig у папці Migrations).
 - NuGet Audit увімкнено: вразливу транзитивну залежність SQLitePCLRaw замінено виправленою версією (D-1-014).
@@ -111,7 +101,7 @@ dotnet test Microclimate.Ci.slnf -c Release --collect:"XPlat Code Coverage"
 | # | Пункт | Як виконано | Де |
 |---|---|---|---|
 | 1 | Нормалізація ≥ 3НФ | 6 таблиць у 3НФ; кімната виміру визначається через датчик, не дублюється | docs/db-schema.md, розділ 5 |
-| 2 | PK/FK та обмеження | Первинні й зовнішні ключі з RESTRICT/CASCADE/SET NULL, UNIQUE (назва кімнати, серійний номер, email), CHECK (поверх, площа, порядок меж порогу) | Persistence/Configurations/EntityConfigurations.cs, міграції |
+| 2 | PK/FK та обмеження | Первинні й зовнішні ключі з RESTRICT/CASCADE/SET NULL, UNIQUE (назва кімнати, серійний номер, email), CHECK (поверх, площа; порядок nullable-порогів уточнено в #82) | Persistence/Configurations/EntityConfigurations.cs, міграції |
 | 3 | Індекси на полях пошуку/JOIN | Measurements (SensorId, MetricType, MeasuredAt), Sensors (RoomId, DeviceKeyHash), Alerts (Status, RaisedAt) і (RoomId, MetricType, Status) | те саме |
 | 4 | Параметризовані запити | Усі запити через EF Core LINQ, без ручного SQL | Repositories/ |
 | 5 | Транзакції | IUnitOfWork.ExecuteInTransactionAsync: усе або нічого | Persistence/AppDbContext.cs, тест транзакції |

@@ -1,5 +1,4 @@
 using Microclimate.Infrastructure.Persistence;
-
 using Microsoft.EntityFrameworkCore;
 
 namespace Microclimate.Api.Storage;
@@ -14,7 +13,8 @@ public static class DatabaseSeeder
     public static async Task InitializeAsync(
         IServiceProvider services,
         bool seedDemoData,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         await using var scope = services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -26,8 +26,7 @@ public static class DatabaseSeeder
             return;
         }
 
-        var demo = new InMemoryDataStore(
-            scope.ServiceProvider.GetRequiredService<TimeProvider>());
+        var demo = new InMemoryDataStore(scope.ServiceProvider.GetRequiredService<TimeProvider>());
         db.Users.AddRange(demo.Users);
         db.Rooms.AddRange(demo.Rooms);
         db.Sensors.AddRange(demo.Sensors);

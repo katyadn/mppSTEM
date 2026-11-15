@@ -13,4 +13,5 @@ public sealed record CreateRoomRequest(
     string Name,
     int Floor,
     double? AreaSqM = null,
-    string? Type = null);
+    string? Type = null
+);

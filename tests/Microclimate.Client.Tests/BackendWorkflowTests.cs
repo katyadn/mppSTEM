@@ -14,18 +14,27 @@ namespace Microclimate.Client.Tests;
 // Інтеграційна перевірка клієнта проти чинного API та ізольованої SQLite-бази.
 public sealed class BackendWorkflowTests
 {
-    // Перевіряє: вхід, кімнати, аналітика й підтвердження працюють через чинний API з тимчасовою SQLite-базою.
     [Fact]
     public async Task ClientUsesCurrentBackendWithSqliteForLoginRoomsAnalyticsAndAcknowledgement()
     {
         await using var factory = new SqliteBackendFactory();
-        using var http = factory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost"), AllowAutoRedirect = false });
+        using var http = factory.CreateClient(
+            new WebApplicationFactoryClientOptions
+            {
+                BaseAddress = new Uri("https://localhost"),
+                AllowAutoRedirect = false,
+            }
+        );
         var settings = new MemorySettings { ApiAddress = http.BaseAddress!.AbsoluteUri };
         var store = new MemoryStore();
         var session = new ClientSession(store, TimeProvider.System);
         var navigation = new TestNavigation();
         var api = new ClientApi(http, settings, session, TimeProvider.System);
-        var login = new LoginViewModel(api, navigation) { Email = "admin@microclimate.local", Password = "AdminPassword123!" };
+        var login = new LoginViewModel(api, navigation)
+        {
+            Email = "admin@microclimate.local",
+            Password = "AdminPassword123!",
+        };
         await login.LoginCommand.ExecuteAsync(null);
         Assert.False(login.HasError, login.ErrorMessage);
         Assert.Equal("dashboard", navigation.Destination);
@@ -51,8 +60,15 @@ public sealed class BackendWorkflowTests
         var measuredAt = DateTimeOffset.UtcNow.AddMinutes(-1);
         using var ingest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/measurements")
         {
-            Content = JsonContent.Create(new MeasurementBatchRequest(Assert.Single(sensors!).Id,
-                [new MeasurementItem(MetricType.Temperature, 22.5, measuredAt), new MeasurementItem(MetricType.Co2, 1900, measuredAt)])),
+            Content = JsonContent.Create(
+                new MeasurementBatchRequest(
+                    Assert.Single(sensors!).Id,
+                    [
+                        new MeasurementItem(MetricType.Temperature, 22.5, measuredAt),
+                        new MeasurementItem(MetricType.Co2, 1900, measuredAt),
+                    ]
+                )
+            ),
         };
         ingest.Headers.Add("X-Device-Key", "test-device-key-12345");
         using var response = await http.SendAsync(ingest);
@@ -79,7 +95,12 @@ public sealed class BackendWorkflowTests
         await alerts.AcknowledgeCommand.ExecuteAsync(alert);
         Assert.False(alerts.HasError, alerts.ErrorMessage);
         Assert.Empty(alerts.Alerts);
-        var acknowledged = await api.GetAlertsAsync(1, AlertLevel.Critical, AlertStatus.Acknowledged, CancellationToken.None);
+        var acknowledged = await api.GetAlertsAsync(
+            1,
+            AlertLevel.Critical,
+            AlertStatus.Acknowledged,
+            CancellationToken.None
+        );
         Assert.Equal(alert.Alert.Id, Assert.Single(acknowledged.Items).Id);
 
         var preferences = new SettingsViewModel(settings, session, navigation);
@@ -93,7 +114,11 @@ public sealed class BackendWorkflowTests
     internal sealed class SqliteBackendFactory : WebApplicationFactory<Program>
     {
         // Шлях до окремої тимчасової SQLite-бази цього запуску.
-        private readonly string databasePath = Path.Combine(Path.GetTempPath(), $"microclimate-client-{Guid.NewGuid():N}.db");
+        private readonly string databasePath = Path.Combine(
+            Path.GetTempPath(),
+            $"microclimate-client-{Guid.NewGuid():N}.db"
+        );
+
         // Задає Development і SQLite для чинного API в ізольованому інтеграційному тесті.
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
@@ -101,6 +126,7 @@ public sealed class BackendWorkflowTests
             builder.UseSetting("Database:Provider", "Sqlite");
             builder.UseSetting("Database:ConnectionString", $"Data Source={databasePath};Pooling=False");
         }
+
         // Зупиняє тестовий API та прибирає файли тимчасової SQLite-бази.
         protected override void Dispose(bool disposing)
         {

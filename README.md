@@ -2,65 +2,15 @@
 
 ![CI](https://github.com/katyadn/mppSTEM/actions/workflows/ci.yml/badge.svg)
 
-Кросплатформна .NET-система для моніторингу температури, вологості, CO₂, PM2.5, шуму й освітленості. Реалізовано історію вимірювань, аналітику комфорту, клієнтське редагування порогів та живі сповіщення. Domain уже містить кімнати, датчики, виміри, пороги, сповіщення й користувачів; будівлі до моделі не входять. Клієнт має HTTP-сценарії входу, кімнат, аналітики й сповіщень за Contracts. API вже містить JWT, кімнати, датчики, виміри, аналітику, сповіщення та користувачів; Infrastructure — EF Core для SQLite/PostgreSQL. Клієнт узгоджено з поточними відповідями сервера; статус перевірок — у docs/client-progress.md.
+Навчальна .NET-система моніторингу температури, вологості, CO₂, PM2.5, шуму й освітленості. MAUI-клієнт показує кімнати, графіки та сповіщення; Operator/Admin можуть редагувати пороги. API зберігає дані через EF Core у SQLite або PostgreSQL.
 
-## Команда
+| Частина | Призначення | Учасник |
+|---|---|---|
+| Domain, Application, Infrastructure, SensorSimulator | Модель, аналітика, БД, симулятор | 1 |
+| Api, Contracts | REST, JWT/DeviceKey, SignalR, DTO | 2 |
+| Client.Core, Client.Maui, deploy, .github | Клієнт, CI, запуск | 3 |
 
-| Учасник | Відповідальність |
-|---|---|
-| 1 | Domain, Application, Infrastructure, SensorSimulator: дані, EF Core, аналітика |
-| 2 | Api, Contracts: REST API, JWT, SignalR, OpenTelemetry |
-| 3 | Client.Maui, Client.Core, deploy/, .github/, solution, CI, README |
-
-Деталі: [зони відповідальності](docs/responsibility-zones.md). Імена учасників додає команда.
-
-## Архітектура
-
-```text
-src/
-  Microclimate.Domain/            Кімнати, датчики, виміри, пороги, сповіщення, користувачі
-  Microclimate.Contracts/         Спільні DTO; частина старих контрактів ще потребує узгодження
-  Microclimate.Application/       Порти сховища, прийому вимірів та аналітики
-  Microclimate.Infrastructure/    EF Core, SQLite/PostgreSQL, міграції та репозиторії
-  Microclimate.Api/               REST API, JWT, прийом вимірів, аналітика й SignalR
-  Microclimate.SensorSimulator/   Симулятор датчиків: добові коливання, сценарій перегріву, відправлення в API
-  Microclimate.Client.Core/       ViewModels, HTTP, сесія та проєкції без MAUI
-  Microclimate.Client.Maui/       Кросплатформний UI, MVVM, навігація та графік із прогалинами
-tests/
-  Microclimate.Domain.Tests/          Тести предметної моделі
-  Microclimate.Application.Tests/     Тести прикладних типів
-  Microclimate.Api.IntegrationTests/  Тести службових API endpoints
-  Microclimate.Client.Tests/          HTTP, сесії, ViewModels, проєкції та інтеграція з API/SQLite
-  Microclimate.Infrastructure.Tests/  Репозиторії та аналітика з БД
-  Microclimate.SensorSimulator.Tests/ Генерація значень, сценарії та відправлення вимірів
-```
-
-Стрілки позначають **посилання на проєкти**, а не мережеві виклики:
-
-```mermaid
-graph LR
-  Application --> Domain
-  Application --> Contracts
-  Infrastructure --> Application
-  Infrastructure --> Domain
-  Api --> Application
-  Api --> Infrastructure
-  Api --> Contracts
-  SensorSimulator --> Contracts
-  SensorSimulator --> Domain
-  ClientMaui[Client.Maui] --> Contracts
-  ClientMaui --> ClientCore[Client.Core]
-  ClientCore --> Contracts
-  ClientTests[Client.Tests] --> ClientCore
-  ClientTests --> Api
-  InfrastructureTests[Infrastructure.Tests] --> Infrastructure
-  DomainTests[Domain.Tests] --> Domain
-  ApplicationTests[Application.Tests] --> Application
-  ApiTests[Api.IntegrationTests] --> Api
-  SimulatorTests[SensorSimulator.Tests] --> SensorSimulator
-```
-
-Domain і Contracts не посилаються на інші проєкти. Client.Core містить ViewModels, HTTP, сесію та логіку відображення і тестується на Linux; нативні екрани, сховище та малювання — у MAUI.
+Client.Core тестується без MAUI; нативні екрани, сховище й графік — у Client.Maui. Розрахунки виконує сервер. [Зони відповідальності](docs/responsibility-zones.md), [API](docs/api.md), [перевірки](docs/verification.md), [відомі обмеження](docs/known-limitations.md).
 
 ## Вимоги
 
@@ -151,12 +101,6 @@ dotnet workload install maui-android --version 10.0.404
 dotnet build src/Microclimate.Client.Maui -c Release -f net10.0-android -p:MauiTargetFramework=net10.0-android
 ```
 
-## CI та перевірки клієнта
-
-CI має чотири jobs: Linux `build-test` (restore, строгий Release build, тести, coverage artifact/summary), Windows `maui-build`, Android `android-build` і `postgres-smoke` з API та PostgreSQL у Compose. Клієнтські тести покривають HTTP, сесію, ViewModels, NoData, розриви часового ряду, пороги та SignalR; платформні jobs перевіряють збірку. Artifact `static-analysis` містить SARIF кожного .NET-проєкту та журнал збірки; `coverage-report` — справжній звіт покриття, `test-results` — TRX.
-
-Клієнтський вхід викликає API та зберігає access-сесію в системному захищеному сховищі (або лише в пам’яті, якщо сховище недоступне). Кімнати, деталі та сповіщення завантажуються HTTP-запитами; є пагінація, фільтри й повідомлення про помилки. Потік вхід → кімнати → аналітика → підтвердження сповіщення → вихід перевірено із чинними контролерами API та SQLite через ASP.NET Core TestServer, а окремий нативний MacCatalyst прогін описано у [UI-звіті](docs/ui/mac-smoke-2026-11-15.md). [Стан клієнта та межі перевірок](docs/client-progress.md).
-
 ## Запуск через Docker
 
 [Інструкція Docker Compose](deploy/README.md): PostgreSQL запускається окремо; профіль app збирає API й simulator та передає конфігурацію Database. API застосовує міграції PostgreSQL під час старту; симулятор надсилає виміри від датчика, заданого в deploy/.env.
@@ -166,11 +110,6 @@ CI має чотири jobs: Linux `build-test` (restore, строгий Release
 - [Правила внеску](CONTRIBUTING.md)
 - [Архітектурні рішення](DECISIONS.md)
 - [Журнал генерації та ШІ](META-USAGE.md)
-- [Документація](docs/)
+- [Перевірки й coverage](docs/verification.md)
+- [Стан клієнта](docs/client-progress.md) і [підготовка до захисту](docs/participant-3-report.md)
 - [Підсумковий чекліст](docs/stage-0-checklist.md)
-
-## Завершення клієнтських сценаріїв (Учасник 3)
-
-Клієнт підтримує пороги Admin/Operator, останні виміри в огляді, SignalR із reconnect і fallback, деталі точок графіка та локальну тему. Опис і фактичні перевірки: [стан клієнта](docs/client-progress.md), [звіт для захисту](docs/participant-3-report.md). Для Xcode 27.2 використовуйте .NET SDK/workload set 10.0.404; сумісність зафіксована в D-3-023.
-
-CI містить `build-test`, `maui-build` (Windows), `android-build` та `postgres-smoke`. Останній запускає PostgreSQL і API та перевіряє HTTP-сценарій, а не лише синтаксис Compose. Збірки Windows/Android не замінюють ручного тестування UI.

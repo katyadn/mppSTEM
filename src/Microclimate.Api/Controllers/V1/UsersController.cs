@@ -1,17 +1,13 @@
 using System.Security.Cryptography;
 using System.Text;
-
 using Asp.Versioning;
-
 using FluentValidation;
-
 using Microclimate.Application.Abstractions.Persistence;
 using Microclimate.Application.Common;
 using Microclimate.Contracts.Auth;
 using Microclimate.Contracts.Common;
 using Microclimate.Contracts.Users;
 using Microclimate.Domain.Users;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -29,7 +25,8 @@ public sealed class UsersController(
     IUserRepository users,
     IUnitOfWork unitOfWork,
     TimeProvider time,
-    IValidator<CreateUserRequest> createValidator) : ControllerBase
+    IValidator<CreateUserRequest> createValidator
+) : ControllerBase
 {
     /// <summary>
     /// Отримання списку всіх зареєстрованих користувачів.
@@ -52,7 +49,8 @@ public sealed class UsersController(
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<UserResponse>> Create(
         [FromBody] CreateUserRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var validation = await createValidator.ValidateAsync(request, cancellationToken);
         if (!validation.IsValid)
@@ -80,7 +78,13 @@ public sealed class UsersController(
         var passwordHash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(request.Password)));
         var displayName = request.Email.Split('@')[0];
 
-        var user = Microclimate.Domain.Users.User.Create(normalizedEmail, displayName, passwordHash, domainRole, time.GetUtcNow());
+        var user = Microclimate.Domain.Users.User.Create(
+            normalizedEmail,
+            displayName,
+            passwordHash,
+            domainRole,
+            time.GetUtcNow()
+        );
         users.Add(user);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -97,7 +101,8 @@ public sealed class UsersController(
     public async Task<ActionResult<UserResponse>> ChangeRole(
         Guid id,
         [FromBody] ChangeRoleRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var user = await users.GetByIdAsync(id, cancellationToken);
         if (user is null)
@@ -121,9 +126,7 @@ public sealed class UsersController(
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(
-        Guid id,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         var user = await users.GetByIdAsync(id, cancellationToken);
         if (user is null)

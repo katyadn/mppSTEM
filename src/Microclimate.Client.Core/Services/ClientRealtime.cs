@@ -8,7 +8,14 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Microclimate.Client.Core.Services;
 
 // Стан каналу відділено від доступності HTTP: під час reconnect залишається періодичне оновлення.
-public enum LiveConnectionState { Connecting, Connected, Reconnecting, Offline, SignedOut }
+public enum LiveConnectionState
+{
+    Connecting,
+    Connected,
+    Reconnecting,
+    Offline,
+    SignedOut,
+}
 
 // Один watcher належить видимій сторінці. Скасування припиняє transport, retries та підписки.
 public sealed class ClientRealtime(IClientSettings settings, ClientSession session, TimeProvider clock)
@@ -21,27 +28,45 @@ public sealed class ClientRealtime(IClientSettings settings, ClientSession sessi
             {
                 options.AccessTokenProvider = async () =>
                 {
-                    if (ApiAddress.Normalize(settings.ApiAddress) != server.AbsoluteUri) return null;
+                    if (ApiAddress.Normalize(settings.ApiAddress) != server.AbsoluteUri)
+                        return null;
                     return await session.TokenAsync(server.AbsoluteUri).ConfigureAwait(false);
                 };
                 options.HttpMessageHandlerFactory = original =>
                 {
-                    if (original is HttpClientHandler clientHandler) clientHandler.AllowAutoRedirect = false;
+                    if (original is HttpClientHandler clientHandler)
+                        clientHandler.AllowAutoRedirect = false;
                     var inner = original;
-                    if (handlerFactory is not null) { original.Dispose(); inner = handlerFactory(); }
+                    if (handlerFactory is not null)
+                    {
+                        original.Dispose();
+                        inner = handlerFactory();
+                    }
                     return new ServerBoundHandler(server, inner);
                 };
-                if (longPolling) options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling;
+                if (longPolling)
+                    options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling;
             })
             .AddJsonProtocol(options => options.PayloadSerializerOptions = ClientJsonContext.Default.Options)
-            .WithAutomaticReconnect([TimeSpan.Zero, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10)])
+            .WithAutomaticReconnect([
+                TimeSpan.Zero,
+                TimeSpan.FromSeconds(2),
+                TimeSpan.FromSeconds(5),
+                TimeSpan.FromSeconds(10),
+            ])
             .Build();
     }
 
     // rooms читається повторно: пагінація огляду додає підписки без нового з'єднання.
     // refresh повертає false, якщо UI зайнятий; тоді подія не губиться.
-    public async Task WatchAsync(HubConnection connection, Func<Task<IReadOnlyCollection<Guid>>> rooms, bool includeAlerts,
-        Func<Task<bool>> refresh, Func<LiveConnectionState, Task> status, CancellationToken cancellationToken)
+    public async Task WatchAsync(
+        HubConnection connection,
+        Func<Task<IReadOnlyCollection<Guid>>> rooms,
+        bool includeAlerts,
+        Func<Task<bool>> refresh,
+        Func<LiveConnectionState, Task> status,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentNullException.ThrowIfNull(rooms);
@@ -59,17 +84,29 @@ public sealed class ClientRealtime(IClientSettings settings, ClientSession sessi
         var attempt = 0;
         LiveConnectionState? previousState = null;
         using var raised = connection.On<JsonElement>(HubMethods.AlertRaised, _ => Interlocked.Exchange(ref dirty, 1));
-        using var acknowledged = connection.On<JsonElement>(HubMethods.AlertAcknowledged, _ => Interlocked.Exchange(ref dirty, 1));
-        using var measured = connection.On<JsonElement>(HubMethods.MeasurementReceived, _ => Interlocked.Exchange(ref dirty, 1));
-        Task Reconnected(string? _) { Interlocked.Increment(ref generation); Interlocked.Exchange(ref dirty, 1); return Task.CompletedTask; }
+        using var acknowledged = connection.On<JsonElement>(HubMethods.AlertAcknowledged, _ =>
+            Interlocked.Exchange(ref dirty, 1)
+        );
+        using var measured = connection.On<JsonElement>(HubMethods.MeasurementReceived, _ =>
+            Interlocked.Exchange(ref dirty, 1)
+        );
+        Task Reconnected(string? _)
+        {
+            Interlocked.Increment(ref generation);
+            Interlocked.Exchange(ref dirty, 1);
+            return Task.CompletedTask;
+        }
         connection.Reconnected += Reconnected;
         try
         {
             while (!cancellationToken.IsCancellationRequested)
             {
                 // Не дозволяємо старому watcher продовжити роботу з іншим користувачем чи сервером.
-                if (ApiAddress.Normalize(settings.ApiAddress) != server || originalToken is null ||
-                    await session.TokenAsync(server).ConfigureAwait(false) != originalToken)
+                if (
+                    ApiAddress.Normalize(settings.ApiAddress) != server
+                    || originalToken is null
+                    || await session.TokenAsync(server).ConfigureAwait(false) != originalToken
+                )
                 {
                     await status(LiveConnectionState.SignedOut).ConfigureAwait(false);
                     return;
@@ -82,22 +119,44 @@ public sealed class ClientRealtime(IClientSettings settings, ClientSession sessi
                     {
                         currentState = LiveConnectionState.Connecting;
                         await connection.StartAsync(cancellationToken).ConfigureAwait(false);
-                        Interlocked.Increment(ref generation); Interlocked.Exchange(ref dirty, 1); attempt = 0;
+                        Interlocked.Increment(ref generation);
+                        Interlocked.Exchange(ref dirty, 1);
+                        attempt = 0;
                     }
                     if (connection.State == HubConnectionState.Connected)
                     {
                         if (appliedGeneration != Volatile.Read(ref generation))
-                        { subscribed.Clear(); allSubscribed = false; appliedGeneration = Volatile.Read(ref generation); }
+                        {
+                            subscribed.Clear();
+                            allSubscribed = false;
+                            appliedGeneration = Volatile.Read(ref generation);
+                        }
                         if (includeAlerts && !allSubscribed)
-                        { await connection.InvokeAsync("SubscribeToAllAlerts", cancellationToken).ConfigureAwait(false); allSubscribed = true; }
+                        {
+                            await connection
+                                .InvokeAsync("SubscribeToAllAlerts", cancellationToken)
+                                .ConfigureAwait(false);
+                            allSubscribed = true;
+                        }
                         var desired = (await rooms().ConfigureAwait(false)).Where(id => id != Guid.Empty).ToHashSet();
                         foreach (var id in subscribed.Except(desired).ToArray())
-                        { await connection.InvokeAsync("UnsubscribeFromRoom", id, cancellationToken).ConfigureAwait(false); subscribed.Remove(id); }
+                        {
+                            await connection
+                                .InvokeAsync("UnsubscribeFromRoom", id, cancellationToken)
+                                .ConfigureAwait(false);
+                            subscribed.Remove(id);
+                        }
                         foreach (var id in desired.Except(subscribed))
-                        { await connection.InvokeAsync("SubscribeToRoom", id, cancellationToken).ConfigureAwait(false); subscribed.Add(id); }
+                        {
+                            await connection
+                                .InvokeAsync("SubscribeToRoom", id, cancellationToken)
+                                .ConfigureAwait(false);
+                            subscribed.Add(id);
+                        }
                         currentState = LiveConnectionState.Connected;
                     }
-                    else if (connection.State == HubConnectionState.Reconnecting) currentState = LiveConnectionState.Reconnecting;
+                    else if (connection.State == HubConnectionState.Reconnecting)
+                        currentState = LiveConnectionState.Reconnecting;
                 }
                 catch (HttpRequestException exception) when (exception.StatusCode == HttpStatusCode.Unauthorized)
                 {
@@ -105,20 +164,34 @@ public sealed class ClientRealtime(IClientSettings settings, ClientSession sessi
                     await status(LiveConnectionState.SignedOut).ConfigureAwait(false);
                     return;
                 }
-                catch (Exception exception) when (exception is HttpRequestException or HubException or InvalidOperationException or IOException ||
-                    (exception is OperationCanceledException && !cancellationToken.IsCancellationRequested))
+                catch (Exception exception)
+                    when (exception is HttpRequestException or HubException or InvalidOperationException or IOException
+                        || (exception is OperationCanceledException && !cancellationToken.IsCancellationRequested)
+                    )
                 {
-                    nextStart = now.AddSeconds(++attempt == 1 ? 2 : attempt == 2 ? 5 : 10);
+                    nextStart = now.AddSeconds(
+                        ++attempt == 1 ? 2
+                        : attempt == 2 ? 5
+                        : 10
+                    );
                     currentState = LiveConnectionState.Offline;
                 }
                 if (previousState != currentState)
-                { await status(currentState).ConfigureAwait(false); previousState = currentState; }
-                // Максимум одне оновлення за 5 с; fallback також покриває сервер без AlertResolved.
-                if ((Volatile.Read(ref dirty) != 0 && now - lastRefresh >= TimeSpan.FromSeconds(5)) || now - lastRefresh >= TimeSpan.FromSeconds(30))
+                {
+                    await status(currentState).ConfigureAwait(false);
+                    previousState = currentState;
+                }
+                // Максимум одне оновлення за 5 с; polling компенсує відсутність клієнтської підписки на AlertResolved.
+                if (
+                    (Volatile.Read(ref dirty) != 0 && now - lastRefresh >= TimeSpan.FromSeconds(5))
+                    || now - lastRefresh >= TimeSpan.FromSeconds(30)
+                )
                 {
                     Interlocked.Exchange(ref dirty, 0);
-                    if (await refresh().ConfigureAwait(false)) lastRefresh = now;
-                    else Interlocked.Exchange(ref dirty, 1);
+                    if (await refresh().ConfigureAwait(false))
+                        lastRefresh = now;
+                    else
+                        Interlocked.Exchange(ref dirty, 1);
                 }
                 await Task.Delay(TimeSpan.FromSeconds(1), clock, cancellationToken).ConfigureAwait(false);
             }
@@ -134,7 +207,10 @@ public sealed class ClientRealtime(IClientSettings settings, ClientSession sessi
     // Блокує також redirect у JSON negotiation: bearer не може піти на інший origin.
     private sealed class ServerBoundHandler(Uri server, HttpMessageHandler inner) : DelegatingHandler(inner)
     {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        )
         {
             if (request.RequestUri is not { } target || !server.IsBaseOf(target))
                 throw new HttpRequestException("З'єднання намагалося перейти до іншого сервера.");

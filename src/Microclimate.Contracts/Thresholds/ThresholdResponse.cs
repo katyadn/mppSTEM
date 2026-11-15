@@ -19,4 +19,5 @@ public sealed record ThresholdResponse(
     double? WarningMin,
     double? WarningMax,
     double? CriticalMin,
-    double? CriticalMax);
+    double? CriticalMax
+);

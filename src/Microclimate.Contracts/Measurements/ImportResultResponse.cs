@@ -11,4 +11,5 @@ public sealed record ImportResultResponse(
     int TotalRows,
     int ImportedCount,
     int SkippedCount,
-    IReadOnlyList<string> Errors);
+    IReadOnlyList<string> Errors
+);

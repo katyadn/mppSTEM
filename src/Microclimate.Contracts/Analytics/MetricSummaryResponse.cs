@@ -17,4 +17,5 @@ public sealed record MetricSummaryResponse(
     double? Min,
     double? Max,
     double? Avg,
-    double? StdDev);
+    double? StdDev
+);

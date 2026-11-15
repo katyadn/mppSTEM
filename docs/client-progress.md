@@ -19,27 +19,16 @@
 
 ## Межі архітектури та безпека
 
-`Client.Core` містить HTTP, сесію, SignalR, ViewModels і проєкції; `Client.Maui` — XAML, Shell, Preferences, SecureStorage, UI-dispatch і графік. Серверні Domain/Application/Infrastructure/Api/Contracts у цій задачі не змінено.
+`Client.Core` містить HTTP, сесію, SignalR, ViewModels і проєкції; `Client.Maui` — XAML, Shell, Preferences, SecureStorage, UI-dispatch і графік. Серверні розрахунки й БД належать іншим учасникам.
 
 Сесія зберігає лише access token, expiry, сервер і профіль. Пароль і refresh token не записуються. Remote API потребує HTTPS; HTTP дозволений лише localhost/loopback/Android emulator 10.0.2.2. Redirect вимкнено; SignalR negotiation додатково не може перенести запит до іншого сервера. Роль у UI не замінює серверну авторизацію.
 
 Огляд не називає старі виміри актуальним комфортом: показує час останнього виміру, а сервер може повернути «Немає актуальної оцінки комфорту». Для сторінки з 20 кімнат виконується максимум 4 паралельних ланцюжки latest/comfort. Серверні розрахунки на клієнті не дублюються. Одиниці фіксовані за Contracts (°C, %, ppm, µg/m³, dB(A), lux); конвертація в інші системи не входить до погодженої моделі.
 
-Живі оновлення зберігають завантажені сторінки списків і чернетку порогів. Відсутня серверна подія AlertResolved компенсується періодичним читанням. Текст стану каналу показано на екрані.
+Живі оновлення зберігають завантажені сторінки списків і чернетку порогів. Клієнт не слухає серверну подію AlertResolved; її результат отримує періодичним читанням. Текст стану каналу показано на екрані.
 
 ## Перевірки
 
-```bash
-dotnet build Microclimate.Ci.slnf -c Release
-dotnet test Microclimate.Ci.slnf -c Release --no-build
-# На Mac: .NET SDK / workload set 10.0.404 та Xcode 27.2.
-dotnet workload install maui-maccatalyst --version 10.0.404
-dotnet build src/Microclimate.Client.Maui -c Debug -f net10.0-maccatalyst \
-  -p:MauiTargetFramework=net10.0-maccatalyst -p:RuntimeIdentifier=maccatalyst-arm64
-```
+Актуальні команди, кількість тестів, coverage і межі платформних перевірок зібрані в [verification.md](verification.md). Приймальні кейси — у [рубриці](participant-3-rubric.md), нативні UI-прогони — [Mac](ui/mac-smoke-2026-11-15.md) та [iOS](ui/ios-smoke-2026-11-15.md).
 
-Локально 2026-11-15: 168/168 тестів (67 Client, 43 API, 40 Domain, 6 Application, 4 Infrastructure, 8 Simulator). Release solution та повні нативні Debug MacCatalyst/iOS Simulator збірки: 0 warnings / 0 errors. MAUI знову має `TreatWarningsAsErrors=true`; CA1711 приглушено тільки для UIKit AppDelegate/SceneDelegate з поясненням імені.
-
-Нові тести перевіряють threshold round-trip через реальний API/SQLite, ролі й 403, відсутні/неправильні межі, живі сторінки списків, тему, автоматичний період, справжній SignalR hub через TestServer/LongPolling, підписки після reconnect, busy UI, logout, fallback і заборону redirect. `deploy/smoke.py` пройшов проти ізольованого локального API/SQLite; PostgreSQL перевіряється окремим CI job, його результат не підміняється SQLite-тестами.
-
-Деталі нативних UI-прогонів — [Mac](ui/mac-smoke-2026-11-15.md) та [iOS](ui/ios-smoke-2026-11-15.md). На iOS Simulator підтверджено SecureStorage з відновленням сесії після завершення процесу; на Mac ad-hoc — memory-only fallback. Windows/Android UI та фізичний iPhone не перевірені. [Аудит рубрики](participant-3-rubric.md) відокремлює технічні докази від командних та особистих критеріїв захисту. Збірка платформи не є доказом ручного UI-прогону. Merge виконує людина після рев'ю Учасника 2 та зеленого CI згідно `CONTRIBUTING.md`.
+Реалізацію #76 злито через [PR #77](https://github.com/katyadn/mppSTEM/pull/77) 15.11.2026. Merge не підтверджує виконання всіх особистих і командних критеріїв захисту.

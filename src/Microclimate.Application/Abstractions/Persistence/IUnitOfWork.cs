@@ -9,6 +9,5 @@ public interface IUnitOfWork
     /// Виконує дію в одній транзакції БД: або всі зміни зберігаються, або
     /// жодна.
     /// </summary>
-    Task ExecuteInTransactionAsync(Func<CancellationToken, Task> action,
-        CancellationToken cancellationToken);
+    Task ExecuteInTransactionAsync(Func<CancellationToken, Task> action, CancellationToken cancellationToken);
 }

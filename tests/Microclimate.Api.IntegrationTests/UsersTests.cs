@@ -1,11 +1,9 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-
 using Microclimate.Contracts.Auth;
 using Microclimate.Contracts.Common;
 using Microclimate.Contracts.Users;
-
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Microclimate.Api.IntegrationTests;
@@ -60,7 +58,11 @@ public sealed class UsersTests(WebApplicationFactory<Program> factory) : IClassF
     public async Task CreateUser_AsAdmin_Returns201Created()
     {
         var token = await GetAdminTokenAsync();
-        var createReq = new CreateUserRequest($"newuser-{Guid.NewGuid().ToString()[..6]}@microclimate.local", "SuperSecurePass123!", UserRole.Viewer);
+        var createReq = new CreateUserRequest(
+            $"newuser-{Guid.NewGuid().ToString()[..6]}@microclimate.local",
+            "SuperSecurePass123!",
+            UserRole.Viewer
+        );
 
         using var req = new HttpRequestMessage(HttpMethod.Post, "/api/v1/users")
         {
@@ -99,7 +101,11 @@ public sealed class UsersTests(WebApplicationFactory<Program> factory) : IClassF
         var token = await GetAdminTokenAsync();
 
         // Створюємо користувача
-        var createReq = new CreateUserRequest($"roleuser-{Guid.NewGuid().ToString()[..6]}@microclimate.local", "StrongPassword123!", UserRole.Viewer);
+        var createReq = new CreateUserRequest(
+            $"roleuser-{Guid.NewGuid().ToString()[..6]}@microclimate.local",
+            "StrongPassword123!",
+            UserRole.Viewer
+        );
         using var postReq = new HttpRequestMessage(HttpMethod.Post, "/api/v1/users")
         {
             Content = JsonContent.Create(createReq),

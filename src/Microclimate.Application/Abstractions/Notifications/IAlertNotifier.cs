@@ -10,12 +10,9 @@ namespace Microclimate.Application.Abstractions.Notifications;
 /// </summary>
 public interface IAlertNotifier
 {
-    Task AlertRaisedAsync(Alert alert,
-        CancellationToken cancellationToken);
+    Task AlertRaisedAsync(Alert alert, CancellationToken cancellationToken);
 
-    Task AlertAcknowledgedAsync(Alert alert,
-        CancellationToken cancellationToken);
+    Task AlertAcknowledgedAsync(Alert alert, CancellationToken cancellationToken);
 
-    Task AlertResolvedAsync(Alert alert,
-        CancellationToken cancellationToken);
+    Task AlertResolvedAsync(Alert alert, CancellationToken cancellationToken);
 }
