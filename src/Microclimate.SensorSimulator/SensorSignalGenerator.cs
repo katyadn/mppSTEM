@@ -7,7 +7,7 @@ using DomainMetricType = Microclimate.Domain.Enums.MetricType;
 namespace Microclimate.SensorSimulator;
 
 /// <summary>
-/// Генерує пакет вимірів одного датчика. Має стан (генератор випадкових чисел і хід сценарію),
+/// Генерує пакет вимірів одного датчика. Має стан,
 /// тому на кожен датчик створюється окремий екземпляр.
 /// </summary>
 public sealed class SensorSignalGenerator

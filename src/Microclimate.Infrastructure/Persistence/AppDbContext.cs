@@ -12,8 +12,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Microclimate.Infrastructure.Persistence;
 
 /// <summary>
-/// Спільний контекст БД. Для кожного провайдера є свій нащадок (SqliteAppDbContext, PostgresAppDbContext)
-/// з окремим набором міграцій (docs/db-schema.md, розділ 6).
+/// Спільний контекст БД. Для кожного провайдера є свій нащадок
 /// </summary>
 public abstract class AppDbContext(DbContextOptions options) : DbContext(options), IUnitOfWork
 {
@@ -46,8 +45,6 @@ public abstract class AppDbContext(DbContextOptions options) : DbContext(options
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
-        // Таблиці описано в Configurations/* за docs/db-schema.md, розділ 3.
-        // Id сутностей створює домен (Guid v7), тому в конфігураціях стоїть ValueGeneratedNever.
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 
@@ -55,7 +52,7 @@ public abstract class AppDbContext(DbContextOptions options) : DbContext(options
     {
         ArgumentNullException.ThrowIfNull(configurationBuilder);
 
-        // Enum-и зберігаються рядками (DECISIONS.md, D-1-003).
+        // Enum-и зберігаються рядками.
         configurationBuilder.Properties<MetricType>().HaveConversion<string>().HaveMaxLength(32);
         configurationBuilder.Properties<RoomType>().HaveConversion<string>().HaveMaxLength(32);
         configurationBuilder.Properties<AlertLevel>().HaveConversion<string>().HaveMaxLength(16);
