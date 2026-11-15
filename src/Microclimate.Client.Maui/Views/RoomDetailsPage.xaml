@@ -1,42 +1,64 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- Аналітика вибраної кімнати: метрика, період, статистика та графік із окремим порожнім станом. -->
-
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
- xmlns:vm="clr-namespace:Microclimate.Client.Core.ViewModels;assembly=Microclimate.Client.Core" xmlns:controls="clr-namespace:Microclimate.Client.Maui.Controls" x:Name="PageRoot" x:Class="Microclimate.Client.Maui.Views.RoomDetailsPage"
- x:DataType="vm:RoomDetailsViewModel" Title="{Binding Title}">
-
-<ScrollView><VerticalStackLayout Padding="24" Spacing="14">
-<Label Text="{Binding Title}" FontSize="28" FontAttributes="Bold" />
-<Grid ColumnDefinitions="*,*" ColumnSpacing="12" IsEnabled="{Binding Thresholds.IsNotBusy}">
-<Picker Title="Метрика" ItemsSource="{Binding Metrics}" ItemDisplayBinding="{Binding Name, x:DataType=vm:MetricOption}" SelectedItem="{Binding SelectedMetric}" IsEnabled="{Binding IsNotBusy}" />
-<Picker Grid.Column="1" Title="Період" ItemsSource="{Binding Periods}" ItemDisplayBinding="{Binding Name, x:DataType=vm:PeriodOption}" SelectedItem="{Binding SelectedPeriod}" IsEnabled="{Binding IsNotBusy}" />
-</Grid>
-<Button Text="Застосувати / оновити" Command="{Binding RefreshCommand}" IsEnabled="{Binding IsNotBusy}" />
-<Label Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" TextColor="{AppThemeBinding Light=#B00020, Dark=#FFB4AB}" />
-<Grid HeightRequest="24"><ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" /></Grid>
-<Label Text="{Binding LiveStatus}" FontSize="12" />
-<Label Text="{Binding RangeText}" />
-<Label Text="Індекс комфорту" FontAttributes="Bold" /><Label Text="{Binding ComfortText}" FontSize="22" />
-<Label Text="Історія вимірювань" FontAttributes="Bold" />
-<Label Text="Немає вимірювань за обраний період" IsVisible="{Binding HasNoSeries}" />
-<controls:TimeSeriesChart x:Name="HistoryChart" Segments="{Binding Series}" Unit="{Binding ChartUnit}" HeightRequest="240" IsVisible="{Binding HasSeries}" />
-<Label Text="{Binding Source={x:Reference HistoryChart}, Path=SelectedPointText, x:DataType=controls:TimeSeriesChart}" FontAttributes="Bold" />
-<Label Text="{Binding SummaryText}" />
-<Label Text="Торкніться графіка, щоб побачити значення й час." FontSize="12" IsVisible="{Binding HasSeries}" />
-<VerticalStackLayout BindingContext="{Binding Thresholds}" x:DataType="vm:ThresholdsViewModel" Spacing="8" Margin="0,12,0,0">
-<Label Text="Пороги кімнати" FontSize="20" FontAttributes="Bold" />
-<Label Text="{Binding Unit, StringFormat='Одиниці: {0}'}" />
-<Label Text="Порожнє поле — межа не контролюється. Змінювати пороги можуть Admin та Operator." FontSize="12" />
-<VerticalStackLayout IsEnabled="{Binding CanSave}" Spacing="8">
-<Label Text="Критична нижня межа" /><Entry Text="{Binding CriticalMin}" Placeholder="Не задано" Keyboard="Numeric" />
-<Label Text="Нижня межа попередження" /><Entry Text="{Binding WarningMin}" Placeholder="Не задано" Keyboard="Numeric" />
-<Label Text="Верхня межа попередження" /><Entry Text="{Binding WarningMax}" Placeholder="Не задано" Keyboard="Numeric" />
-<Label Text="Критична верхня межа" /><Entry Text="{Binding CriticalMax}" Placeholder="Не задано" Keyboard="Numeric" />
-</VerticalStackLayout>
-<Label Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" TextColor="{AppThemeBinding Light=#B00020, Dark=#FFB4AB}" />
-<Label Text="{Binding Message}" />
-<ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-<Button Text="Зберегти пороги" Command="{Binding SaveCommand}" IsVisible="{Binding CanEdit}" IsEnabled="{Binding CanSave}" />
-</VerticalStackLayout>
-<Button Text="Назад" Command="{Binding GoBackCommand}" />
-</VerticalStackLayout></ScrollView></ContentPage>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Microclimate.Client.Core.ViewModels;assembly=Microclimate.Client.Core"
+             xmlns:controls="clr-namespace:Microclimate.Client.Maui.Controls"
+             x:Name="PageRoot" x:Class="Microclimate.Client.Maui.Views.RoomDetailsPage"
+             x:DataType="vm:RoomDetailsViewModel" Title="{Binding Title}">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Оновити" Command="{Binding RefreshCommand}" IsEnabled="{Binding IsNotBusy}" />
+    </ContentPage.ToolbarItems>
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="24" MaximumWidthRequest="1000" HorizontalOptions="Fill">
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="16" IsEnabled="{Binding Thresholds.IsNotBusy}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Показник" Style="{StaticResource FieldLabel}" />
+                    <Picker Title="Показник" ItemsSource="{Binding Metrics}" ItemDisplayBinding="{Binding Name, x:DataType=vm:MetricOption}" SelectedItem="{Binding SelectedMetric}" IsEnabled="{Binding IsNotBusy}" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" Spacing="6">
+                    <Label Text="Період" Style="{StaticResource FieldLabel}" />
+                    <Picker Title="Період" ItemsSource="{Binding Periods}" ItemDisplayBinding="{Binding Name, x:DataType=vm:PeriodOption}" SelectedItem="{Binding SelectedPeriod}" IsEnabled="{Binding IsNotBusy}" />
+                </VerticalStackLayout>
+            </Grid>
+            <VerticalStackLayout Spacing="8">
+                <Label Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" Style="{StaticResource ErrorText}" />
+                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" HeightRequest="24" />
+                <Label Text="{Binding LiveStatus}" Style="{StaticResource Caption}" />
+                <Label Text="{Binding RangeText}" Style="{StaticResource Caption}" />
+            </VerticalStackLayout>
+            <Border>
+                <VerticalStackLayout Spacing="16">
+                    <Label Text="Історія вимірювань" Style="{StaticResource SectionTitle}" />
+                    <Label Text="Немає вимірювань за обраний період" IsVisible="{Binding HasNoSeries}" />
+                    <controls:TimeSeriesChart x:Name="HistoryChart" Segments="{Binding Series}" Unit="{Binding ChartUnit}" HeightRequest="260" IsVisible="{Binding HasSeries}" />
+                    <Label Text="{Binding Source={x:Reference HistoryChart}, Path=SelectedPointText, x:DataType=controls:TimeSeriesChart}" FontAttributes="Bold" />
+                    <Label Text="{Binding SummaryText}" />
+                    <Label Text="Натисніть на графік, щоб побачити значення й час." Style="{StaticResource Caption}" IsVisible="{Binding HasSeries}" />
+                </VerticalStackLayout>
+            </Border>
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Індекс комфорту" Style="{StaticResource SectionTitle}" />
+                <Label Text="{Binding ComfortText}" />
+            </VerticalStackLayout>
+            <BoxView />
+            <VerticalStackLayout BindingContext="{Binding Thresholds}" x:DataType="vm:ThresholdsViewModel" Spacing="16">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Пороги сповіщень" Style="{StaticResource SectionTitle}" />
+                    <Label Text="{Binding Unit, StringFormat='Одиниці: {0}'}" Style="{StaticResource Caption}" />
+                    <Label Text="Порожнє поле — межа не контролюється. Змінювати пороги можуть Admin та Operator." Style="{StaticResource Caption}" />
+                </VerticalStackLayout>
+                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="16" RowSpacing="16" IsEnabled="{Binding CanSave}">
+                    <VerticalStackLayout Spacing="6"><Label Text="Критична нижня межа" Style="{StaticResource FieldLabel}" /><Entry Text="{Binding CriticalMin}" Placeholder="Не задано" Keyboard="Numeric" SemanticProperties.Description="Критична нижня межа" /></VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1" Spacing="6"><Label Text="Критична верхня межа" Style="{StaticResource FieldLabel}" /><Entry Text="{Binding CriticalMax}" Placeholder="Не задано" Keyboard="Numeric" SemanticProperties.Description="Критична верхня межа" /></VerticalStackLayout>
+                    <VerticalStackLayout Grid.Row="1" Spacing="6"><Label Text="Нижня межа попередження" Style="{StaticResource FieldLabel}" /><Entry Text="{Binding WarningMin}" Placeholder="Не задано" Keyboard="Numeric" SemanticProperties.Description="Нижня межа попередження" /></VerticalStackLayout>
+                    <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="6"><Label Text="Верхня межа попередження" Style="{StaticResource FieldLabel}" /><Entry Text="{Binding WarningMax}" Placeholder="Не задано" Keyboard="Numeric" SemanticProperties.Description="Верхня межа попередження" /></VerticalStackLayout>
+                </Grid>
+                <Label Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" Style="{StaticResource ErrorText}" />
+                <Label Text="{Binding Message}" />
+                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" HeightRequest="24" />
+                <Button Text="Зберегти пороги" Command="{Binding SaveCommand}" IsVisible="{Binding CanEdit}" IsEnabled="{Binding CanSave}" HorizontalOptions="Start" />
+            </VerticalStackLayout>
+            <Button Text="Назад до кімнат" Command="{Binding GoBackCommand}" Style="{StaticResource TextButton}" HorizontalOptions="Start" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

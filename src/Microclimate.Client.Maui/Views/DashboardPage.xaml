@@ -1,22 +1,82 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- Огляд кімнат із пагінацією; команди елементів звертаються до типізованої ViewModel сторінки. -->
-
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
- xmlns:vm="clr-namespace:Microclimate.Client.Core.ViewModels;assembly=Microclimate.Client.Core" xmlns:cards="clr-namespace:Microclimate.Client.Core.Presentation;assembly=Microclimate.Client.Core" xmlns:views="clr-namespace:Microclimate.Client.Maui.Views" x:Name="PageRoot" x:Class="Microclimate.Client.Maui.Views.DashboardPage"
- x:DataType="vm:DashboardViewModel" Title="{Binding Title}">
-
-<Grid Padding="20" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12">
-<VerticalStackLayout Spacing="4"><Label Text="Огляд кімнат" FontSize="28" FontAttributes="Bold" /><Label Text="{Binding LiveStatus}" FontSize="12" /></VerticalStackLayout>
-<Label Grid.Row="1" Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" TextColor="{AppThemeBinding Light=#B00020, Dark=#FFB4AB}" />
-<Button Grid.Row="2" Text="Оновити" Command="{Binding RefreshCommand}" IsEnabled="{Binding IsNotBusy}" />
-<RefreshView Grid.Row="3" Command="{Binding RefreshCommand}" IsRefreshing="{Binding IsBusy, Mode=OneWay}">
-<CollectionView ItemsSource="{Binding Rooms}" SelectionMode="None">
-<CollectionView.EmptyView><Label Text="Кімнат немає. Оновіть список або перевірте з’єднання." Margin="0,20" /></CollectionView.EmptyView>
-<CollectionView.ItemTemplate><DataTemplate x:DataType="cards:RoomCard"><Border Padding="16" Margin="0,0,0,12">
-<VerticalStackLayout Spacing="8">
-<Label Text="{Binding Name}" FontSize="22" FontAttributes="Bold" />
-<Label Text="{Binding StatusText}" /><Label Text="{Binding MetricsText}" /><Label Text="{Binding UpdatedText}" FontSize="12" />
-<Button Text="Деталі кімнати" Command="{Binding Source={x:Reference PageRoot}, Path=ViewModel.OpenSelectedRoomCommand, x:DataType=views:DashboardPage}" CommandParameter="{Binding .}" />
-</VerticalStackLayout></Border></DataTemplate></CollectionView.ItemTemplate>
-<CollectionView.Footer><Button Text="Завантажити ще" Command="{Binding LoadMoreCommand}" IsVisible="{Binding HasMore}" IsEnabled="{Binding IsNotBusy}" /></CollectionView.Footer>
-</CollectionView></RefreshView></Grid></ContentPage>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Microclimate.Client.Core.ViewModels;assembly=Microclimate.Client.Core"
+             xmlns:cards="clr-namespace:Microclimate.Client.Core.Presentation;assembly=Microclimate.Client.Core"
+             xmlns:views="clr-namespace:Microclimate.Client.Maui.Views"
+             x:Name="PageRoot" x:Class="Microclimate.Client.Maui.Views.DashboardPage"
+             x:DataType="vm:DashboardViewModel" Title="{Binding Title}" Shell.NavBarIsVisible="False">
+    <ContentPage.Resources>
+        <Style x:Key="RoomStatus" x:DataType="cards:RoomCard" TargetType="Label" BasedOn="{StaticResource FieldLabel}">
+            <Style.Triggers>
+                <DataTrigger TargetType="Label" Binding="{Binding StatusCode}" Value="Comfortable"><Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource GoodLight}, Dark={StaticResource GoodDark}}" /></DataTrigger>
+                <DataTrigger TargetType="Label" Binding="{Binding StatusCode}" Value="Normal"><Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource GoodLight}, Dark={StaticResource GoodDark}}" /></DataTrigger>
+                <DataTrigger TargetType="Label" Binding="{Binding StatusCode}" Value="Acceptable"><Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource WarningLight}, Dark={StaticResource WarningDark}}" /></DataTrigger>
+                <DataTrigger TargetType="Label" Binding="{Binding StatusCode}" Value="Warning"><Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource WarningLight}, Dark={StaticResource WarningDark}}" /></DataTrigger>
+                <DataTrigger TargetType="Label" Binding="{Binding StatusCode}" Value="Uncomfortable"><Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource DangerLight}, Dark={StaticResource DangerDark}}" /></DataTrigger>
+                <DataTrigger TargetType="Label" Binding="{Binding StatusCode}" Value="Critical"><Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource DangerLight}, Dark={StaticResource DangerDark}}" /></DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </ContentPage.Resources>
+    <Grid Padding="24" RowDefinitions="Auto,Auto,*" RowSpacing="20">
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+            <VerticalStackLayout Spacing="6">
+                <Label Text="Огляд кімнат" Style="{StaticResource PageTitle}" />
+                <Label Text="Поточні показники та стан приміщень" Style="{StaticResource Caption}" />
+            </VerticalStackLayout>
+            <Button Grid.Column="1" Text="Оновити" Style="{StaticResource SecondaryButton}"
+                    Command="{Binding RefreshCommand}" IsEnabled="{Binding IsNotBusy}" VerticalOptions="Center" />
+        </Grid>
+        <VerticalStackLayout Grid.Row="1" Spacing="8">
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Text="{Binding LiveStatus}" Style="{StaticResource Caption}" VerticalOptions="Center" />
+                <ActivityIndicator Grid.Column="1" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" WidthRequest="24" HeightRequest="24" />
+            </Grid>
+            <Label Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" Style="{StaticResource ErrorText}" />
+        </VerticalStackLayout>
+        <RefreshView Grid.Row="2" Command="{Binding RefreshCommand}" IsRefreshing="{Binding IsBusy, Mode=OneWay}">
+            <CollectionView x:Name="RoomsCollection" ItemsSource="{Binding Rooms}" SelectionMode="None" SizeChanged="OnRoomsSizeChanged">
+                <CollectionView.ItemsLayout><GridItemsLayout Orientation="Vertical" Span="1" HorizontalItemSpacing="16" VerticalItemSpacing="16" /></CollectionView.ItemsLayout>
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout Padding="24,40" Spacing="12" IsVisible="{Binding Source={x:Reference PageRoot}, Path=ViewModel.IsNotBusy, x:DataType=views:DashboardPage}">
+                        <Label Text="Немає кімнат для відображення" Style="{StaticResource SectionTitle}" />
+                        <Label Text="Оновіть список або перевірте адресу сервера в налаштуваннях." Style="{StaticResource Caption}" />
+                    </VerticalStackLayout>
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="cards:RoomCard">
+                        <Border>
+                            <VerticalStackLayout Spacing="16">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                    <VerticalStackLayout Spacing="5">
+                                        <Label Text="{Binding Name}" Style="{StaticResource SectionTitle}" />
+                                        <Label Text="{Binding FloorText}" Style="{StaticResource Caption}" />
+                                    </VerticalStackLayout>
+                                    <Label Grid.Column="1" Text="{Binding StatusText}" Style="{StaticResource RoomStatus}" MaximumWidthRequest="150" VerticalOptions="Start" HorizontalTextAlignment="End" />
+                                </Grid>
+                                <BoxView />
+                                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="20" RowSpacing="16">
+                                    <VerticalStackLayout Spacing="4"><Label Text="Температура" Style="{StaticResource Caption}" /><Label Text="{Binding TemperatureText}" Style="{StaticResource MetricValue}" /></VerticalStackLayout>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="4"><Label Text="CO₂" Style="{StaticResource Caption}" /><Label Text="{Binding Co2Text}" Style="{StaticResource MetricValue}" /></VerticalStackLayout>
+                                    <VerticalStackLayout Grid.Row="1" Spacing="4"><Label Text="Вологість" Style="{StaticResource Caption}" /><Label Text="{Binding HumidityText}" Style="{StaticResource MetricValue}" /></VerticalStackLayout>
+                                    <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="4"><Label Text="PM2.5" Style="{StaticResource Caption}" /><Label Text="{Binding Pm25Text}" Style="{StaticResource MetricValue}" /></VerticalStackLayout>
+                                    <VerticalStackLayout Grid.Row="2" Spacing="4"><Label Text="Шум" Style="{StaticResource Caption}" /><Label Text="{Binding NoiseText}" Style="{StaticResource MetricValue}" /></VerticalStackLayout>
+                                    <VerticalStackLayout Grid.Row="2" Grid.Column="1" Spacing="4"><Label Text="Освітленість" Style="{StaticResource Caption}" /><Label Text="{Binding LightText}" Style="{StaticResource MetricValue}" /></VerticalStackLayout>
+                                </Grid>
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <Label Text="{Binding UpdatedText}" Style="{StaticResource Caption}" VerticalOptions="Center" />
+                                    <Button Grid.Column="1" Text="Відкрити" Style="{StaticResource TextButton}"
+                                            Command="{Binding Source={x:Reference PageRoot}, Path=ViewModel.OpenSelectedRoomCommand, x:DataType=views:DashboardPage}"
+                                            CommandParameter="{Binding .}" SemanticProperties.Description="{Binding Name, StringFormat='Відкрити кімнату {0}'}" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+                <CollectionView.Footer>
+                    <Button Text="Завантажити ще" Style="{StaticResource SecondaryButton}" Margin="0,20,0,20" Command="{Binding LoadMoreCommand}" IsVisible="{Binding HasMore}" IsEnabled="{Binding IsNotBusy}" />
+                </CollectionView.Footer>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
+</ContentPage>

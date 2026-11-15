@@ -29,6 +29,9 @@ public partial class SettingsViewModel : BaseViewModel
     [ObservableProperty]
     private string sessionText = string.Empty;
 
+    [ObservableProperty]
+    private bool isSignedIn;
+
     public IReadOnlyList<ThemeOption> Themes { get; } =
     [new(ClientTheme.System, "Як у системі"), new(ClientTheme.Light, "Світла"), new(ClientTheme.Dark, "Темна")];
 
@@ -47,6 +50,7 @@ public partial class SettingsViewModel : BaseViewModel
     // Оновлює поля адреси, профілю та фактичного способу зберігання сесії.
     public override Task InitializeAsync()
     {
+        IsSignedIn = session.Current is not null;
         ServerAddress = settings.ApiAddress;
         SelectedTheme = Themes.First(option => option.Value == settings.Theme);
         Message = string.Empty;

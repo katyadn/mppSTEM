@@ -1,23 +1,42 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- Редагування адреси API, відомості про профіль і спосіб збереження сесії, вихід. -->
-
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
- xmlns:vm="clr-namespace:Microclimate.Client.Core.ViewModels;assembly=Microclimate.Client.Core"  x:Name="PageRoot" x:Class="Microclimate.Client.Maui.Views.SettingsPage"
- x:DataType="vm:SettingsViewModel" Title="{Binding Title}">
-
-<ScrollView><VerticalStackLayout Padding="24" Spacing="14">
-<Label Text="Налаштування" FontSize="28" FontAttributes="Bold" />
-<Label Text="{Binding ProfileText}" /><Label Text="{Binding SessionText}" />
-<Label Text="Адреса API" FontAttributes="Bold" />
-<Entry Text="{Binding ServerAddress}" Keyboard="Url" Placeholder="https://api.example.com/" IsEnabled="{Binding IsNotBusy}" />
-<Label Text="Після зміни сервера потрібно увійти знову." />
-<Label Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" TextColor="{AppThemeBinding Light=#B00020, Dark=#FFB4AB}" />
-<ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-<Label Text="{Binding Message}" />
-<Label Text="Тема" FontAttributes="Bold" />
-<Picker Title="Тема застосунку" ItemsSource="{Binding Themes}" ItemDisplayBinding="{Binding Name, x:DataType=vm:ThemeOption}" SelectedItem="{Binding SelectedTheme}" IsEnabled="{Binding IsNotBusy}" />
-<Label Text="Одиниці: °C · % · ppm · µg/m³ · dB(A) · lux" />
-<Button Text="Зберегти налаштування" Command="{Binding SaveCommand}" IsEnabled="{Binding IsNotBusy}" />
-<Button Text="Вийти з облікового запису" Command="{Binding LogoutCommand}" IsEnabled="{Binding IsNotBusy}" />
-<Button Text="До входу" Command="{Binding GoToLoginCommand}" />
-</VerticalStackLayout></ScrollView></ContentPage>
+             xmlns:vm="clr-namespace:Microclimate.Client.Core.ViewModels;assembly=Microclimate.Client.Core"
+             x:Class="Microclimate.Client.Maui.Views.SettingsPage" x:DataType="vm:SettingsViewModel" Title="{Binding Title}">
+    <Grid SafeAreaEdges="SoftInput">
+        <ScrollView>
+            <VerticalStackLayout Padding="24" Spacing="24" MaximumWidthRequest="720" HorizontalOptions="Fill">
+                <Border>
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Обліковий запис" Style="{StaticResource SectionTitle}" />
+                        <Label Text="{Binding ProfileText}" />
+                        <Label Text="{Binding SessionText}" Style="{StaticResource Caption}" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border>
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Вигляд" Style="{StaticResource SectionTitle}" />
+                        <Label Text="Тема застосунку" Style="{StaticResource FieldLabel}" />
+                        <Picker Title="Тема застосунку" ItemsSource="{Binding Themes}" ItemDisplayBinding="{Binding Name, x:DataType=vm:ThemeOption}" SelectedItem="{Binding SelectedTheme}" IsEnabled="{Binding IsNotBusy}" />
+                        <Label Text="Одиниці: °C · % · ppm · µg/m³ · dB(A) · lux" Style="{StaticResource Caption}" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border>
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Підключення" Style="{StaticResource SectionTitle}" />
+                        <Label Text="Адреса сервера" Style="{StaticResource FieldLabel}" />
+                        <Entry Text="{Binding ServerAddress}" Keyboard="Url" Placeholder="https://api.example.com/" IsEnabled="{Binding IsNotBusy}" SemanticProperties.Description="Адреса сервера" />
+                        <Label Text="Після зміни сервера потрібно увійти знову." Style="{StaticResource Caption}" />
+                    </VerticalStackLayout>
+                </Border>
+                <Label Text="{Binding ErrorMessage}" IsVisible="{Binding HasError}" Style="{StaticResource ErrorText}" />
+                <Label Text="{Binding Message}" Style="{StaticResource Caption}" />
+                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+                <Button Text="Зберегти налаштування" Command="{Binding SaveCommand}" IsEnabled="{Binding IsNotBusy}" />
+                <Button Text="Вийти з облікового запису" Style="{StaticResource DestructiveButton}" Command="{Binding LogoutCommand}" IsVisible="{Binding IsSignedIn}" IsEnabled="{Binding IsNotBusy}" />
+                <Button Text="До входу" Style="{StaticResource TextButton}" Command="{Binding GoToLoginCommand}">
+                    <Button.Triggers><DataTrigger TargetType="Button" Binding="{Binding IsSignedIn}" Value="True"><Setter Property="IsVisible" Value="False" /></DataTrigger></Button.Triggers>
+                </Button>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>
