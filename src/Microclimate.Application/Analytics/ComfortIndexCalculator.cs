@@ -16,7 +16,6 @@ public sealed class ComfortIndexCalculator : IComfortIndexCalculator
             .Select(i => new MetricComfortScore(i.Metric, i.Value,
                 Score(i.Value, i.Limits),
                 ComfortIndexSettings.Weight(i.Metric)))
-            .Where(c => c.Weight > 0)
             .ToList();
 
         var totalWeight = components.Sum(c => c.Weight);

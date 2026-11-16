@@ -10,11 +10,7 @@ builder.Services.AddOptions<SimulatorOptions>()
 builder.Services.AddSingleton<IValidateOptions<SimulatorOptions>,
     SimulatorOptionsValidator>();
 
-builder.Services.AddHttpClient(MeasurementApiClient.HttpClientName,
-    (services, client) =>
-    client.BaseAddress =
-        services.GetRequiredService<IOptions<SimulatorOptions>>(
-        ).Value.ApiBaseUrl);
+builder.Services.AddMeasurementApiClient();
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IMeasurementSender, MeasurementApiClient>();
