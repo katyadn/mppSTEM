@@ -42,8 +42,6 @@ public sealed partial class SimulatorWorker(
         CancellationToken cancellationToken
     )
     {
-        // Наявність id перевірено SimulatorOptionsValidator під час
-        // старту.
         var sensorId = sensor.SensorId.GetValueOrDefault();
         using var timer = new PeriodicTimer(period, time);
         try
