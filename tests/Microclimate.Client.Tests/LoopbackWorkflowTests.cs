@@ -105,7 +105,7 @@ public sealed class LoopbackWorkflowTests
         var details = new RoomDetailsViewModel(api, fixture.Navigation, fixture.Clock, fixture.Session);
         details.SelectRoom(ClientFixture.RoomId, "101");
         await details.InitializeAsync();
-        Assert.Equal(2, details.Series.Count);
+        Assert.Equal(2, details.Charts[0].Series.Count);
         Assert.Equal("82/100 · Прийнятно", details.ComfortText);
         var alerts = new AlertsViewModel(api, fixture.Session, fixture.Navigation);
         await alerts.InitializeAsync();

@@ -28,6 +28,19 @@ public partial class DashboardPage : ContentPage
         );
     }
 
+    private void OnRoomsSizeChanged(object? sender, EventArgs e)
+    {
+        if (RoomsCollection.ItemsLayout is GridItemsLayout layout)
+        {
+            var span =
+                RoomsCollection.Width >= 1120 ? 3
+                : RoomsCollection.Width >= 720 ? 2
+                : 1;
+            if (layout.Span != span)
+                layout.Span = span;
+        }
+    }
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();

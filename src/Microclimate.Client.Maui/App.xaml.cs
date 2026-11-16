@@ -19,6 +19,23 @@ public partial class App : Application
         };
     }
 
-    protected override Window CreateWindow(IActivationState? activationState) =>
-        new(services.GetRequiredService<AppShell>());
+    protected override Window CreateWindow(IActivationState? activationState)
+    {
+        var window = new Window(services.GetRequiredService<AppShell>());
+#if MACCATALYST
+        var titleBar = new TitleBar { Title = "Мікроклімат", HeightRequest = 42 };
+        titleBar.SetAppThemeColor(
+            TitleBar.ForegroundColorProperty,
+            (Color)Resources["TextLight"],
+            (Color)Resources["TextDark"]
+        );
+        titleBar.SetAppThemeColor(
+            VisualElement.BackgroundColorProperty,
+            (Color)Resources["CanvasLight"],
+            (Color)Resources["CanvasDark"]
+        );
+        window.TitleBar = titleBar;
+#endif
+        return window;
+    }
 }

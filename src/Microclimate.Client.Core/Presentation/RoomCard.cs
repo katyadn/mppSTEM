@@ -4,10 +4,18 @@ using Microclimate.Contracts.Rooms;
 
 namespace Microclimate.Client.Core.Presentation;
 
-// Клієнт працює з кімнатами; поля будівлі зі старого DTO не використовуються.
 // Дані картки кімнати без залежності інтерфейсу від застарілих полів будівлі.
 public sealed record RoomCard(Guid Id, string Name, int Floor, string? Type, string StatusText, string MetricsText)
 {
+    public string StatusCode { get; init; } = "NoData";
+    public string FloorText => $"Поверх {Floor}";
+    public string TemperatureText { get; init; } = "—";
+    public string HumidityText { get; init; } = "—";
+    public string Co2Text { get; init; } = "—";
+    public string Pm25Text { get; init; } = "—";
+    public string NoiseText { get; init; } = "—";
+    public string LightText { get; init; } = "—";
+
     public string UpdatedText { get; init; } = "Вимірів ще немає";
 
     // Створює картку з доступних вимірів і серверного статусу, ігноруючи legacy-поля будівлі.
@@ -42,10 +50,25 @@ public sealed record RoomCard(Guid Id, string Name, int Floor, string? Type, str
             )
         )
         {
+            StatusCode = room.LatestMetrics.Count == 0 ? "NoData" : room.Status,
+            TemperatureText = MetricText(room, MetricType.Temperature),
+            HumidityText = MetricText(room, MetricType.Humidity),
+            Co2Text = MetricText(room, MetricType.Co2),
+            Pm25Text = MetricText(room, MetricType.Pm25),
+            NoiseText = MetricText(room, MetricType.Noise),
+            LightText = MetricText(room, MetricType.Light),
             UpdatedText =
                 room.LatestMetrics.Count == 0
                     ? "Вимірів ще немає"
                     : $"Останній вимір: {room.LatestMetrics.Max(metric => metric.MeasuredAt).ToLocalTime():dd.MM HH:mm}",
         };
+    }
+
+    private static string MetricText(RoomSummaryResponse room, MetricType type)
+    {
+        var latest = room.LatestMetrics.Where(metric => metric.Metric == type).MaxBy(metric => metric.MeasuredAt);
+        return latest is null
+            ? "—"
+            : $"{latest.Value.ToString("0.#", CultureInfo.InvariantCulture)} {MetricPresentation.MetricUnit(type)}";
     }
 }

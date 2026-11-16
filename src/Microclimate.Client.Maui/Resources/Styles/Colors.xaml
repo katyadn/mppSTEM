@@ -43,4 +43,20 @@
     <SolidColorBrush x:Key="Gray600Brush" Color="{StaticResource Gray600}"/>
     <SolidColorBrush x:Key="Gray900Brush" Color="{StaticResource Gray900}"/>
     <SolidColorBrush x:Key="Gray950Brush" Color="{StaticResource Gray950}"/>
+    <Color x:Key="CanvasLight">#F6F5FA</Color>
+    <Color x:Key="CanvasDark">#15141A</Color>
+    <Color x:Key="SurfaceLight">#FFFFFF</Color>
+    <Color x:Key="SurfaceDark">#24222C</Color>
+    <Color x:Key="TextLight">#24212E</Color>
+    <Color x:Key="TextDark">#F5F3FA</Color>
+    <Color x:Key="MutedLight">#686371</Color>
+    <Color x:Key="MutedDark">#B9B3C6</Color>
+    <Color x:Key="LineLight">#E4E0EC</Color>
+    <Color x:Key="LineDark">#403A4B</Color>
+    <Color x:Key="DangerLight">#A12C3D</Color>
+    <Color x:Key="DangerDark">#FFADB8</Color>
+    <Color x:Key="WarningLight">#885700</Color>
+    <Color x:Key="WarningDark">#EFCA79</Color>
+    <Color x:Key="GoodLight">#246446</Color>
+    <Color x:Key="GoodDark">#9DD9B5</Color>
 </ResourceDictionary>

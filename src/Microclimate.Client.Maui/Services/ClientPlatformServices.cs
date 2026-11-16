@@ -16,12 +16,30 @@ public sealed class PlatformClientSettings : IClientSettings
         {
             Preferences.Default.Set("theme", value.ToString());
             if (Application.Current is { } app)
+            {
                 app.UserAppTheme = value switch
                 {
                     ClientTheme.Light => AppTheme.Light,
                     ClientTheme.Dark => AppTheme.Dark,
                     _ => AppTheme.Unspecified,
                 };
+#if MACCATALYST
+                // MAUI змінює поточний контролер; коренева панель також має скинути примусову тему.
+                var nativeStyle = value switch
+                {
+                    ClientTheme.Light => UIKit.UIUserInterfaceStyle.Light,
+                    ClientTheme.Dark => UIKit.UIUserInterfaceStyle.Dark,
+                    _ => UIKit.UIUserInterfaceStyle.Unspecified,
+                };
+                foreach (var window in app.Windows)
+                    if (window.Handler?.PlatformView is UIKit.UIWindow nativeWindow)
+                    {
+                        nativeWindow.OverrideUserInterfaceStyle = nativeStyle;
+                        if (nativeWindow.RootViewController is { } controller)
+                            controller.OverrideUserInterfaceStyle = nativeStyle;
+                    }
+#endif
+            }
         }
     }
 

@@ -1,4 +1,3 @@
-using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microclimate.Client.Core.Presentation;
@@ -24,31 +23,22 @@ public partial class RoomDetailsViewModel : BaseViewModel
     private string comfortText = "Немає даних";
 
     [ObservableProperty]
-    private string summaryText = "Немає даних";
-
-    // Період завантажених даних у місцевому часі та одиниця метрики.
-    [ObservableProperty]
     private string rangeText = string.Empty;
 
-    // Одиниця завантаженої серії; не змінюється від самого вибору іншої метрики.
     [ObservableProperty]
-    private string chartUnit = string.Empty;
+    [NotifyPropertyChangedFor(nameof(IsThresholdEditorClosed))]
+    private bool isThresholdEditorOpen;
 
-    // Неперервні сегменти графіка; пропущені інтервали розділяють сегменти.
-    [ObservableProperty]
-    private IReadOnlyList<IReadOnlyList<ChartPoint>> series = [];
+    public bool IsThresholdEditorClosed => !IsThresholdEditorOpen;
+    public string ThresholdEditorTitle => $"Пороги · {SelectedMetric.Name}";
+    public IReadOnlyList<MetricChartViewModel> Charts { get; }
 
+    // Метрика відкритого редактора порогів; усі графіки завантажуються разом.
     [ObservableProperty]
-    private bool hasSeries;
-
-    [ObservableProperty]
-    private bool hasNoSeries = true;
-
-    // Вибір метрики, що застосовується при наступному оновленні.
-    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ThresholdEditorTitle))]
     private MetricOption selectedMetric;
 
-    // Вибір періоду, що застосовується при наступному оновленні.
+    // Спільний період усіх шести графіків.
     [ObservableProperty]
     private PeriodOption selectedPeriod;
 
@@ -67,7 +57,6 @@ public partial class RoomDetailsViewModel : BaseViewModel
     public Guid? RoomId { get; private set; }
 
     private bool initialized;
-    private MetricType? thresholdMetric;
     private Task activeRefresh = Task.CompletedTask;
     private int selectionVersion;
     public ThresholdsViewModel Thresholds { get; }
@@ -76,9 +65,8 @@ public partial class RoomDetailsViewModel : BaseViewModel
     partial void OnSelectedMetricChanged(MetricOption value)
     {
         Thresholds.Invalidate();
-        thresholdMetric = null;
         if (initialized)
-            SelectionRefresh = RefreshSelectionAsync();
+            SelectionRefresh = LoadSelectedThresholdsAsync();
     }
 
     partial void OnSelectedPeriodChanged(PeriodOption value)
@@ -108,24 +96,23 @@ public partial class RoomDetailsViewModel : BaseViewModel
         this.navigation = navigation;
         this.clock = clock;
         Thresholds = new ThresholdsViewModel(api, session, navigation);
+        Charts = Metrics.Select(metric => new MetricChartViewModel(metric)).ToArray();
         selectedMetric = Metrics[0];
         selectedPeriod = Periods[0];
         Title = "Деталі кімнати";
     }
 
-    // Запам’ятовує кімнату й очищає попередню статистику та графік.
+    // Запам’ятовує кімнату й очищає попередню статистику.
     public void SelectRoom(Guid? roomId, string? name)
     {
         initialized = false;
-        thresholdMetric = null;
         Thresholds.Invalidate();
         RoomId = roomId;
         Title = string.IsNullOrWhiteSpace(name) ? "Деталі кімнати" : name;
-        Series = [];
-        HasSeries = false;
-        HasNoSeries = true;
+        foreach (var chart in Charts)
+            chart.Clear();
+        IsThresholdEditorOpen = false;
         ComfortText = "Немає даних";
-        SummaryText = "Немає даних";
     }
 
     public override async Task InitializeAsync()
@@ -134,7 +121,7 @@ public partial class RoomDetailsViewModel : BaseViewModel
         initialized = true;
     }
 
-    // Очищає старі дані, фіксує метрику й UTC-період та завантажує кімнату, статистику, ряд і комфорт.
+    // Очищає старі дані та завантажує всі показники за один UTC-період.
     [RelayCommand]
     private Task RefreshAsync() => StartRefreshAsync(live: false);
 
@@ -153,46 +140,92 @@ public partial class RoomDetailsViewModel : BaseViewModel
             ErrorMessage = "Спершу виберіть кімнату в огляді.";
             return;
         }
-        // Новий період не показує старих даних; live update зберігає висоту графіка й вибрану точку.
         if (!live)
         {
-            Series = [];
-            HasSeries = false;
-            HasNoSeries = true;
-            SummaryText = "Немає даних";
+            foreach (var chart in Charts)
+                chart.Clear();
             ComfortText = "Немає даних";
         }
         var to = clock.GetUtcNow();
         var from = to.AddDays(-SelectedPeriod.Days);
-        var metric = SelectedMetric;
-        if (!Thresholds.IsLoaded || thresholdMetric != metric.Value)
-        {
-            // Пороги завантажуються незалежно від успіху запитів аналітики.
-            await Thresholds.LoadAsync(roomId, metric.Value);
-            token.ThrowIfCancellationRequested();
-            thresholdMetric = metric.Value;
-        }
-        var room = await api.GetRoomAsync(roomId, token);
-        var summary = await api.GetSummaryAsync(roomId, metric.Value, from, to, token);
-        var points = await api.GetSeriesAsync(roomId, metric.Value, from, to, token);
-        var comfort = await api.GetComfortAsync(roomId, token);
+        var roomTask = api.GetRoomAsync(roomId, token);
+        var comfortTask = api.GetComfortAsync(roomId, token);
+        var latestTask = api.GetLatestAsync(roomId, token);
+        var thresholdsTask = api.GetThresholdsAsync(roomId, token);
+        var chartTasks = Charts
+            .Select(async chart =>
+            {
+                var summaryTask = api.GetSummaryAsync(roomId, chart.Metric, from, to, token);
+                var pointsTask = api.GetSeriesAsync(roomId, chart.Metric, from, to, token);
+                await Task.WhenAll(summaryTask, pointsTask);
+                return (Chart: chart, Summary: await summaryTask, Points: await pointsTask);
+            })
+            .ToArray();
+        await Task.WhenAll(chartTasks.Cast<Task>().Concat([roomTask, comfortTask, latestTask, thresholdsTask]));
         token.ThrowIfCancellationRequested();
-        Title = room.Name;
-        ChartUnit = metric.Unit;
-        RangeText = $"{from.ToLocalTime():dd.MM HH:mm} — {to.ToLocalTime():dd.MM HH:mm} · {metric.Unit}";
-        Series = AnalyticsPresentation.SplitSeries(points);
-        HasSeries = Series.Count > 0;
-        HasNoSeries = !HasSeries;
-        ComfortText = AnalyticsPresentation.ComfortText(comfort);
-        if (summary.Count > 0)
+        Title = (await roomTask).Name;
+        RangeText = $"{from.ToLocalTime():dd.MM HH:mm} — {to.ToLocalTime():dd.MM HH:mm}";
+        ComfortText = AnalyticsPresentation.ComfortText(await comfortTask);
+        var latest = await latestTask;
+        var thresholds = await thresholdsTask;
+        foreach (var task in chartTasks)
         {
-            // Відсутній агрегат показуємо тире, а не вигаданим нульовим виміром.
-            static string Format(double? value) => value?.ToString("0.#", CultureInfo.InvariantCulture) ?? "—";
-            SummaryText =
-                $"Мін: {Format(summary.Min)} · Середнє: {Format(summary.Avg)} · Макс: {Format(summary.Max)} {metric.Unit}";
+            var result = await task;
+            result.Chart.Update(
+                result.Summary,
+                result.Points,
+                latest.Where(item => item.Metric == result.Chart.Metric).MaxBy(item => item.MeasuredAt),
+                thresholds.FirstOrDefault(item => item.Metric == result.Chart.Metric),
+                to
+            );
+        }
+    }
+
+    private async Task LoadSelectedThresholdsAsync()
+    {
+        if (RoomId is not { } roomId)
+            return;
+        await Thresholds.LoadAsync(roomId, SelectedMetric.Value);
+    }
+
+    [RelayCommand]
+    private async Task OpenThresholdsAsync(MetricChartViewModel chart)
+    {
+        if (RoomId is null)
+            return;
+        IsThresholdEditorOpen = true;
+        if (SelectedMetric.Value != chart.Metric)
+        {
+            SelectedMetric = Metrics.First(item => item.Value == chart.Metric);
+            if (initialized)
+                await SelectionRefresh;
+            else
+                await LoadSelectedThresholdsAsync();
         }
         else
-            SummaryText = "Немає даних";
+            await LoadSelectedThresholdsAsync();
+    }
+
+    [RelayCommand]
+    private void CloseThresholds()
+    {
+        if (Thresholds.IsBusy)
+            return;
+        IsThresholdEditorOpen = false;
+        Thresholds.Invalidate();
+    }
+
+    [RelayCommand]
+    private async Task SaveThresholdsAsync()
+    {
+        if (!Thresholds.CanSave)
+            return;
+        await Thresholds.SaveCommand.ExecuteAsync(null);
+        if (Thresholds.HasError || string.IsNullOrEmpty(Thresholds.Message))
+            return;
+        IsThresholdEditorOpen = false;
+        await activeRefresh;
+        await RefreshLiveAsync();
     }
 
     [RelayCommand]

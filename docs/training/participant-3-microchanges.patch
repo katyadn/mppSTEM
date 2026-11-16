@@ -50,7 +50,7 @@ new file mode 100644
 +        vm.SelectedPeriod = vm.Periods.Single(option => option.Days == 14);
 +        await vm.SelectionRefresh;
 +        var request = Assert.Single(f.Requests, item =>
-+            item.Uri.AbsolutePath.EndsWith("/series", StringComparison.Ordinal)
++            item.Uri.AbsolutePath.EndsWith("/series", StringComparison.Ordinal) && item.Uri.Query.Contains("metric=temperature", StringComparison.Ordinal)
 +        );
 +        var query = QueryHelpers.ParseQuery(request.Uri.Query);
 +        var from = DateTimeOffset.Parse(query["from"].ToString(), CultureInfo.InvariantCulture);

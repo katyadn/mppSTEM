@@ -38,5 +38,40 @@ public sealed class RoomCardTests
         var card = RoomCard.FromResponse(response);
         Assert.Equal("Немає даних", card.StatusText);
         Assert.Empty(card.MetricsText);
+        Assert.Equal("NoData", card.StatusCode);
+        Assert.Equal("—", card.TemperatureText);
+        Assert.Equal("—", card.Co2Text);
+    }
+
+    [Fact]
+    public void DashboardKeepsZeroDistinctFromMissingAndUsesLatestReading()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var response = new RoomSummaryResponse(
+            Guid.NewGuid(),
+            Guid.Empty,
+            "",
+            "101",
+            2,
+            null,
+            "Comfortable",
+            [
+                new(MetricType.Temperature, 24.5, now.AddMinutes(-5)),
+                new(MetricType.Temperature, 0, now),
+                new(MetricType.Humidity, 45, now),
+                new(MetricType.Co2, 650, now),
+                new(MetricType.Pm25, 8.2, now),
+                new(MetricType.Noise, 40, now),
+            ]
+        );
+        var card = RoomCard.FromResponse(response);
+        Assert.Equal("0 °C", card.TemperatureText);
+        Assert.Equal("45 %", card.HumidityText);
+        Assert.Equal("650 ppm", card.Co2Text);
+        Assert.Equal("8.2 µg/m³", card.Pm25Text);
+        Assert.Equal("40 dB(A)", card.NoiseText);
+        Assert.Equal("—", card.LightText);
+        Assert.Equal("Comfortable", card.StatusCode);
+        Assert.Equal("Поверх 2", card.FloorText);
     }
 }

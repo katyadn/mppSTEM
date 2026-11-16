@@ -52,8 +52,8 @@ public sealed class BackendWorkflowTests
         details.SelectRoom(room.Id, room.Name);
         await details.InitializeAsync();
         Assert.False(details.HasError, details.ErrorMessage);
-        Assert.Equal("Немає даних", details.SummaryText);
-        Assert.False(details.HasSeries);
+        Assert.All(details.Charts, chart => Assert.Equal("Немає даних", chart.SummaryText));
+        Assert.All(details.Charts, chart => Assert.False(chart.HasSeries));
 
         http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", session.Current.AccessToken);
         var sensors = await http.GetFromJsonAsync<List<SensorResponse>>($"/api/v1/rooms/{room.Id}/sensors");
@@ -76,14 +76,23 @@ public sealed class BackendWorkflowTests
 
         await details.RefreshCommand.ExecuteAsync(null);
         Assert.False(details.HasError, details.ErrorMessage);
-        Assert.Contains("22.5", details.SummaryText, StringComparison.Ordinal);
-        Assert.True(details.HasSeries);
-        Assert.Equal(22.5, Assert.Single(details.Series.SelectMany(segment => segment)).Value);
+        Assert.Contains("22.5", details.Charts[0].SummaryText, StringComparison.Ordinal);
+        Assert.True(details.Charts[0].HasSeries);
+        Assert.Equal(22.5, Assert.Single(details.Charts[0].Series.SelectMany(segment => segment)).Value);
         Assert.NotEqual("Немає даних", details.ComfortText);
+        Assert.Equal(MetricChartState.Normal, details.Charts[0].State);
+        Assert.Equal(MetricChartState.Critical, details.Charts[2].State);
+        Assert.False(details.Charts[1].HasSeries);
+        await details.OpenThresholdsCommand.ExecuteAsync(details.Charts[0]);
+        details.Thresholds.WarningMax = "22";
+        await details.SaveThresholdsCommand.ExecuteAsync(null);
+        Assert.False(details.Thresholds.HasError, details.Thresholds.ErrorMessage);
+        Assert.False(details.IsThresholdEditorOpen);
+        Assert.Equal(MetricChartState.Warning, details.Charts[0].State);
         details.SelectedPeriod = details.Periods[1];
         await details.SelectionRefresh;
         Assert.False(details.HasError, details.ErrorMessage);
-        Assert.True(details.HasSeries);
+        Assert.True(details.Charts[0].HasSeries);
 
         var alerts = new AlertsViewModel(api, session, navigation);
         alerts.SelectedLevel = alerts.Levels[2];
