@@ -87,7 +87,6 @@ public sealed partial class MeasurementApiClient(
         }
         catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
-            // Тайм-аут HttpClient, а не зупинка симулятора.
             LogUnavailable(batch.SensorId, ex.Message);
             return SendResult.Unavailable;
         }
