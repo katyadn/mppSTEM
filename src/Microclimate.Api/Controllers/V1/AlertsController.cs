@@ -1,14 +1,11 @@
 using System.Security.Claims;
-
 using Asp.Versioning;
-
 using Microclimate.Application.Abstractions.Notifications;
 using Microclimate.Application.Abstractions.Persistence;
 using Microclimate.Application.Common;
 using Microclimate.Contracts.Alerts;
 using Microclimate.Contracts.Common;
 using Microclimate.Domain.Alerts;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,7 +21,8 @@ public sealed class AlertsController(
     IAlertRepository alerts,
     IAlertNotifier alertNotifier,
     IUnitOfWork unitOfWork,
-    TimeProvider time) : ControllerBase
+    TimeProvider time
+) : ControllerBase
 {
     /// <summary>
     /// Отримання фільтрованого списку сповіщень із пагінацією.
@@ -38,15 +36,14 @@ public sealed class AlertsController(
         [FromQuery] AlertStatus? status,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = PageRequest.DefaultPageSize,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
-        Domain.Enums.AlertLevel? domainLevel = level.HasValue && Enum.TryParse<Domain.Enums.AlertLevel>(level.Value.ToString(), out var dl)
-            ? dl
-            : null;
+        Domain.Enums.AlertLevel? domainLevel =
+            level.HasValue && Enum.TryParse<Domain.Enums.AlertLevel>(level.Value.ToString(), out var dl) ? dl : null;
 
-        Domain.Enums.AlertStatus? domainStatus = status.HasValue && Enum.TryParse<Domain.Enums.AlertStatus>(status.Value.ToString(), out var ds)
-            ? ds
-            : null;
+        Domain.Enums.AlertStatus? domainStatus =
+            status.HasValue && Enum.TryParse<Domain.Enums.AlertStatus>(status.Value.ToString(), out var ds) ? ds : null;
 
         var filter = new AlertFilter(roomId, domainLevel, domainStatus);
         var pageRequest = new PageRequest(page, pageSize);
@@ -65,9 +62,7 @@ public sealed class AlertsController(
     [ProducesResponseType<AlertResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<AlertResponse>> Acknowledge(
-        Guid id,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<AlertResponse>> Acknowledge(Guid id, CancellationToken cancellationToken)
     {
         var alert = await alerts.GetByIdAsync(id, cancellationToken);
         if (alert is null)
@@ -108,6 +103,7 @@ public sealed class AlertsController(
             alert.RaisedAt,
             alert.AcknowledgedAt,
             alert.AcknowledgedByUserId,
-            alert.ResolvedAt);
+            alert.ResolvedAt
+        );
     }
 }

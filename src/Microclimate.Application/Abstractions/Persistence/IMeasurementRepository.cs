@@ -13,33 +13,37 @@ namespace Microclimate.Application.Abstractions.Persistence;
 /// </summary>
 public interface IMeasurementRepository
 {
-    Task AddRangeAsync(IReadOnlyCollection<Measurement> measurements,
-        CancellationToken cancellationToken);
+    Task AddRangeAsync(IReadOnlyCollection<Measurement> measurements, CancellationToken cancellationToken);
 
     Task<PagedResult<Measurement>> GetByRoomAsync(
         Guid roomId,
         MetricType metric,
         DateRange range,
         PageRequest page,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken
+    );
 
-    IAsyncEnumerable<Measurement> StreamByRoomAsync(Guid roomId,
-        MetricType? metric, DateRange range,
-        CancellationToken cancellationToken);
+    IAsyncEnumerable<Measurement> StreamByRoomAsync(
+        Guid roomId,
+        MetricType? metric,
+        DateRange range,
+        CancellationToken cancellationToken
+    );
 
     Task<IReadOnlyList<MetricSummary>> GetSummaryAsync(
         Guid roomId,
         MetricType? metric,
         DateRange range,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken
+    );
 
     Task<IReadOnlyList<SeriesPoint>> GetSeriesAsync(
         Guid roomId,
         MetricType metric,
         DateRange range,
         AggregationInterval interval,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken
+    );
 
-    Task<IReadOnlyList<Measurement>> GetLatestByRoomAsync(Guid roomId,
-        CancellationToken cancellationToken);
+    Task<IReadOnlyList<Measurement>> GetLatestByRoomAsync(Guid roomId, CancellationToken cancellationToken);
 }

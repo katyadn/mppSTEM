@@ -21,7 +21,7 @@
 | 1 | [#59](https://github.com/katyadn/mppSTEM/issues/59) Update participant 1 META-USAGE section | 20.10.2026 | 2026-10-26 |
 | 1 | [#61](https://github.com/katyadn/mppSTEM/issues/61) Swagger authorization for JWT and device key | 20.10.2026 | 2026-10-26 |
 | 1 | [#69](https://github.com/katyadn/mppSTEM/issues/69) Симулятор датчиків (Етап 2) | 08.11.2026 | не вказано |
-| 1 | [#70](https://github.com/katyadn/mppSTEM/issues/70) Експорт вимірів у CSV і JSON | відкрите | не вказано |
+| 1 | [#70](https://github.com/katyadn/mppSTEM/issues/70) Експорт вимірів у CSV і JSON | 15.11.2026 | не вказано |
 | 1 | [#73](https://github.com/katyadn/mppSTEM/issues/73) Оформлення розділу Учасника 1 у META-USAGE | 08.11.2026 | не вказано |
 | 2 | [#23](https://github.com/katyadn/mppSTEM/issues/23) [Stage 0] API specification (docs/api.md) | 12.10.2026 | не вказано |
 | 2 | [#24](https://github.com/katyadn/mppSTEM/issues/24) [Stage 0] Shared contracts: request/response DTOs | 12.10.2026 | не вказано |
@@ -45,11 +45,13 @@
 | 3 | [#62](https://github.com/katyadn/mppSTEM/issues/62) Align MAUI with Xcode 27.1 and verify Mac launch | 24.10.2026 | не вказано |
 | 3 | [#64](https://github.com/katyadn/mppSTEM/issues/64) Add navigation icons and chart annotations | 24.10.2026 | не вказано |
 | 3 | [#66](https://github.com/katyadn/mppSTEM/issues/66) Document participant 3 client code and infrastructure | 24.10.2026 | 2026-10-24 |
-| 3 | [#76](https://github.com/katyadn/mppSTEM/issues/76) Complete participant 3 client workflows and delivery checks | відкрите | 2026-11-15 |
+| 3 | [#76](https://github.com/katyadn/mppSTEM/issues/76) Complete participant 3 client workflows and delivery checks | 15.11.2026 | 2026-11-15 |
+
+Таблиця охоплює навчальні задачі до #76; технічне очищення #80 ведеться окремо.
 
 ## Що ще потрібно для оцінки B2
 
 - Звірити узгоджені строки, яких немає в issues, з викладачем/командою. Без них частку виконаного вчасно не обчислено.
 - #43: issue закрито 24.10 при дедлайні 13.10; commit `ad5cca5` і історичний UI-прогін датовані 13.10. Це різні події, а не доказ завчасного перенесення строку.
-- #76: клієнтська реалізація готова до рев'ю в PR #77, issue відкритий до merge. Людське рев'ю й merge не позначені завершеними.
-- #33 та #70 залишаються відкритими в зонах інших учасників. Закриті issues з непозначеними чеклістами не виправлялися заднім числом.
+- #76: закрито після merge #77 15.11; формального GitHub review на PR немає.
+- #33 залишається відкритим; #70 закрито після merge #72 15.11. Закриті issues з непозначеними чеклістами не виправлялися заднім числом.

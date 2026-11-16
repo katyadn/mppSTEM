@@ -17,6 +17,5 @@ public sealed class PingController(TimeProvider timeProvider) : ControllerBase
     /// </summary>
     [HttpGet]
     [ProducesResponseType<PingResponse>(StatusCodes.Status200OK)]
-    public ActionResult<PingResponse> Get() =>
-        Ok(new PingResponse("ok", "1.0", timeProvider.GetUtcNow()));
+    public ActionResult<PingResponse> Get() => Ok(new PingResponse("ok", "1.0", timeProvider.GetUtcNow()));
 }

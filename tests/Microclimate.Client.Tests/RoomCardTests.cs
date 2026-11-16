@@ -7,13 +7,23 @@ namespace Microclimate.Client.Tests;
 // Перевірки картки кімнати без legacy-полів будівлі та вигаданого нормального стану.
 public sealed class RoomCardTests
 {
-    // Перевіряє: картка кімнати не відображає застарілі поля будівлі.
     [Fact]
     public void RoomCardIgnoresLegacyBuildingFields()
     {
         var id = Guid.NewGuid();
-        var response = new RoomSummaryResponse(id, Guid.Empty, "Legacy building", "101", 1, "Classroom", "Warning",
-            [new(MetricType.Co2, 1300, DateTimeOffset.UtcNow, AlertLevel.Warning), new(MetricType.Noise, 55, DateTimeOffset.UtcNow)]);
+        var response = new RoomSummaryResponse(
+            id,
+            Guid.Empty,
+            "Legacy building",
+            "101",
+            1,
+            "Classroom",
+            "Warning",
+            [
+                new(MetricType.Co2, 1300, DateTimeOffset.UtcNow, AlertLevel.Warning),
+                new(MetricType.Noise, 55, DateTimeOffset.UtcNow),
+            ]
+        );
         var card = RoomCard.FromResponse(response);
         Assert.Equal(id, card.Id);
         Assert.Equal("101", card.Name);
@@ -21,7 +31,6 @@ public sealed class RoomCardTests
         Assert.Equal("CO₂: 1300 ppm · Шум: 55 dB(A)", card.MetricsText);
     }
 
-    // Перевіряє: відсутні виміри не позначаються як нормальні умови.
     [Fact]
     public void MissingMeasurementsDoNotClaimNormalConditions()
     {

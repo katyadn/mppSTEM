@@ -39,4 +39,5 @@ public sealed record AnomalyResponse(
     DateTimeOffset To,
     double? Value,
     double? Expected,
-    double? Score);
+    double? Score
+);

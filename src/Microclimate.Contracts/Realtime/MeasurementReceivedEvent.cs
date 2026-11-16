@@ -9,8 +9,4 @@ namespace Microclimate.Contracts.Realtime;
 /// <param name="Metric">Тип фізичної метрики.</param>
 /// <param name="Value">Поточне значення в одиницях метрики.</param>
 /// <param name="MeasuredAt">Час вимірювання сенсором (UTC).</param>
-public sealed record MeasurementReceivedEvent(
-    Guid RoomId,
-    MetricType Metric,
-    double Value,
-    DateTimeOffset MeasuredAt);
+public sealed record MeasurementReceivedEvent(Guid RoomId, MetricType Metric, double Value, DateTimeOffset MeasuredAt);

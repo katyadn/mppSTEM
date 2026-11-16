@@ -1,16 +1,12 @@
 using System.Security.Cryptography;
 using System.Text;
-
 using Asp.Versioning;
-
 using FluentValidation;
-
 using Microclimate.Application.Abstractions.Persistence;
 using Microclimate.Application.Common;
 using Microclimate.Contracts.Common;
 using Microclimate.Contracts.Sensors;
 using Microclimate.Domain.Sensors;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -27,7 +23,8 @@ public sealed class SensorsController(
     IRoomRepository rooms,
     IUnitOfWork unitOfWork,
     TimeProvider time,
-    IValidator<CreateSensorRequest> createValidator) : ControllerBase
+    IValidator<CreateSensorRequest> createValidator
+) : ControllerBase
 {
     private static readonly MetricType[] DefaultCapabilities =
     [
@@ -46,7 +43,8 @@ public sealed class SensorsController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<SensorResponse>>> ListByRoom(
         Guid roomId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var room = await rooms.GetByIdAsync(roomId, cancellationToken);
         if (room is null)
@@ -66,9 +64,7 @@ public sealed class SensorsController(
     [HttpGet("api/v{version:apiVersion}/sensors/{id:guid}")]
     [ProducesResponseType<SensorResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<SensorResponse>> GetById(
-        Guid id,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<SensorResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var sensor = await sensors.GetByIdAsync(id, cancellationToken);
         if (sensor is null)
@@ -90,7 +86,8 @@ public sealed class SensorsController(
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<SensorCreatedResponse>> Create(
         [FromBody] CreateSensorRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var validation = await createValidator.ValidateAsync(request, cancellationToken);
         if (!validation.IsValid)
@@ -118,12 +115,7 @@ public sealed class SensorsController(
         var deviceKey = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32));
         var keyHash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(deviceKey)));
 
-        var sensor = Sensor.Create(
-            request.RoomId,
-            request.SerialNumber,
-            request.Model,
-            keyHash,
-            time.GetUtcNow());
+        var sensor = Sensor.Create(request.RoomId, request.SerialNumber, request.Model, keyHash, time.GetUtcNow());
 
         sensors.Add(sensor);
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -141,9 +133,7 @@ public sealed class SensorsController(
     [HttpDelete("api/v{version:apiVersion}/sensors/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(
-        Guid id,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         var sensor = await sensors.GetByIdAsync(id, cancellationToken);
         if (sensor is null)
@@ -164,9 +154,7 @@ public sealed class SensorsController(
     [HttpPost("api/v{version:apiVersion}/sensors/{id:guid}/rotate-key")]
     [ProducesResponseType<SensorCreatedResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<SensorCreatedResponse>> RotateKey(
-        Guid id,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<SensorCreatedResponse>> RotateKey(Guid id, CancellationToken cancellationToken)
     {
         var sensor = await sensors.GetByIdAsync(id, cancellationToken);
         if (sensor is null)
@@ -193,5 +181,6 @@ public sealed class SensorsController(
             sensor.IsActive,
             capabilities ?? DefaultCapabilities,
             sensor.InstalledAt,
-            sensor.LastSeenAt);
+            sensor.LastSeenAt
+        );
 }

@@ -1,27 +1,33 @@
 using Microclimate.Client.Core.Services;
-using Microclimate.Client.Maui.Services;
 using Microclimate.Client.Core.ViewModels;
+using Microclimate.Client.Maui.Services;
 
 namespace Microclimate.Client.Maui.Views;
 
 // Сторінка огляду кімнат, яка прив’язує ViewModel і узгоджує її завантаження з життєвим циклом екрана.
 public partial class DashboardPage : ContentPage
 {
-    // Модель стану та команд цієї сторінки.
     private readonly DashboardViewModel viewModel;
     private readonly PageLiveUpdates live;
+
     // Типізований доступ до команд сторінки для скомпільованих XAML-прив’язок.
     public DashboardViewModel ViewModel => viewModel;
 
-    // Ініціалізує DashboardPage та його залежності для клієнтського сценарію.
     public DashboardPage(DashboardViewModel viewModel, ClientRealtime realtime, INavigationService navigation)
     {
         this.viewModel = viewModel;
         InitializeComponent();
         BindingContext = viewModel;
-        live = new PageLiveUpdates(realtime, viewModel, navigation, () => viewModel.Rooms.Select(room => room.Id).ToArray(), true, viewModel.RefreshLiveAsync);
+        live = new PageLiveUpdates(
+            realtime,
+            viewModel,
+            navigation,
+            () => viewModel.Rooms.Select(room => room.Id).ToArray(),
+            true,
+            viewModel.RefreshLiveAsync
+        );
     }
-    // Після появи сторінки асинхронно ініціалізує її ViewModel.
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
@@ -29,7 +35,6 @@ public partial class DashboardPage : ContentPage
         await viewModel.InitializeAsync();
     }
 
-    // Скасовує запит ViewModel при виході зі сторінки.
     protected override void OnDisappearing()
     {
         live.Stop();

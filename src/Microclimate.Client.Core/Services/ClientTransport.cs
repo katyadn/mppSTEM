@@ -5,8 +5,6 @@ public static class ClientTransport
 {
     // Перенаправлення не повинно переносити пароль або токен до іншого сервера.
     // Створює HttpClient із тайм-аутом 15 секунд і вимкненими redirect, щоб не передавати облікові дані іншій адресі.
-    public static HttpClient Create() => new(new HttpClientHandler { AllowAutoRedirect = false })
-    {
-        Timeout = TimeSpan.FromSeconds(15),
-    };
+    public static HttpClient Create() =>
+        new(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(15) };
 }

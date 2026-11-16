@@ -14,14 +14,20 @@ public interface IComfortIndexCalculator
 /// <summary>Сценарії аналітики для ендпоінтів analytics/*.</summary>
 public interface IAnalyticsService
 {
-    Task<IReadOnlyList<MetricSummary>> GetSummaryAsync(Guid roomId,
-        MetricType? metric, DateRange range,
-        CancellationToken cancellationToken);
+    Task<IReadOnlyList<MetricSummary>> GetSummaryAsync(
+        Guid roomId,
+        MetricType? metric,
+        DateRange range,
+        CancellationToken cancellationToken
+    );
 
-    Task<IReadOnlyList<SeriesPoint>> GetSeriesAsync(Guid roomId,
-        MetricType metric, DateRange range, AggregationInterval interval,
-        CancellationToken cancellationToken);
+    Task<IReadOnlyList<SeriesPoint>> GetSeriesAsync(
+        Guid roomId,
+        MetricType metric,
+        DateRange range,
+        AggregationInterval interval,
+        CancellationToken cancellationToken
+    );
 
-    Task<ComfortIndexResult> GetComfortIndexAsync(Guid roomId,
-        CancellationToken cancellationToken);
+    Task<ComfortIndexResult> GetComfortIndexAsync(Guid roomId, CancellationToken cancellationToken);
 }

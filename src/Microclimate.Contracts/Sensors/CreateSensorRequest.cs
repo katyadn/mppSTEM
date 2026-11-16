@@ -13,4 +13,5 @@ public sealed record CreateSensorRequest(
     Guid RoomId,
     string SerialNumber,
     string? Model,
-    IReadOnlyList<MetricType> Capabilities);
+    IReadOnlyList<MetricType> Capabilities
+);

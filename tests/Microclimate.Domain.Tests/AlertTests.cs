@@ -7,9 +7,16 @@ namespace Microclimate.Domain.Tests;
 public class AlertTests
 {
     private static Alert NewAlert() =>
-        Alert.Raise(TestData.RoomId, null, MetricType.Co2,
-            AlertLevel.Warning, 1300, 1200, "CO₂ вище норми",
-            TestData.Now);
+        Alert.Raise(
+            TestData.RoomId,
+            null,
+            MetricType.Co2,
+            AlertLevel.Warning,
+            1300,
+            1200,
+            "CO₂ вище норми",
+            TestData.Now
+        );
 
     [Fact]
     public void Acknowledge_OpenAlert_SetsUserAndStatus()
@@ -39,15 +46,13 @@ public class AlertTests
         var alert = NewAlert();
         alert.Resolve(TestData.Now);
 
-        Assert.Throws<DomainException>(() => alert.Acknowledge(
-            TestData.UserId, TestData.Now));
+        Assert.Throws<DomainException>(() => alert.Acknowledge(TestData.UserId, TestData.Now));
         Assert.Throws<DomainException>(() => alert.Resolve(TestData.Now));
     }
 
     [Fact]
     public void Acknowledge_BeforeRaised_Throws()
     {
-        Assert.Throws<DomainException>(() => NewAlert().Acknowledge(
-            TestData.UserId, TestData.Now.AddSeconds(-1)));
+        Assert.Throws<DomainException>(() => NewAlert().Acknowledge(TestData.UserId, TestData.Now.AddSeconds(-1)));
     }
 }

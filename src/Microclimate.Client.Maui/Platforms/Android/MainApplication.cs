@@ -7,12 +7,9 @@ namespace Microclimate.Client.Maui;
 [Application]
 public class MainApplication : MauiApplication
 {
-	// Передає нативний дескриптор і правила володіння базовому Android Application.
-	public MainApplication(IntPtr handle, JniHandleOwnership ownership)
-		: base(handle, ownership)
-	{
-	}
+    // Передає нативний дескриптор і правила володіння базовому Android Application.
+    public MainApplication(IntPtr handle, JniHandleOwnership ownership)
+        : base(handle, ownership) { }
 
-	// Створює MAUI-застосунок зі спільною конфігурацією залежностей.
-	protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
+    protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
 }

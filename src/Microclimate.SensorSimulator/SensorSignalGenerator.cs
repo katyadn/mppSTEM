@@ -1,7 +1,6 @@
 using Microclimate.Contracts.Common;
 using Microclimate.Contracts.Measurements;
 using Microclimate.Domain.Metrics;
-
 using DomainMetricType = Microclimate.Domain.Enums.MetricType;
 
 namespace Microclimate.SensorSimulator;
@@ -12,12 +11,16 @@ namespace Microclimate.SensorSimulator;
 /// </summary>
 public sealed class SensorSignalGenerator
 {
-
     private readonly IReadOnlyList<MetricSignal> _signals;
     private readonly Random _random;
     private readonly OverheatScenario? _overheat;
 
-    public SensorSignalGenerator(SimulationScenario scenario, int seed, OverheatOptions overheat, IReadOnlyList<MetricSignal>? signals = null)
+    public SensorSignalGenerator(
+        SimulationScenario scenario,
+        int seed,
+        OverheatOptions overheat,
+        IReadOnlyList<MetricSignal>? signals = null
+    )
     {
         ArgumentNullException.ThrowIfNull(overheat);
         _signals = signals ?? MetricSignal.Defaults;
@@ -28,9 +31,7 @@ public sealed class SensorSignalGenerator
     public IReadOnlyList<MeasurementItem> Next(DateTimeOffset now)
     {
         var hourOfDay = now.TimeOfDay.TotalHours;
-        return _signals
-            .Select(signal => new MeasurementItem(signal.Metric, Generate(signal, hourOfDay), now))
-            .ToList();
+        return _signals.Select(signal => new MeasurementItem(signal.Metric, Generate(signal, hourOfDay), now)).ToList();
     }
 
     private double Generate(MetricSignal signal, double hourOfDay)

@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-
 using Microclimate.Contracts.Alerts;
 using Microclimate.Contracts.Auth;
 using Microclimate.Contracts.Common;
@@ -9,12 +8,12 @@ using Microclimate.Contracts.Measurements;
 using Microclimate.Contracts.Rooms;
 using Microclimate.Contracts.Sensors;
 using Microclimate.Contracts.Thresholds;
-
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Microclimate.Api.IntegrationTests;
 
-public sealed class ThresholdsAndAlertsTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public sealed class ThresholdsAndAlertsTests(WebApplicationFactory<Program> factory)
+    : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly HttpClient _client = factory.CreateClient();
 
@@ -80,7 +79,8 @@ public sealed class ThresholdsAndAlertsTests(WebApplicationFactory<Program> fact
             WarningMin: 18.0,
             WarningMax: 24.0,
             CriticalMin: 15.0,
-            CriticalMax: 28.0);
+            CriticalMax: 28.0
+        );
 
         using var req = new HttpRequestMessage(HttpMethod.Put, $"/api/v1/rooms/{roomId}/thresholds/Temperature")
         {
@@ -108,7 +108,8 @@ public sealed class ThresholdsAndAlertsTests(WebApplicationFactory<Program> fact
             WarningMin: 20.0,
             WarningMax: 25.0,
             CriticalMin: 30.0,
-            CriticalMax: 35.0);
+            CriticalMax: 35.0
+        );
 
         using var req = new HttpRequestMessage(HttpMethod.Put, $"/api/v1/rooms/{roomId}/thresholds/Temperature")
         {
@@ -129,9 +130,8 @@ public sealed class ThresholdsAndAlertsTests(WebApplicationFactory<Program> fact
         // 35.0 °C для офісу перевищує критичну межу 28 °C
         var batchReq = new MeasurementBatchRequest(
             sensorId,
-            [
-                new MeasurementItem(MetricType.Temperature, 35.0, DateTimeOffset.UtcNow),
-            ]);
+            [new MeasurementItem(MetricType.Temperature, 35.0, DateTimeOffset.UtcNow)]
+        );
 
         using var ingestHttpReq = new HttpRequestMessage(HttpMethod.Post, "/api/v1/measurements")
         {

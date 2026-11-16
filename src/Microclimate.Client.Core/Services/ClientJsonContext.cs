@@ -12,7 +12,11 @@ namespace Microclimate.Client.Core.Services;
 public sealed record ClientProblem(Dictionary<string, string[]>? Errors);
 
 // Метадані JSON, згенеровані під час компіляції для клієнтських DTO, із camelCase та рядковими enum.
-[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true, UseStringEnumConverter = true)]
+[JsonSourceGenerationOptions(
+    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    PropertyNameCaseInsensitive = true,
+    UseStringEnumConverter = true
+)]
 [JsonSerializable(typeof(LoginRequest))]
 [JsonSerializable(typeof(TokenResponse))]
 [JsonSerializable(typeof(UserResponse))]

@@ -8,8 +8,4 @@ namespace Microclimate.Contracts.Common;
 /// <param name="Page">Номер поточної сторінки (починаючи з 1).</param>
 /// <param name="PageSize">Кількість елементів на сторінці.</param>
 /// <param name="TotalCount">Загальна кількість елементів, що задовольняють фільтр.</param>
-public sealed record PagedResponse<T>(
-    IReadOnlyList<T> Items,
-    int Page,
-    int PageSize,
-    int TotalCount);
+public sealed record PagedResponse<T>(IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount);

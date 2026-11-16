@@ -27,11 +27,7 @@ public enum ComfortCategory
 /// <param name="Value">Поточне середнє значення за 15 хв.</param>
 /// <param name="Score">Часткова оцінка від 0 до 100.</param>
 /// <param name="Weight">Вага метрики у зваженому індексі.</param>
-public sealed record ComfortScoreComponentResponse(
-    MetricType Metric,
-    double Value,
-    double Score,
-    double Weight);
+public sealed record ComfortScoreComponentResponse(MetricType Metric, double Value, double Score, double Weight);
 
 /// <summary>
 /// Зведений індекс комфорту приміщення.
@@ -42,4 +38,5 @@ public sealed record ComfortScoreComponentResponse(
 public sealed record ComfortIndexResponse(
     double? Index,
     ComfortCategory Category,
-    IReadOnlyList<ComfortScoreComponentResponse> Components);
+    IReadOnlyList<ComfortScoreComponentResponse> Components
+);

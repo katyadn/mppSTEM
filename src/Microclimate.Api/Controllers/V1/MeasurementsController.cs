@@ -1,7 +1,5 @@
 using Asp.Versioning;
-
 using FluentValidation;
-
 using Microclimate.Api.Authentication;
 using Microclimate.Application.Abstractions.Files;
 using Microclimate.Application.Abstractions.Persistence;
@@ -12,7 +10,6 @@ using Microclimate.Contracts.Measurements;
 using Microclimate.Contracts.Rooms;
 using Microclimate.Domain.Measurements;
 using Microclimate.Domain.ValueObjects;
-
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -31,11 +28,12 @@ public sealed class MeasurementsController(
     IMeasurementRepository measurements,
     IRoomRepository rooms,
     IMeasurementExporter exporter,
-    IValidator<MeasurementBatchRequest> batchValidator) : ControllerBase
+    IValidator<MeasurementBatchRequest> batchValidator
+) : ControllerBase
 {
     /// <summary>
     /// Прийом пакета вимірів від сенсора (до 500 записів).
-    /// Доступно як датчикам за X-Device-Key, так і операторам/адміністраторам за JWT.
+    /// Доступно датчикам за X-Device-Key або користувачам із JWT будь-якої ролі.
     /// </summary>
     [HttpPost("api/v{version:apiVersion}/measurements")]
     [Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme},{DeviceKeyAuthHandler.SchemeName}")]
@@ -46,7 +44,8 @@ public sealed class MeasurementsController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Ingest(
         [FromBody] MeasurementBatchRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var validation = await batchValidator.ValidateAsync(request, cancellationToken);
         if (!validation.IsValid)
@@ -62,27 +61,35 @@ public sealed class MeasurementsController(
 
         // Якщо автентифіковано через DeviceKey, перевіряємо, що ID датчика у клеймі співпадає з пакетом
         var sensorClaim = User.FindFirst("sensor_id")?.Value;
-        if (sensorClaim is not null && Guid.TryParse(sensorClaim, out var authSensorId) && authSensorId != request.SensorId)
+        if (
+            sensorClaim is not null
+            && Guid.TryParse(sensorClaim, out var authSensorId)
+            && authSensorId != request.SensorId
+        )
         {
             return Forbid();
         }
 
-        var inputs = request.Items.Select(item =>
-        {
-            var domainMetric = Enum.TryParse<Domain.Enums.MetricType>(item.Metric.ToString(), out var m)
-                ? m
-                : Domain.Enums.MetricType.Temperature;
-            return new MeasurementInput(domainMetric, item.Value, item.MeasuredAt);
-        }).ToList();
+        var inputs = request
+            .Items.Select(item =>
+            {
+                var domainMetric = Enum.TryParse<Domain.Enums.MetricType>(item.Metric.ToString(), out var m)
+                    ? m
+                    : Domain.Enums.MetricType.Temperature;
+                return new MeasurementInput(domainMetric, item.Value, item.MeasuredAt);
+            })
+            .ToList();
 
         var result = await ingestionService.IngestAsync(request.SensorId, inputs, cancellationToken);
 
-        return Accepted(new
-        {
-            result.Accepted,
-            result.AlertsRaised,
-            result.AlertsResolved,
-        });
+        return Accepted(
+            new
+            {
+                result.Accepted,
+                result.AlertsRaised,
+                result.AlertsResolved,
+            }
+        );
     }
 
     /// <summary>
@@ -99,7 +106,8 @@ public sealed class MeasurementsController(
         [FromQuery] DateTimeOffset? to,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = PageRequest.DefaultPageSize,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         var room = await rooms.GetByIdAsync(roomId, cancellationToken);
         if (room is null)
@@ -118,14 +126,17 @@ public sealed class MeasurementsController(
 
         var paged = await measurements.GetByRoomAsync(roomId, domainMetric, range, pageRequest, cancellationToken);
 
-        var responses = paged.Items.Select(item => new MeasurementResponse(
-            Guid.NewGuid(),
-            roomId,
-            item.SensorId,
-            metric,
-            item.Value,
-            item.MeasuredAt,
-            item.MeasuredAt)).ToList();
+        var responses = paged
+            .Items.Select(item => new MeasurementResponse(
+                Guid.NewGuid(),
+                roomId,
+                item.SensorId,
+                metric,
+                item.Value,
+                item.MeasuredAt,
+                item.MeasuredAt
+            ))
+            .ToList();
 
         return Ok(new PagedResponse<MeasurementResponse>(responses, paged.Page, paged.PageSize, paged.TotalCount));
     }
@@ -139,7 +150,8 @@ public sealed class MeasurementsController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<LatestMetricResponse>>> GetLatest(
         Guid roomId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var room = await rooms.GetByIdAsync(roomId, cancellationToken);
         if (room is null)
@@ -149,11 +161,15 @@ public sealed class MeasurementsController(
 
         var latestList = await measurements.GetLatestByRoomAsync(roomId, cancellationToken);
 
-        var responses = latestList.Select(item =>
-        {
-            var metricType = Enum.TryParse<MetricType>(item.Metric.ToString(), out var mt) ? mt : MetricType.Temperature;
-            return new LatestMetricResponse(metricType, item.Value, item.MeasuredAt);
-        }).ToList();
+        var responses = latestList
+            .Select(item =>
+            {
+                var metricType = Enum.TryParse<MetricType>(item.Metric.ToString(), out var mt)
+                    ? mt
+                    : MetricType.Temperature;
+                return new LatestMetricResponse(metricType, item.Value, item.MeasuredAt);
+            })
+            .ToList();
 
         return Ok(responses);
     }
@@ -173,7 +189,8 @@ public sealed class MeasurementsController(
         [FromQuery] DateTimeOffset? from,
         [FromQuery] DateTimeOffset? to,
         [FromQuery] ExportFormat format = ExportFormat.Csv,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         if (!Enum.IsDefined(format))
         {
@@ -186,9 +203,8 @@ public sealed class MeasurementsController(
             throw NotFoundException.For("Кімната", roomId);
         }
 
-        Domain.Enums.MetricType? domainMetric = metric.HasValue && Enum.TryParse<Domain.Enums.MetricType>(metric.Value.ToString(), out var dm)
-            ? dm
-            : null;
+        Domain.Enums.MetricType? domainMetric =
+            metric.HasValue && Enum.TryParse<Domain.Enums.MetricType>(metric.Value.ToString(), out var dm) ? dm : null;
 
         var start = from ?? DateTimeOffset.UtcNow.AddMonths(-1);
         var end = to ?? DateTimeOffset.UtcNow;
@@ -200,7 +216,12 @@ public sealed class MeasurementsController(
             FileName = $"room-{roomId}-measurements.{ExportFormats.FileExtension(format)}",
         }.ToString();
 
-        await exporter.ExportAsync(measurements.StreamByRoomAsync(roomId, domainMetric, range, cancellationToken), Response.Body, format, cancellationToken);
+        await exporter.ExportAsync(
+            measurements.StreamByRoomAsync(roomId, domainMetric, range, cancellationToken),
+            Response.Body,
+            format,
+            cancellationToken
+        );
         return new EmptyResult();
     }
 }

@@ -1,12 +1,10 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-
 using Microclimate.Contracts.Auth;
 using Microclimate.Contracts.Common;
 using Microclimate.Contracts.Rooms;
 using Microclimate.Contracts.Sensors;
-
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Microclimate.Api.IntegrationTests;
@@ -82,7 +80,8 @@ public sealed class SensorsTests(WebApplicationFactory<Program> factory) : IClas
             room!.Id,
             $"SN-SRV-{Guid.NewGuid().ToString()[..8]}",
             "BME680",
-            [MetricType.Temperature, MetricType.Humidity, MetricType.Co2]);
+            [MetricType.Temperature, MetricType.Humidity, MetricType.Co2]
+        );
 
         using var sensorHttpReq = new HttpRequestMessage(HttpMethod.Post, "/api/v1/sensors")
         {
@@ -105,11 +104,7 @@ public sealed class SensorsTests(WebApplicationFactory<Program> factory) : IClas
     public async Task CreateSensor_AsOperator_Returns403Forbidden()
     {
         var token = await GetOperatorTokenAsync();
-        var createSensorReq = new CreateSensorRequest(
-            Guid.NewGuid(),
-            "SN-TEST-403",
-            "DHT22",
-            [MetricType.Temperature]);
+        var createSensorReq = new CreateSensorRequest(Guid.NewGuid(), "SN-TEST-403", "DHT22", [MetricType.Temperature]);
 
         using var req = new HttpRequestMessage(HttpMethod.Post, "/api/v1/sensors")
         {

@@ -7,11 +7,9 @@ namespace Microclimate.Application.Abstractions.Persistence;
 /// використовують DefaultThresholds.</summary>
 public interface IThresholdRepository
 {
-    Task<IReadOnlyList<Threshold>> ListByRoomAsync(Guid roomId,
-        CancellationToken cancellationToken);
+    Task<IReadOnlyList<Threshold>> ListByRoomAsync(Guid roomId, CancellationToken cancellationToken);
 
-    Task<Threshold?> GetAsync(Guid roomId, MetricType metric,
-        CancellationToken cancellationToken);
+    Task<Threshold?> GetAsync(Guid roomId, MetricType metric, CancellationToken cancellationToken);
 
     void Add(Threshold threshold);
 }

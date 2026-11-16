@@ -6,20 +6,34 @@ namespace Microclimate.Client.Maui.Controls;
 // Малює окремі сегменти часового ряду зі шкалою, одиницями та місцевими датами й часом.
 public sealed class TimeSeriesChart : GraphicsView, IDrawable
 {
-    // BindableProperty сегментів; зміна даних спричиняє перемальовування.
     public static readonly BindableProperty SegmentsProperty = BindableProperty.Create(
-        nameof(Segments), typeof(IReadOnlyList<IReadOnlyList<ChartPoint>>), typeof(TimeSeriesChart),
-        propertyChanged: (view, _, _) => ((TimeSeriesChart)view).RefreshSelection());
-    // BindableProperty одиниці осі значень; зміна підпису спричиняє перемальовування.
-    public static readonly BindableProperty UnitProperty = BindableProperty.Create(
-        nameof(Unit), typeof(string), typeof(TimeSeriesChart), string.Empty,
-        propertyChanged: (view, _, _) => ((TimeSeriesChart)view).Invalidate());
+        nameof(Segments),
+        typeof(IReadOnlyList<IReadOnlyList<ChartPoint>>),
+        typeof(TimeSeriesChart),
+        propertyChanged: (view, _, _) => ((TimeSeriesChart)view).RefreshSelection()
+    );
 
-    // Призначає сам контроль об’єктом малювання GraphicsView.
+    public static readonly BindableProperty UnitProperty = BindableProperty.Create(
+        nameof(Unit),
+        typeof(string),
+        typeof(TimeSeriesChart),
+        string.Empty,
+        propertyChanged: (view, _, _) => ((TimeSeriesChart)view).Invalidate()
+    );
+
     private readonly List<(ChartPoint Point, PointF Position)> renderedPoints = [];
     private ChartPoint? selected;
-    public static readonly BindableProperty SelectedPointTextProperty = BindableProperty.Create(nameof(SelectedPointText), typeof(string), typeof(TimeSeriesChart), string.Empty);
-    public string SelectedPointText { get => (string)GetValue(SelectedPointTextProperty); private set => SetValue(SelectedPointTextProperty, value); }
+    public static readonly BindableProperty SelectedPointTextProperty = BindableProperty.Create(
+        nameof(SelectedPointText),
+        typeof(string),
+        typeof(TimeSeriesChart),
+        string.Empty
+    );
+    public string SelectedPointText
+    {
+        get => (string)GetValue(SelectedPointTextProperty);
+        private set => SetValue(SelectedPointTextProperty, value);
+    }
 
     public TimeSeriesChart()
     {
@@ -27,25 +41,45 @@ public sealed class TimeSeriesChart : GraphicsView, IDrawable
         StartInteraction += SelectPoint;
         DragInteraction += SelectPoint;
         MoveHoverInteraction += SelectPoint;
-        Loaded += (_, _) => { if (Application.Current is { } app) app.RequestedThemeChanged += OnThemeChanged; };
-        Unloaded += (_, _) => { if (Application.Current is { } app) app.RequestedThemeChanged -= OnThemeChanged; };
+        Loaded += (_, _) =>
+        {
+            if (Application.Current is { } app)
+                app.RequestedThemeChanged += OnThemeChanged;
+        };
+        Unloaded += (_, _) =>
+        {
+            if (Application.Current is { } app)
+                app.RequestedThemeChanged -= OnThemeChanged;
+        };
         SemanticProperties.SetDescription(this, "Графік вимірювань. Торкніться точки для значення та часу.");
     }
 
     private void OnThemeChanged(object? sender, AppThemeChangedEventArgs e) => Invalidate();
+
     private void RefreshSelection()
     {
-        if (selected is { } previous) selected = Segments?.SelectMany(segment => segment).FirstOrDefault(point => point.Time == previous.Time);
-        UpdateSelectedPointText(); renderedPoints.Clear(); Invalidate();
+        if (selected is { } previous)
+            selected = Segments?.SelectMany(segment => segment).FirstOrDefault(point => point.Time == previous.Time);
+        UpdateSelectedPointText();
+        renderedPoints.Clear();
+        Invalidate();
     }
+
     private void UpdateSelectedPointText()
     {
-        SelectedPointText = selected is null ? string.Empty : $"{selected.Time.ToLocalTime():dd.MM.yyyy HH:mm} · {selected.Value.ToString("0.##", CultureInfo.InvariantCulture)} {Unit}";
-        SemanticProperties.SetDescription(this, selected is null ? "Графік вимірювань. Торкніться точки для значення та часу." : SelectedPointText);
+        SelectedPointText = selected is null
+            ? string.Empty
+            : $"{selected.Time.ToLocalTime():dd.MM.yyyy HH:mm} · {selected.Value.ToString("0.##", CultureInfo.InvariantCulture)} {Unit}";
+        SemanticProperties.SetDescription(
+            this,
+            selected is null ? "Графік вимірювань. Торкніться точки для значення та часу." : SelectedPointText
+        );
     }
+
     private void SelectPoint(object? sender, TouchEventArgs e)
     {
-        if (e.Touches.Length == 0 || renderedPoints.Count == 0) return;
+        if (e.Touches.Length == 0 || renderedPoints.Count == 0)
+            return;
         var touch = e.Touches[0];
         var nearest = renderedPoints.MinBy(item => Math.Abs(item.Position.X - touch.X));
         selected = nearest.Point;
@@ -59,7 +93,7 @@ public sealed class TimeSeriesChart : GraphicsView, IDrawable
         get => (IReadOnlyList<IReadOnlyList<ChartPoint>>?)GetValue(SegmentsProperty);
         set => SetValue(SegmentsProperty, value);
     }
-    // Одиниця вимірювання завантаженого часового ряду.
+
     public string Unit
     {
         get => (string)GetValue(UnitProperty);
@@ -71,13 +105,19 @@ public sealed class TimeSeriesChart : GraphicsView, IDrawable
     {
         renderedPoints.Clear();
         var segments = Segments;
-        if (segments is null || segments.Count == 0) return;
+        if (segments is null || segments.Count == 0)
+            return;
         var points = segments.SelectMany(segment => segment).ToArray();
-        if (points.Length == 0 || dirtyRect.Width < 140 || dirtyRect.Height < 100) return;
+        if (points.Length == 0 || dirtyRect.Width < 140 || dirtyRect.Height < 100)
+            return;
 
         var start = points.Min(point => point.Time);
         var end = points.Max(point => point.Time);
-        if (end == start) { start = start.AddMinutes(-30); end = end.AddMinutes(30); }
+        if (end == start)
+        {
+            start = start.AddMinutes(-30);
+            end = end.AddMinutes(30);
+        }
         var duration = (end - start).TotalSeconds;
         var minimum = points.Min(point => point.Value);
         var maximum = points.Max(point => point.Value);
@@ -86,13 +126,16 @@ public sealed class TimeSeriesChart : GraphicsView, IDrawable
         var step = TickStep((span + 2 * padding) / 4);
         var lower = Math.Floor((minimum - padding) / step) * step;
         var upper = Math.Ceiling((maximum + padding) / step) * step;
-        var plot = new RectF(dirtyRect.Left + 62, dirtyRect.Top + 26,
-            dirtyRect.Width - 80, dirtyRect.Height - 88);
+        var plot = new RectF(dirtyRect.Left + 62, dirtyRect.Top + 26, dirtyRect.Width - 80, dirtyRect.Height - 88);
         var dark = Application.Current?.RequestedTheme == AppTheme.Dark;
         var labelColor = Color.FromArgb(dark ? "#D1CBDC" : "#6B6474");
         var gridColor = Color.FromArgb(dark ? "#3E374A" : "#EAE6F0");
         var tickCount = (int)Math.Round((upper - lower) / step);
-        var decimals = Math.Clamp((int)Math.Ceiling(-Math.Log10(step)) + (step / Math.Pow(10, Math.Floor(Math.Log10(step))) == 2.5 ? 1 : 0), 0, 4);
+        var decimals = Math.Clamp(
+            (int)Math.Ceiling(-Math.Log10(step)) + (step / Math.Pow(10, Math.Floor(Math.Log10(step))) == 2.5 ? 1 : 0),
+            0,
+            4
+        );
 
         canvas.SaveState();
         canvas.FontSize = 10;
@@ -102,11 +145,19 @@ public sealed class TimeSeriesChart : GraphicsView, IDrawable
         for (var tick = 0; tick <= tickCount; tick++)
         {
             var value = lower + tick * step;
-            if (Math.Abs(value) < step / 1000) value = 0;
+            if (Math.Abs(value) < step / 1000)
+                value = 0;
             var y = plot.Bottom - (float)((value - lower) / (upper - lower)) * plot.Height;
             canvas.DrawLine(plot.Left, y, plot.Right, y);
-            canvas.DrawString(value.ToString("F" + decimals, CultureInfo.InvariantCulture),
-                dirtyRect.Left, y - 8, 52, 16, HorizontalAlignment.Right, VerticalAlignment.Center);
+            canvas.DrawString(
+                value.ToString("F" + decimals, CultureInfo.InvariantCulture),
+                dirtyRect.Left,
+                y - 8,
+                52,
+                16,
+                HorizontalAlignment.Right,
+                VerticalAlignment.Center
+            );
         }
 
         var intervals = plot.Width < 360 ? 2 : 4;
@@ -117,17 +168,45 @@ public sealed class TimeSeriesChart : GraphicsView, IDrawable
             var time = start.AddSeconds(duration * tick / intervals).ToLocalTime();
             canvas.DrawLine(x, plot.Top, x, plot.Bottom);
             var textX = Math.Clamp(x - 30, dirtyRect.Left, dirtyRect.Right - 60);
-            canvas.DrawString(time.ToString(showTime ? "HH:mm" : "dd.MM", CultureInfo.InvariantCulture),
-                textX, plot.Bottom + 6, 60, 16, HorizontalAlignment.Center, VerticalAlignment.Top);
+            canvas.DrawString(
+                time.ToString(showTime ? "HH:mm" : "dd.MM", CultureInfo.InvariantCulture),
+                textX,
+                plot.Bottom + 6,
+                60,
+                16,
+                HorizontalAlignment.Center,
+                VerticalAlignment.Top
+            );
             if (showTime)
-                canvas.DrawString(time.ToString("dd.MM", CultureInfo.InvariantCulture),
-                    textX, plot.Bottom + 21, 60, 16, HorizontalAlignment.Center, VerticalAlignment.Top);
+                canvas.DrawString(
+                    time.ToString("dd.MM", CultureInfo.InvariantCulture),
+                    textX,
+                    plot.Bottom + 21,
+                    60,
+                    16,
+                    HorizontalAlignment.Center,
+                    VerticalAlignment.Top
+                );
         }
         canvas.FontSize = 11;
-        canvas.DrawString(string.IsNullOrWhiteSpace(Unit) ? "Значення" : $"Значення, {Unit}",
-            plot.Left, dirtyRect.Top, plot.Width, 18, HorizontalAlignment.Left, VerticalAlignment.Top);
-        canvas.DrawString("Час (місцевий)", plot.Left, dirtyRect.Bottom - 18, plot.Width, 18,
-            HorizontalAlignment.Right, VerticalAlignment.Top);
+        canvas.DrawString(
+            string.IsNullOrWhiteSpace(Unit) ? "Значення" : $"Значення, {Unit}",
+            plot.Left,
+            dirtyRect.Top,
+            plot.Width,
+            18,
+            HorizontalAlignment.Left,
+            VerticalAlignment.Top
+        );
+        canvas.DrawString(
+            "Час (місцевий)",
+            plot.Left,
+            dirtyRect.Bottom - 18,
+            plot.Width,
+            18,
+            HorizontalAlignment.Right,
+            VerticalAlignment.Top
+        );
 
         canvas.StrokeColor = Colors.MediumPurple;
         canvas.FillColor = Colors.MediumPurple;
@@ -139,8 +218,10 @@ public sealed class TimeSeriesChart : GraphicsView, IDrawable
             {
                 var position = new PointF(
                     plot.Left + (float)((point.Time - start).TotalSeconds / duration) * plot.Width,
-                    plot.Bottom - (float)((point.Value - lower) / (upper - lower)) * plot.Height);
-                if (previous is { } last) canvas.DrawLine(last.X, last.Y, position.X, position.Y);
+                    plot.Bottom - (float)((point.Value - lower) / (upper - lower)) * plot.Height
+                );
+                if (previous is { } last)
+                    canvas.DrawLine(last.X, last.Y, position.X, position.Y);
                 renderedPoints.Add((point, position));
                 canvas.FillCircle(position.X, position.Y, selected == point ? 6 : 3);
                 if (selected == point)
@@ -160,7 +241,12 @@ public sealed class TimeSeriesChart : GraphicsView, IDrawable
     {
         var magnitude = Math.Pow(10, Math.Floor(Math.Log10(desired)));
         var fraction = desired / magnitude;
-        var rounded = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 2.5 ? 2.5 : fraction <= 5 ? 5 : 10;
+        var rounded =
+            fraction <= 1 ? 1
+            : fraction <= 2 ? 2
+            : fraction <= 2.5 ? 2.5
+            : fraction <= 5 ? 5
+            : 10;
         return rounded * magnitude;
     }
 }

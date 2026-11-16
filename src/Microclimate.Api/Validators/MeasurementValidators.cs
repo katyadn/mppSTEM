@@ -1,5 +1,4 @@
 using FluentValidation;
-
 using Microclimate.Application.Measurements;
 using Microclimate.Contracts.Measurements;
 
@@ -9,12 +8,14 @@ public sealed class MeasurementBatchRequestValidator : AbstractValidator<Measure
 {
     public MeasurementBatchRequestValidator()
     {
-        RuleFor(x => x.SensorId)
-            .NotEmpty().WithMessage("Ідентифікатор сенсора обов'язковий.");
+        RuleFor(x => x.SensorId).NotEmpty().WithMessage("Ідентифікатор сенсора обов'язковий.");
 
         RuleFor(x => x.Items)
-            .NotEmpty().WithMessage("Пакет вимірів не може бути порожнім.")
+            .NotEmpty()
+            .WithMessage("Пакет вимірів не може бути порожнім.")
             .Must(items => items.Count <= IMeasurementIngestionService.MaxBatchSize)
-            .WithMessage($"Кількість вимірів у пакеті не може перевищувати {IMeasurementIngestionService.MaxBatchSize}.");
+            .WithMessage(
+                $"Кількість вимірів у пакеті не може перевищувати {IMeasurementIngestionService.MaxBatchSize}."
+            );
     }
 }

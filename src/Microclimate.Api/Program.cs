@@ -1,23 +1,18 @@
 using System.Text;
-
 using Asp.Versioning;
-
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
-
 using FluentValidation;
-
 using Microclimate.Api.Authentication;
 using Microclimate.Api.Middleware;
 using Microclimate.Api.Services;
 using Microclimate.Application;
 using Microclimate.Contracts.Auth;
 using Microclimate.Infrastructure;
-
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,8 +20,8 @@ builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-// ── OpenTelemetry ─────────────────────────────────────────────────────────────
-builder.Services.AddOpenTelemetry()
+builder
+    .Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService("Microclimate.Api"))
     .WithTracing(tracing =>
     {
@@ -45,9 +40,8 @@ builder.Services.AddOpenTelemetry()
         }
     });
 
-// ── Versioning ────────────────────────────────────────────────────────────────
-builder.Services
-    .AddApiVersioning(options =>
+builder
+    .Services.AddApiVersioning(options =>
     {
         options.DefaultApiVersion = new ApiVersion(1, 0);
         options.ReportApiVersions = true;
@@ -63,41 +57,41 @@ builder.Services
 
 builder.Services.ConfigureAll<Microsoft.AspNetCore.OpenApi.OpenApiOptions>(options =>
 {
-    options.AddDocumentTransformer((doc, _, _) =>
-    {
-        doc.Components ??= new();
-        var scheme = new Microsoft.OpenApi.OpenApiSecurityScheme
+    options.AddDocumentTransformer(
+        (doc, _, _) =>
         {
-            Type = Microsoft.OpenApi.SecuritySchemeType.Http,
-            Scheme = "bearer",
-            BearerFormat = "JWT",
-            Description = "Enter your JWT token (without 'Bearer ' prefix)",
-        };
+            doc.Components ??= new();
+            var scheme = new Microsoft.OpenApi.OpenApiSecurityScheme
+            {
+                Type = Microsoft.OpenApi.SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                Description = "Enter your JWT token (without 'Bearer ' prefix)",
+            };
 
-        doc.Components.SecuritySchemes ??= new Dictionary<string, Microsoft.OpenApi.IOpenApiSecurityScheme>();
-        doc.Components.SecuritySchemes["Bearer"] = scheme;
+            doc.Components.SecuritySchemes ??= new Dictionary<string, Microsoft.OpenApi.IOpenApiSecurityScheme>();
+            doc.Components.SecuritySchemes["Bearer"] = scheme;
 
-        var req = new Microsoft.OpenApi.OpenApiSecurityRequirement
-        {
-            [new Microsoft.OpenApi.OpenApiSecuritySchemeReference("Bearer", doc)] = [],
-        };
+            var req = new Microsoft.OpenApi.OpenApiSecurityRequirement
+            {
+                [new Microsoft.OpenApi.OpenApiSecuritySchemeReference("Bearer", doc)] = [],
+            };
 
-        doc.Security ??= [];
-        doc.Security.Add(req);
+            doc.Security ??= [];
+            doc.Security.Add(req);
 
-        return Task.CompletedTask;
-    });
+            return Task.CompletedTask;
+        }
+    );
 });
 
-// ── JWT Authentication ────────────────────────────────────────────────────────
 var jwtSection = builder.Configuration.GetSection("Jwt");
-var secretKey = jwtSection["SecretKey"]
-    ?? throw new InvalidOperationException("Jwt:SecretKey is not configured.");
+var secretKey = jwtSection["SecretKey"] ?? throw new InvalidOperationException("Jwt:SecretKey is not configured.");
 var issuer = jwtSection["Issuer"] ?? "microclimate-api";
 var audience = jwtSection["Audience"] ?? "microclimate-client";
 
-builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder
+    .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -116,17 +110,21 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-// ── Application Services ──────────────────────────────────────────────────────
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddSignalR();
-builder.Services.AddScoped<Microclimate.Application.Abstractions.Notifications.IAlertNotifier, Microclimate.Api.Services.SignalRAlertNotifier>();
-builder.Services.AddScoped<Microclimate.Application.Measurements.IMeasurementIngestionService, Microclimate.Api.Services.MeasurementIngestionService>();
+builder.Services.AddScoped<
+    Microclimate.Application.Abstractions.Notifications.IAlertNotifier,
+    Microclimate.Api.Services.SignalRAlertNotifier
+>();
+builder.Services.AddScoped<
+    Microclimate.Application.Measurements.IMeasurementIngestionService,
+    Microclimate.Api.Services.MeasurementIngestionService
+>();
 
 // Аналітика й індекс комфорту — шар Application.
 builder.Services.AddApplication();
 
-// ── Persistence ───────────────────────────────────────────────────────────────
 // Якщо задано Database:Provider (профілі запуску, Docker), дані зберігаються в БД через Infrastructure.
 // Без нього (інтеграційні тести) лишається сховище в пам'яті.
 var useDatabase = !string.IsNullOrWhiteSpace(builder.Configuration[DatabaseSettings.ProviderKey]);
@@ -137,24 +135,45 @@ if (useDatabase)
 else
 {
     builder.Services.AddSingleton<Microclimate.Api.Storage.InMemoryDataStore>();
-    builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IUserRepository, Microclimate.Api.Storage.InMemoryUserRepository>();
-    builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.ISensorRepository, Microclimate.Api.Storage.InMemorySensorRepository>();
-    builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IRoomRepository, Microclimate.Api.Storage.InMemoryRoomRepository>();
-    builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IThresholdRepository, Microclimate.Api.Storage.InMemoryThresholdRepository>();
-    builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IAlertRepository, Microclimate.Api.Storage.InMemoryAlertRepository>();
-    builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IMeasurementRepository, Microclimate.Api.Storage.InMemoryMeasurementRepository>();
-    builder.Services.AddScoped<Microclimate.Application.Abstractions.Persistence.IUnitOfWork, Microclimate.Api.Storage.InMemoryUnitOfWork>();
+    builder.Services.AddScoped<
+        Microclimate.Application.Abstractions.Persistence.IUserRepository,
+        Microclimate.Api.Storage.InMemoryUserRepository
+    >();
+    builder.Services.AddScoped<
+        Microclimate.Application.Abstractions.Persistence.ISensorRepository,
+        Microclimate.Api.Storage.InMemorySensorRepository
+    >();
+    builder.Services.AddScoped<
+        Microclimate.Application.Abstractions.Persistence.IRoomRepository,
+        Microclimate.Api.Storage.InMemoryRoomRepository
+    >();
+    builder.Services.AddScoped<
+        Microclimate.Application.Abstractions.Persistence.IThresholdRepository,
+        Microclimate.Api.Storage.InMemoryThresholdRepository
+    >();
+    builder.Services.AddScoped<
+        Microclimate.Application.Abstractions.Persistence.IAlertRepository,
+        Microclimate.Api.Storage.InMemoryAlertRepository
+    >();
+    builder.Services.AddScoped<
+        Microclimate.Application.Abstractions.Persistence.IMeasurementRepository,
+        Microclimate.Api.Storage.InMemoryMeasurementRepository
+    >();
+    builder.Services.AddScoped<
+        Microclimate.Application.Abstractions.Persistence.IUnitOfWork,
+        Microclimate.Api.Storage.InMemoryUnitOfWork
+    >();
     builder.Services.AddMeasurementExport();
 }
 
-// ── FluentValidation ──────────────────────────────────────────────────────────
 builder.Services.AddValidatorsFromAssemblyContaining<Program>(includeInternalTypes: true);
 
 builder.Services.AddHealthChecks();
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
-builder.Services.AddCors(options => options.AddPolicy("Default", policy =>
-    policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
+builder.Services.AddCors(options =>
+    options.AddPolicy("Default", policy => policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod())
+);
 
 var app = builder.Build();
 
@@ -179,7 +198,10 @@ app.MapHub<Microclimate.Api.Hubs.AlertsHub>("/hubs/alerts");
 
 if (useDatabase)
 {
-    await Microclimate.Api.Storage.DatabaseSeeder.InitializeAsync(app.Services, seedDemoData: app.Environment.IsDevelopment());
+    await Microclimate.Api.Storage.DatabaseSeeder.InitializeAsync(
+        app.Services,
+        seedDemoData: app.Environment.IsDevelopment()
+    );
 }
 
 await app.RunAsync();

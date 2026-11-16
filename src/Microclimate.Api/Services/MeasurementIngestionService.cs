@@ -8,7 +8,6 @@ using Microclimate.Domain.Alerts;
 using Microclimate.Domain.Measurements;
 using Microclimate.Domain.Metrics;
 using Microclimate.Domain.Thresholds;
-
 using Microsoft.AspNetCore.SignalR;
 
 namespace Microclimate.Api.Services;
@@ -25,12 +24,14 @@ public sealed class MeasurementIngestionService(
     IAlertNotifier alertNotifier,
     IUnitOfWork unitOfWork,
     IHubContext<AlertsHub> hubContext,
-    TimeProvider time) : IMeasurementIngestionService
+    TimeProvider time
+) : IMeasurementIngestionService
 {
     public async Task<IngestionResult> IngestAsync(
         Guid sensorId,
         IReadOnlyCollection<MeasurementInput> items,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(items);
 
@@ -43,7 +44,8 @@ public sealed class MeasurementIngestionService(
         {
             throw new ValidationException(
                 nameof(items),
-                $"Пакет містить {items.Count} вимірів, що перевищує ліміт {IMeasurementIngestionService.MaxBatchSize}.");
+                $"Пакет містить {items.Count} вимірів, що перевищує ліміт {IMeasurementIngestionService.MaxBatchSize}."
+            );
         }
 
         var sensor = await sensors.GetByIdAsync(sensorId, cancellationToken);
@@ -62,7 +64,6 @@ public sealed class MeasurementIngestionService(
 
         var now = time.GetUtcNow();
 
-        // Валідуємо і створюємо сутності Measurement
         var measurementEntities = new List<Measurement>(items.Count);
         foreach (var item in items)
         {
@@ -93,7 +94,8 @@ public sealed class MeasurementIngestionService(
             {
                 var exceededBound = limits.ExceededBound(latest.Value) ?? latest.Value;
                 var unit = MetricLimits.Unit(latest.Metric);
-                var message = $"Перевищено поріг {latest.Metric} у кімнаті '{room.Name}': {latest.Value:0.##} {unit} (межа {exceededBound:0.##} {unit}).";
+                var message =
+                    $"Перевищено поріг {latest.Metric} у кімнаті '{room.Name}': {latest.Value:0.##} {unit} (межа {exceededBound:0.##} {unit}).";
 
                 if (existingAlert is null)
                 {
@@ -105,7 +107,8 @@ public sealed class MeasurementIngestionService(
                         latest.Value,
                         exceededBound,
                         message,
-                        now);
+                        now
+                    );
 
                     alerts.Add(newAlert);
                     raisedAlerts.Add(newAlert);
@@ -125,7 +128,8 @@ public sealed class MeasurementIngestionService(
                         latest.Value,
                         exceededBound,
                         message,
-                        now);
+                        now
+                    );
 
                     alerts.Add(newAlert);
                     raisedAlerts.Add(newAlert);
@@ -141,12 +145,15 @@ public sealed class MeasurementIngestionService(
         }
 
         // Зберігаємо в одній транзакції
-        await unitOfWork.ExecuteInTransactionAsync(async ct =>
-        {
-            await measurements.AddRangeAsync(measurementEntities, ct);
-            sensor.MarkSeen(now);
-            await unitOfWork.SaveChangesAsync(ct);
-        }, cancellationToken);
+        await unitOfWork.ExecuteInTransactionAsync(
+            async ct =>
+            {
+                await measurements.AddRangeAsync(measurementEntities, ct);
+                sensor.MarkSeen(now);
+                await unitOfWork.SaveChangesAsync(ct);
+            },
+            cancellationToken
+        );
 
         // Оповіщення SignalR після коміту
         foreach (var alert in raisedAlerts)
@@ -159,12 +166,15 @@ public sealed class MeasurementIngestionService(
             await alertNotifier.AlertResolvedAsync(alert, cancellationToken);
         }
 
-        // Сповіщення про надходження вимірів у кімнату
         foreach (var item in latestPerMetric)
         {
-            var metricType = Enum.TryParse<Contracts.Common.MetricType>(item.Metric.ToString(), out var mt) ? mt : Contracts.Common.MetricType.Temperature;
+            var metricType = Enum.TryParse<Contracts.Common.MetricType>(item.Metric.ToString(), out var mt)
+                ? mt
+                : Contracts.Common.MetricType.Temperature;
             var eventPayload = new MeasurementReceivedEvent(sensor.RoomId, metricType, item.Value, item.MeasuredAt);
-            await hubContext.Clients.Group($"room-{sensor.RoomId}").SendAsync(HubMethods.MeasurementReceived, eventPayload, cancellationToken);
+            await hubContext
+                .Clients.Group($"room-{sensor.RoomId}")
+                .SendAsync(HubMethods.MeasurementReceived, eventPayload, cancellationToken);
         }
 
         return new IngestionResult(measurementEntities.Count, alertsRaised, alertsResolved);

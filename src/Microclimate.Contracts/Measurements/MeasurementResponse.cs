@@ -19,4 +19,5 @@ public sealed record MeasurementResponse(
     MetricType Metric,
     double Value,
     DateTimeOffset MeasuredAt,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt
+);

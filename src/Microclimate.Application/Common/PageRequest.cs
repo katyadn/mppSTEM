@@ -11,14 +11,12 @@ public sealed record PageRequest
     {
         if (page < 1)
         {
-            throw new ValidationException(nameof(page),
-                "Номер сторінки має бути не меншим за 1.");
+            throw new ValidationException(nameof(page), "Номер сторінки має бути не меншим за 1.");
         }
 
         if (pageSize is < 1 or > MaxPageSize)
         {
-            throw new ValidationException(nameof(pageSize),
-                $"Розмір сторінки має бути від 1 до {MaxPageSize}.");
+            throw new ValidationException(nameof(pageSize), $"Розмір сторінки має бути від 1 до {MaxPageSize}.");
         }
 
         Page = page;

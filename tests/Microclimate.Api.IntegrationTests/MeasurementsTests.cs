@@ -1,18 +1,17 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-
 using Microclimate.Contracts.Auth;
 using Microclimate.Contracts.Common;
 using Microclimate.Contracts.Measurements;
 using Microclimate.Contracts.Rooms;
 using Microclimate.Contracts.Sensors;
-
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Microclimate.Api.IntegrationTests;
 
-public sealed class MeasurementsTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public sealed class MeasurementsTests(WebApplicationFactory<Program> factory)
+    : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly HttpClient _client = factory.CreateClient();
 
@@ -52,7 +51,8 @@ public sealed class MeasurementsTests(WebApplicationFactory<Program> factory) : 
             [
                 new MeasurementItem(MetricType.Temperature, 22.5, DateTimeOffset.UtcNow),
                 new MeasurementItem(MetricType.Humidity, 45.0, DateTimeOffset.UtcNow),
-            ]);
+            ]
+        );
 
         using var req = new HttpRequestMessage(HttpMethod.Post, "/api/v1/measurements")
         {
@@ -71,9 +71,8 @@ public sealed class MeasurementsTests(WebApplicationFactory<Program> factory) : 
 
         var batchReq = new MeasurementBatchRequest(
             sensorId,
-            [
-                new MeasurementItem(MetricType.Temperature, 22.5, DateTimeOffset.UtcNow),
-            ]);
+            [new MeasurementItem(MetricType.Temperature, 22.5, DateTimeOffset.UtcNow)]
+        );
 
         using var req = new HttpRequestMessage(HttpMethod.Post, "/api/v1/measurements")
         {
@@ -93,9 +92,8 @@ public sealed class MeasurementsTests(WebApplicationFactory<Program> factory) : 
         // 999 °C перевищує фізичні межі температури [-40; 85]
         var batchReq = new MeasurementBatchRequest(
             sensorId,
-            [
-                new MeasurementItem(MetricType.Temperature, 999.0, DateTimeOffset.UtcNow),
-            ]);
+            [new MeasurementItem(MetricType.Temperature, 999.0, DateTimeOffset.UtcNow)]
+        );
 
         using var req = new HttpRequestMessage(HttpMethod.Post, "/api/v1/measurements")
         {
@@ -113,7 +111,10 @@ public sealed class MeasurementsTests(WebApplicationFactory<Program> factory) : 
         var (roomId, _) = await GetSeededRoomAndSensorAsync();
         var token = await GetAdminTokenAsync();
 
-        using var req = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/rooms/{roomId}/measurements?metric=Temperature");
+        using var req = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"/api/v1/rooms/{roomId}/measurements?metric=Temperature"
+        );
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var response = await _client.SendAsync(req);

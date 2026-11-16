@@ -13,4 +13,5 @@ public sealed record BuildingResponse(
     string Name,
     string? Address,
     string? Description,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt
+);

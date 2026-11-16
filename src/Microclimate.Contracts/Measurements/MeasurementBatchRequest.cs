@@ -5,6 +5,4 @@ namespace Microclimate.Contracts.Measurements;
 /// </summary>
 /// <param name="SensorId">Ідентифікатор сенсора, що передає пакет.</param>
 /// <param name="Items">Список окремих вимірів.</param>
-public sealed record MeasurementBatchRequest(
-    Guid SensorId,
-    IReadOnlyList<MeasurementItem> Items);
+public sealed record MeasurementBatchRequest(Guid SensorId, IReadOnlyList<MeasurementItem> Items);

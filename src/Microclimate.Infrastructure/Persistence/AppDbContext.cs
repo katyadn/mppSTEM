@@ -6,7 +6,6 @@ using Microclimate.Domain.Rooms;
 using Microclimate.Domain.Sensors;
 using Microclimate.Domain.Thresholds;
 using Microclimate.Domain.Users;
-
 using Microsoft.EntityFrameworkCore;
 
 namespace Microclimate.Infrastructure.Persistence;
@@ -14,8 +13,7 @@ namespace Microclimate.Infrastructure.Persistence;
 /// <summary>
 /// Спільний контекст БД. Для кожного провайдера є свій нащадок
 /// </summary>
-public abstract class AppDbContext(DbContextOptions options) : DbContext(
-    options), IUnitOfWork
+public abstract class AppDbContext(DbContextOptions options) : DbContext(options), IUnitOfWork
 {
     public DbSet<Room> Rooms => Set<Room>();
 
@@ -29,16 +27,17 @@ public abstract class AppDbContext(DbContextOptions options) : DbContext(
 
     public DbSet<User> Users => Set<User>();
 
-    public async Task ExecuteInTransactionAsync(Func<CancellationToken,
-        Task> action, CancellationToken cancellationToken)
+    public async Task ExecuteInTransactionAsync(
+        Func<CancellationToken, Task> action,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(action);
 
         var strategy = Database.CreateExecutionStrategy();
         await strategy.ExecuteAsync(async () =>
         {
-            await using var transaction = await
-                Database.BeginTransactionAsync(cancellationToken);
+            await using var transaction = await Database.BeginTransactionAsync(cancellationToken);
             await action(cancellationToken);
             await SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -48,25 +47,18 @@ public abstract class AppDbContext(DbContextOptions options) : DbContext(
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(
-            AppDbContext).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 
-    protected override void ConfigureConventions(
-        ModelConfigurationBuilder configurationBuilder)
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         ArgumentNullException.ThrowIfNull(configurationBuilder);
 
         // Enum-и зберігаються рядками.
-        configurationBuilder.Properties<MetricType>(
-            ).HaveConversion<string>().HaveMaxLength(32);
-        configurationBuilder.Properties<RoomType>().HaveConversion<string>(
-            ).HaveMaxLength(32);
-        configurationBuilder.Properties<AlertLevel>(
-            ).HaveConversion<string>().HaveMaxLength(16);
-        configurationBuilder.Properties<AlertStatus>(
-            ).HaveConversion<string>().HaveMaxLength(16);
-        configurationBuilder.Properties<UserRole>().HaveConversion<string>(
-            ).HaveMaxLength(16);
+        configurationBuilder.Properties<MetricType>().HaveConversion<string>().HaveMaxLength(32);
+        configurationBuilder.Properties<RoomType>().HaveConversion<string>().HaveMaxLength(32);
+        configurationBuilder.Properties<AlertLevel>().HaveConversion<string>().HaveMaxLength(16);
+        configurationBuilder.Properties<AlertStatus>().HaveConversion<string>().HaveMaxLength(16);
+        configurationBuilder.Properties<UserRole>().HaveConversion<string>().HaveMaxLength(16);
     }
 }

@@ -21,4 +21,5 @@ public sealed record SensorResponse(
     bool IsActive,
     IReadOnlyList<MetricType> Capabilities,
     DateTimeOffset InstalledAt,
-    DateTimeOffset? LastSeenAt);
+    DateTimeOffset? LastSeenAt
+);

@@ -17,8 +17,14 @@ public sealed class Sensor : Entity<Guid>
         DeviceKeyHash = string.Empty;
     }
 
-    private Sensor(Guid id, Guid roomId, string serialNumber,
-        string? model, string deviceKeyHash, DateTimeOffset installedAt)
+    private Sensor(
+        Guid id,
+        Guid roomId,
+        string serialNumber,
+        string? model,
+        string deviceKeyHash,
+        DateTimeOffset installedAt
+    )
     {
         Id = id;
         RoomId = roomId;
@@ -45,24 +51,27 @@ public sealed class Sensor : Entity<Guid>
 
     public DateTimeOffset? LastSeenAt { get; private set; }
 
-    public static Sensor Create(Guid roomId, string serialNumber,
-        string? model, string deviceKeyHash, DateTimeOffset now) =>
+    public static Sensor Create(
+        Guid roomId,
+        string serialNumber,
+        string? model,
+        string deviceKeyHash,
+        DateTimeOffset now
+    ) =>
         new(
             Guid.CreateVersion7(now),
             Guard.NotEmpty(roomId, "Кімната"),
-            Guard.RequiredText(serialNumber, "Серійний номер",
-                SerialNumberMaxLength),
+            Guard.RequiredText(serialNumber, "Серійний номер", SerialNumberMaxLength),
             Guard.OptionalText(model, "Модель", ModelMaxLength),
-            Guard.RequiredText(deviceKeyHash, "Хеш ключа датчика",
-                DeviceKeyHashMaxLength),
-            now.ToUniversalTime());
+            Guard.RequiredText(deviceKeyHash, "Хеш ключа датчика", DeviceKeyHashMaxLength),
+            now.ToUniversalTime()
+        );
 
     public void EnsureActive()
     {
         if (!IsActive)
         {
-            throw new DomainException(
-                $"Датчик {SerialNumber} деактивовано.");
+            throw new DomainException($"Датчик {SerialNumber} деактивовано.");
         }
     }
 
@@ -83,7 +92,6 @@ public sealed class Sensor : Entity<Guid>
     public void RotateDeviceKey(string newDeviceKeyHash)
     {
         EnsureActive();
-        DeviceKeyHash = Guard.RequiredText(newDeviceKeyHash,
-            "Хеш ключа датчика", DeviceKeyHashMaxLength);
+        DeviceKeyHash = Guard.RequiredText(newDeviceKeyHash, "Хеш ключа датчика", DeviceKeyHashMaxLength);
     }
 }

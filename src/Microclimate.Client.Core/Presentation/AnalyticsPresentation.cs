@@ -39,8 +39,12 @@ public static class AnalyticsPresentation
     // Форматує індекс і серверну категорію; NoData або некоректний індекс не перетворює на нуль.
     public static string ComfortText(ComfortIndexResponse? comfort)
     {
-        if (comfort is null || comfort.Category == ComfortCategory.NoData ||
-            comfort.Index is not { } index || !double.IsFinite(index))
+        if (
+            comfort is null
+            || comfort.Category == ComfortCategory.NoData
+            || comfort.Index is not { } index
+            || !double.IsFinite(index)
+        )
         {
             return "Немає даних";
         }

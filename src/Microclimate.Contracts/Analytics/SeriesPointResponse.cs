@@ -8,9 +8,4 @@ namespace Microclimate.Contracts.Analytics;
 /// <param name="Avg">Середнє значення за кошик.</param>
 /// <param name="Min">Мінімальне значення за кошик.</param>
 /// <param name="Max">Максимальне значення за кошик.</param>
-public sealed record SeriesPointResponse(
-    DateTimeOffset BucketStart,
-    int Count,
-    double? Avg,
-    double? Min,
-    double? Max);
+public sealed record SeriesPointResponse(DateTimeOffset BucketStart, int Count, double? Avg, double? Min, double? Max);

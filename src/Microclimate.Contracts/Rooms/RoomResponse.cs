@@ -17,4 +17,5 @@ public sealed record RoomResponse(
     int Floor,
     double? AreaSqM,
     string? Type,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt
+);
